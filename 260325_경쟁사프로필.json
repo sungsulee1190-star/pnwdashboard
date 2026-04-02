@@ -1,0 +1,374 @@
+[
+  {
+    "id": "app",
+    "name": "Asia Pulp & Paper (APP)",
+    "country": "중국+인도네시아",
+    "listed": false,
+    "ticker": "-",
+    "currency": "USD",
+    "ir_access": "❌",
+    "capa_kt": 2390,
+    "mills": [
+      "Yangpu (Hainan)",
+      "Zhenjiang (Gold East)",
+      "Karawang (Pindo Deli)"
+    ],
+    "products": [
+      "WFC-Commodity",
+      "WFC-Premium"
+    ],
+    "pulp_self": true,
+    "links": {
+      "homepage": "https://www.app.com.cn/",
+      "sustainability": "https://www.app.com.cn/en/sustainability/",
+      "ir": null,
+      "note": "비상장 그룹사. 지속가능성 보고서만 공개."
+    },
+    "financials": []
+  },
+  {
+    "id": "chenming",
+    "name": "Chenming Group (晨鸣纸业)",
+    "country": "중국",
+    "listed": true,
+    "ticker": "000488.SZ / 1812.HK",
+    "currency": "CNY",
+    "ir_access": "🟡",
+    "capa_kt": 1180,
+    "mills": [
+      "Shouguang No.3 (Chenming CWF)",
+      "Shouguang (Meilun)"
+    ],
+    "products": [
+      "WFC-Commodity",
+      "WFC-Premium"
+    ],
+    "pulp_self": true,
+    "links": {
+      "homepage": "http://www.chenming.com/",
+      "ir": "http://www.chenming.com/investor/",
+      "annual_report": "http://www.cninfo.com.cn/new/disclosure/stock?stockCode=000488",
+      "hk_ir": "https://www1.hkexnews.hk/search/titlesearch.xhtml?lang=en&stock=1812",
+      "note": "중문 위주. 홍콩 상장분 영문 공시 일부 있음."
+    },
+    "financials": []
+  },
+  {
+    "id": "huatai",
+    "name": "Shandong Huatai Group (华泰股份)",
+    "country": "중국",
+    "listed": true,
+    "ticker": "600308.SH",
+    "currency": "CNY",
+    "ir_access": "🟡",
+    "capa_kt": 700,
+    "mills": [
+      "Dongying Mill"
+    ],
+    "products": [
+      "WFC-Commodity",
+      "WFC-Premium",
+      "WFC-C1S"
+    ],
+    "pulp_self": true,
+    "links": {
+      "homepage": "http://www.sdhuatai.com/",
+      "ir": "http://www.sdhuatai.com/investor/",
+      "annual_report": "http://www.cninfo.com.cn/new/disclosure/stock?stockCode=600308",
+      "note": "중문 위주. 영문 자료 제한적."
+    },
+    "financials": []
+  },
+  {
+    "id": "sunpaper",
+    "name": "Shandong Sun Paper (太阳纸业)",
+    "country": "중국",
+    "listed": true,
+    "ticker": "002078.SZ",
+    "currency": "CNY",
+    "ir_access": "🟡",
+    "capa_kt": 510,
+    "mills": [
+      "Yanzhou Mill"
+    ],
+    "products": [
+      "WFC-Commodity",
+      "WFC-Premium"
+    ],
+    "pulp_self": true,
+    "links": {
+      "homepage": "https://www.sunpapergroup.com/",
+      "ir": "https://www.sunpapergroup.com/investor/",
+      "annual_report": "http://www.cninfo.com.cn/new/disclosure/stock?stockCode=002078",
+      "note": "중문 위주. 영문 연보 있음."
+    },
+    "financials": []
+  },
+  {
+    "id": "sappi",
+    "name": "SAPPI",
+    "country": "남아공/유럽",
+    "listed": true,
+    "ticker": "SAP.JO (JSE)",
+    "currency": "USD",
+    "ir_access": "✅",
+    "capa_kt": 1230,
+    "mills": [
+      "Gratkorn (오스트리아)",
+      "Ehingen (독일)",
+      "Maastricht (네덜란드)"
+    ],
+    "products": [
+      "WFC-LW",
+      "WFC-MW",
+      "WFC-HW"
+    ],
+    "pulp_self": true,
+    "links": {
+      "homepage": "https://www.sappi.com/",
+      "ir": "https://www.sappi.com/investor-relations",
+      "quarterly": "https://www.sappi.com/financial-results",
+      "annual_report": "https://www.sappi.com/annual-integrated-report",
+      "note": "영문 분기 보고서 우수. Graphic Paper 사업부 별도 실적."
+    },
+    "financials": []
+  },
+  {
+    "id": "upm",
+    "name": "UPM-Kymmene",
+    "country": "핀란드",
+    "listed": true,
+    "ticker": "UPM.HE (Helsinki)",
+    "currency": "EUR",
+    "ir_access": "✅",
+    "capa_kt": 1220,
+    "mills": [
+      "Kymi (핀란드)",
+      "Nordland (독일)",
+      "Changshu (중국)"
+    ],
+    "products": [
+      "WFC-LW",
+      "WFC-MW",
+      "WFC-HW",
+      "WFC-Commodity"
+    ],
+    "pulp_self": true,
+    "links": {
+      "homepage": "https://www.upm.com/",
+      "ir": "https://www.upm.com/investors/",
+      "quarterly": "https://www.upm.com/investors/reports-and-presentations/",
+      "annual_report": "https://www.upm.com/investors/reports-and-presentations/annual-reports/",
+      "note": "영문 분기 보고서 우수. Communication Papers 사업부."
+    },
+    "financials": []
+  },
+  {
+    "id": "moorim",
+    "name": "Moorim Group (무림그룹)",
+    "country": "한국",
+    "listed": true,
+    "ticker": "009580.KS (무림P&P)",
+    "currency": "KRW",
+    "ir_access": "🟡",
+    "capa_kt": 900,
+    "mills": [
+      "울산 Mill",
+      "진주 Mill"
+    ],
+    "products": [
+      "WFC-Commodity",
+      "WFC-Premium"
+    ],
+    "pulp_self": true,
+    "links": {
+      "homepage": "https://www.moorim.co.kr/",
+      "ir": "https://dart.fss.or.kr/dsab007/main.do?option=corp&textCrpNm=무림피앤피",
+      "dart": "https://dart.fss.or.kr",
+      "note": "한국어 DART 공시. 무림P&P(009580) + 무림페이퍼(009200)."
+    },
+    "financials": []
+  },
+  {
+    "id": "hankuk",
+    "name": "Hankuk Paper (한국제지)",
+    "country": "한국",
+    "listed": true,
+    "ticker": "002300.KS",
+    "currency": "KRW",
+    "ir_access": "🟡",
+    "capa_kt": 230,
+    "mills": [
+      "온산 Mill"
+    ],
+    "products": [
+      "WFC-Commodity",
+      "WFC-Premium",
+      "WFC-C1S"
+    ],
+    "pulp_self": false,
+    "links": {
+      "homepage": "https://www.hankukpaper.com/",
+      "ir": "https://dart.fss.or.kr/dsab007/main.do?option=corp&textCrpNm=한국제지",
+      "dart": "https://dart.fss.or.kr",
+      "note": "한국어 DART 공시."
+    },
+    "financials": []
+  },
+  {
+    "id": "oji",
+    "name": "OJI Holdings",
+    "country": "일본",
+    "listed": true,
+    "ticker": "3861.T (Tokyo)",
+    "currency": "JPY",
+    "ir_access": "✅",
+    "capa_kt": 815,
+    "mills": [
+      "Kasugai Mill",
+      "Yonago Mill",
+      "Nantong Mill (중국, Jiangsu OJI)"
+    ],
+    "products": [
+      "WFC-Commodity",
+      "WFC-Premium"
+    ],
+    "pulp_self": true,
+    "links": {
+      "homepage": "https://www.ojiholdings.co.jp/english/",
+      "ir": "https://www.ojiholdings.co.jp/english/ir/",
+      "quarterly": "https://www.ojiholdings.co.jp/english/ir/financial/",
+      "note": "영문 분기 실적 있음. Printing & Communications 사업부."
+    },
+    "financials": []
+  },
+  {
+    "id": "nippon",
+    "name": "Nippon Paper Industries",
+    "country": "일본",
+    "listed": true,
+    "ticker": "3863.T (Tokyo)",
+    "currency": "JPY",
+    "ir_access": "✅",
+    "capa_kt": 744,
+    "mills": [
+      "Iwakuni Mill",
+      "Ishinomaki Mill",
+      "Hokkaido Mill",
+      "Harada Mill"
+    ],
+    "products": [
+      "WFC-Commodity",
+      "WFC-Premium"
+    ],
+    "pulp_self": true,
+    "links": {
+      "homepage": "https://www.nipponpapergroup.com/english/",
+      "ir": "https://www.nipponpapergroup.com/english/ir/",
+      "quarterly": "https://www.nipponpapergroup.com/english/ir/financial/",
+      "note": "영문 분기 실적 있음. Paper & Paperboard 사업부."
+    },
+    "financials": []
+  },
+  {
+    "id": "hansol",
+    "name": "Hansol Paper (한솔제지)",
+    "country": "한국",
+    "listed": true,
+    "ticker": "213500.KS",
+    "currency": "KRW",
+    "ir_access": "🟡",
+    "capa_kt": 440,
+    "mills": [
+      "장항 Mill",
+      "신탄진 Mill"
+    ],
+    "products": [
+      "WFC-Commodity",
+      "WFC-Premium"
+    ],
+    "pulp_self": false,
+    "links": {
+      "homepage": "https://www.hansolpaper.co.kr/",
+      "ir": "https://dart.fss.or.kr/dsab007/main.do?option=corp&textCrpNm=한솔제지",
+      "dart": "https://dart.fss.or.kr",
+      "note": "한국어 DART 공시. 자사 참조용."
+    },
+    "financials": []
+  },
+  {
+    "id": "hokuetsu",
+    "name": "Hokuetsu Corporation",
+    "country": "일본",
+    "listed": true,
+    "ticker": "3865.T (Tokyo)",
+    "currency": "JPY",
+    "ir_access": "✅",
+    "capa_kt": 830,
+    "mills": [
+      "Niigata Mill"
+    ],
+    "products": [
+      "WFC-Commodity",
+      "WFC-Premium"
+    ],
+    "pulp_self": true,
+    "links": {
+      "homepage": "https://www.hokuetsucorp.co.jp/en/",
+      "ir": "https://www.hokuetsucorp.co.jp/en/ir/",
+      "note": "영문 IR 있음."
+    },
+    "financials": []
+  },
+  {
+    "id": "arctic",
+    "name": "Arctic Paper",
+    "country": "스웨덴/폴란드",
+    "listed": true,
+    "ticker": "ATC.WA (Warsaw)",
+    "currency": "EUR",
+    "ir_access": "✅",
+    "capa_kt": 225,
+    "mills": [
+      "Grycksbo Mill (스웨덴)"
+    ],
+    "products": [
+      "WFC-LW",
+      "WFC-MW",
+      "WFC-HW"
+    ],
+    "pulp_self": false,
+    "links": {
+      "homepage": "https://www.arcticpaper.com/",
+      "ir": "https://www.arcticpaper.com/investors/",
+      "quarterly": "https://www.arcticpaper.com/investors/reports-and-presentations/",
+      "note": "영문 분기 보고서 우수."
+    },
+    "financials": []
+  },
+  {
+    "id": "burgo",
+    "name": "Burgo Group",
+    "country": "이탈리아/벨기에",
+    "listed": false,
+    "ticker": "-",
+    "currency": "EUR",
+    "ir_access": "❌",
+    "capa_kt": 376,
+    "mills": [
+      "Virton Mill (벨기에)"
+    ],
+    "products": [
+      "WFC-LW",
+      "WFC-MW",
+      "WFC-HW"
+    ],
+    "pulp_self": true,
+    "links": {
+      "homepage": "https://www.burgo.com/",
+      "ir": null,
+      "note": "비상장. 공시 의무 없음. 홈페이지 정보만."
+    },
+    "financials": []
+  }
+]
