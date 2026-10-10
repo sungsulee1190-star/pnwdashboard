@@ -1,0 +1,1301 @@
+{
+  "as_of": "2026-10-09",
+  "source_policy": "회사·거래소·공시기관의 원문을 우선하며 직접 읽은 기간·통화·단위를 유지한다. Sun/Huatai 2026H1 수치는 회사가 작성한 공시의 Sina 텍스트 미러에서 확인했고 공식 신문 공시와 발행일·제목을 대조했다. 미러를 회사 호스팅으로 표시하지 않는다. 시장점유율·미확인 차입금·APP 그룹 연결 수치를 추정하지 않는다. 최신 공시의 발견과 본문 검증을 구분하고 경영진 전망은 발표일을 표시한다.",
+  "companies": [
+    {
+      "id": "app",
+      "business_model": "중국·인도네시아의 임업–펄프–제지 통합 운영과 포장·인쇄·생활용지 판매. APP 브랜드 아래 여러 법인이 있으므로 법인별 실적을 그룹 연결 실적으로 합치지 않는다.",
+      "segments": [
+        "임업",
+        "펄프",
+        "인쇄·산업용지",
+        "생활용지",
+        "포장"
+      ],
+      "products": [
+        {
+          "name": "인쇄·복사용지",
+          "applications": "출판, 상업 인쇄, 사무용 복사",
+          "competitive_position": "중국·인도네시아 제품군에서 목재펄프 기반 종이와 다양한 인쇄 등급을 제공; 수치 점유율 미검증.",
+          "source_ids": [
+            "app-cn-products",
+            "app-id-units"
+          ]
+        },
+        {
+          "name": "백판지·식품 포장지",
+          "applications": "식품, 화장품, 의약품, 소비재 포장",
+          "competitive_position": "APP 인도네시아 제품 목록에 ivory·duplex·kraft·식품용 등급이 포함된다.",
+          "source_ids": [
+            "app-id-units"
+          ]
+        },
+        {
+          "name": "생활용지",
+          "applications": "가정용 위생·청소",
+          "competitive_position": "펄프부터 완제품까지 범위가 넓어 생활용지 채널도 경쟁 접점이다.",
+          "source_ids": [
+            "app-cn-products",
+            "app-id-units"
+          ]
+        }
+      ],
+      "geographies": [
+        "중국",
+        "인도네시아",
+        "수출시장"
+      ],
+      "financials": [],
+      "guidance": [],
+      "risks": [
+        {
+          "text": "분석: APP China와 인도네시아 상장·비상장 법인의 연결 범위가 달라 단일 매출·부채 비교에 사용할 그룹 공시를 확인하지 못했다.",
+          "source_ids": [
+            "app-cn-about",
+            "app-id-units"
+          ]
+        },
+        {
+          "text": "회사는 2026년 엘니뇨 예상과 산림 화재 대응을 설명한다. 원료 기반의 물리적 위험과 현장 통신·대응 실행이 관리 과제다.",
+          "source_ids": [
+            "app-id-fire"
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "id": "app-cn-about",
+          "title": "APP China 회사 소개",
+          "url": "https://www.app.com.cn/about",
+          "published_at": null,
+          "accessed_at": "2026-10-09",
+          "kind": "company"
+        },
+        {
+          "id": "app-cn-products",
+          "title": "APP China 사업 및 제품",
+          "url": "https://www.app.com.cn/product",
+          "published_at": null,
+          "accessed_at": "2026-10-09",
+          "kind": "company"
+        },
+        {
+          "id": "app-id-units",
+          "title": "Three APP Group Business Units Return to the Fortune Indonesia 100 List in 2026",
+          "url": "https://app.co.id/-/three-app-group-business-units-return-to-the-fortune-indonesia-100-list-in-2026",
+          "published_at": "2026-09-18",
+          "accessed_at": "2026-10-09",
+          "kind": "news"
+        },
+        {
+          "id": "app-id-fire",
+          "title": "The Last Mile of a Hotspot",
+          "url": "https://app.co.id/en/-/the-last-mile-of-a-hotspot",
+          "published_at": "2026-09-29",
+          "accessed_at": "2026-10-09",
+          "kind": "news"
+        }
+      ],
+      "metric_definitions": {
+        "scope": "APP 브랜드/계열 네트워크. 중국 APP와 Indah Kiat·Pindo Deli·Tjiwi Kimia는 동일한 연결 범위가 아니다.",
+        "financials": "2025/2026 그룹 통합 재무 원문을 검증하지 못해 표시하지 않음."
+      },
+      "coverage_note": "회사 소개·제품 검색 색인은 확인했으나 일부 중국 원문은 시간초과. 인도네시아 2026-09-18 공식 발표로 주요 법인명 확인. 그룹 총매출·순차입금·시장점유율은 미확인.",
+      "verified_at": "2026-10-09"
+    },
+    {
+      "id": "chenming",
+      "business_model": "중국 다지역 펄프·제지 통합 제조사. 문화용지·코팅지·백판지가 핵심이며 금융리스 사업은 2025년 말 전면 매각했다.",
+      "segments": [
+        "펄프·기계제지",
+        "문화용지",
+        "코팅지",
+        "백판지"
+      ],
+      "products": [
+        {
+          "name": "문화용지·복사용지",
+          "applications": "교과서, 출판, 사무용 복사",
+          "competitive_position": "펄프·제지 통합 설비와 중국 다지역 제조거점; 재가동 후 판매 회복을 검증해야 한다.",
+          "source_ids": [
+            "chenming-summary-2025",
+            "chenming-h1-2026"
+          ]
+        },
+        {
+          "name": "코팅지",
+          "applications": "고급 도서, 잡지, 광고·상업 인쇄",
+          "competitive_position": "다양한 단면·양면·무광 등급; 디지털 대체와 가격 경쟁 노출.",
+          "source_ids": [
+            "chenming-summary-2025",
+            "chenming-h1-2026"
+          ]
+        },
+        {
+          "name": "백판지·식품용 판지",
+          "applications": "소비재·식품 포장",
+          "competitive_position": "포장용 고부가제품 전환을 추진하지만 공급 확대와 가격 부담 존재.",
+          "source_ids": [
+            "chenming-h1-2026"
+          ]
+        }
+      ],
+      "geographies": [
+        "중국: 산둥·광둥·후베이·장시·지린",
+        "수출시장"
+      ],
+      "financials": [
+        {
+          "period": "2026H1",
+          "currency": "CNY",
+          "unit": "million",
+          "scope": "consolidated",
+          "revenue": 6865.4289433,
+          "operating_profit": null,
+          "net_profit": -786.47508418,
+          "total_debt": null,
+          "cash": null,
+          "net_debt": null,
+          "equity": 155.80569662,
+          "sales_volume": null,
+          "sales_volume_unit": null,
+          "revenue_growth_pct": 225.9,
+          "operating_margin_pct": null,
+          "source_ids": [
+            "chenming-h1-2026"
+          ],
+          "period_start": "2026-01-01",
+          "period_end": "2026-06-30"
+        },
+        {
+          "period": "FY2025",
+          "currency": "CNY",
+          "unit": "million",
+          "scope": "consolidated",
+          "revenue": 6186.55024397,
+          "operating_profit": null,
+          "net_profit": -8295.93240288,
+          "total_debt": null,
+          "cash": null,
+          "net_debt": null,
+          "equity": 903.83559213,
+          "sales_volume": null,
+          "sales_volume_unit": null,
+          "revenue_growth_pct": -72.78,
+          "operating_margin_pct": null,
+          "source_ids": [
+            "chenming-summary-2025"
+          ],
+          "period_start": "2025-01-01",
+          "period_end": "2025-12-31"
+        },
+        {
+          "period": "FY2024",
+          "currency": "CNY",
+          "unit": "million",
+          "scope": "consolidated",
+          "revenue": 22729.47485276,
+          "operating_profit": null,
+          "net_profit": -7410.78449165,
+          "total_debt": null,
+          "cash": null,
+          "net_debt": null,
+          "equity": 9156.10435891,
+          "sales_volume": null,
+          "sales_volume_unit": null,
+          "revenue_growth_pct": null,
+          "operating_margin_pct": null,
+          "source_ids": [
+            "chenming-summary-2025"
+          ],
+          "period_start": "2024-01-01",
+          "period_end": "2024-12-31"
+        }
+      ],
+      "guidance": [
+        {
+          "period": "2026H2 이후",
+          "text": "2026-08-28 발표 기준: 펄프·제지 핵심 사업 집중, 원가 절감·제품 개발 및 신중한 운영을 추진. 정량 매출·이익 가이던스는 확인하지 못함.",
+          "kind": "management_guidance",
+          "source_ids": [
+            "chenming-h1-2026"
+          ]
+        }
+      ],
+      "risks": [
+        {
+          "text": "분석: 2026H1 매출 급증은 전년 대규모 휴업의 기저효과를 포함한다. 순손실과 얇아진 지배주주 자기자본 때문에 매출 성장만으로 정상화 판단은 어렵다.",
+          "source_ids": [
+            "chenming-h1-2026",
+            "chenming-summary-2025"
+          ]
+        },
+        {
+          "text": "2025 감사보고서는 연체채무·소송·자산동결에 강조사항을 제시했다. 2026-09-29 채무상계 관련 안건도 확인되며 금융·유동성 위험 점검이 필요하다.",
+          "source_ids": [
+            "chenming-fy2025",
+            "chenming-debt-2026"
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "id": "chenming-h1-2026",
+          "title": "2026 Interim Results and Interim Report",
+          "url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0828/2026082802744.pdf",
+          "published_at": "2026-08-28",
+          "accessed_at": "2026-10-09",
+          "kind": "results"
+        },
+        {
+          "id": "chenming-fy2025",
+          "title": "2025 Annual Report",
+          "url": "https://www.hkexnews.hk/listedco/listconews/sehk/2026/0330/2026033002142.pdf",
+          "published_at": "2026-03-30",
+          "accessed_at": "2026-10-09",
+          "kind": "annual_report"
+        },
+        {
+          "id": "chenming-summary-2025",
+          "title": "2025 Annual Report Summary",
+          "url": "https://static.cninfo.com.cn/finalpage/2026-03-31/1225058512.PDF",
+          "published_at": "2026-03-31",
+          "accessed_at": "2026-10-09",
+          "kind": "filing"
+        },
+        {
+          "id": "chenming-resumption",
+          "title": "Full Resumption of Production at the Production Bases",
+          "url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0316/2026031600119.pdf",
+          "published_at": "2026-03-16",
+          "accessed_at": "2026-10-09",
+          "kind": "filing"
+        },
+        {
+          "id": "chenming-debt-2026",
+          "title": "Debt Restructuring and Related Party Transaction circular",
+          "url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0929/2026092902033.pdf",
+          "published_at": "2026-09-29",
+          "accessed_at": "2026-10-09",
+          "kind": "filing"
+        }
+      ],
+      "metric_definitions": {
+        "net_profit": "연결 지배주주 귀속 순이익; 연결 전체 순이익과 구분.",
+        "equity": "연결 지배주주 귀속 순자산; 비지배지분 제외.",
+        "operating_profit": "확인한 요약 공시의 세전이익(利润总额)을 영업이익으로 대체하지 않음; 확인되지 않은 값은 null.",
+        "total_debt": "이자부 차입금 총액만 허용. 총부채·미지급금과 구분하며 이자부 총액 미확인 시 null.",
+        "cash": "현금성 자산과 제한성 자금을 구분할 직접 근거 부족 시 null.",
+        "evidence": "2026H1 표의 Revenue 6,865,428,943.30 RMB; attributable loss 786,475,084.18 RMB. 원 단위를 1,000,000으로 나눔."
+      },
+      "coverage_note": "2026H1 HKEX 원문 7페이지 표 및 FY2025 CNINFO 요약 2페이지 표 직접 확인. 재가동은 2026-03-13 발표/03-16 거래소 게시이며 생산능력 회복을 판매량으로 대체하지 않음. 부채 총액은 미확인.",
+      "verified_at": "2026-10-09"
+    },
+    {
+      "id": "huatai",
+      "business_model": "제지와 염소알칼리 화학의 두 축. 화학제품 일부를 제지에 자체 공급하지만 대부분은 외부에 판매하며 종이는 직접 판매 중심이다.",
+      "segments": [
+        "뉴스프린트·문화용지·코팅지·포장지",
+        "염소알칼리 및 화학제품"
+      ],
+      "products": [
+        {
+          "name": "신문용지·문화용지·코팅지",
+          "applications": "신문, 잡지, 출판, 광고 인쇄",
+          "competitive_position": "대규모 뉴스프린트 단일 공장 기반을 회사가 강조하나 수치 점유율은 미검증.",
+          "source_ids": [
+            "huatai-fy2025"
+          ]
+        },
+        {
+          "name": "크라프트·라이너·골심지",
+          "applications": "상품·택배 외포장",
+          "competitive_position": "신문용지 외 포장 등급도 제조하여 제품 노출을 분산.",
+          "source_ids": [
+            "huatai-fy2025"
+          ]
+        },
+        {
+          "name": "가성소다·과산화수소·프로필렌옥사이드",
+          "applications": "제지·표백, 화학 원료",
+          "competitive_position": "제지 원료 내부 공급과 독립 외부 판매를 병행하는 사업 구조.",
+          "source_ids": [
+            "huatai-fy2025"
+          ]
+        }
+      ],
+      "geographies": [
+        "중국 전국 판매망",
+        "산둥 제조 기반"
+      ],
+      "financials": [
+        {
+          "period": "2026H1",
+          "currency": "CNY",
+          "unit": "million",
+          "scope": "consolidated",
+          "revenue": 6210.63347086,
+          "operating_profit": null,
+          "net_profit": 18.89060966,
+          "total_debt": null,
+          "cash": null,
+          "net_debt": null,
+          "equity": 9058.22733021,
+          "sales_volume": null,
+          "sales_volume_unit": null,
+          "revenue_growth_pct": -3.1,
+          "operating_margin_pct": null,
+          "source_ids": [
+            "huatai-h1-mirror",
+            "huatai-h1-official"
+          ],
+          "period_start": "2026-01-01",
+          "period_end": "2026-06-30"
+        },
+        {
+          "period": "FY2025",
+          "currency": "CNY",
+          "unit": "million",
+          "scope": "consolidated",
+          "revenue": 12456.41658359,
+          "operating_profit": null,
+          "net_profit": -65.98209473,
+          "total_debt": null,
+          "cash": null,
+          "net_debt": null,
+          "equity": 9028.14470442,
+          "sales_volume": null,
+          "sales_volume_unit": null,
+          "revenue_growth_pct": -4.52,
+          "operating_margin_pct": null,
+          "source_ids": [
+            "huatai-fy2025"
+          ],
+          "period_start": "2025-01-01",
+          "period_end": "2025-12-31"
+        },
+        {
+          "period": "FY2024",
+          "currency": "CNY",
+          "unit": "million",
+          "scope": "consolidated",
+          "revenue": 13046.08849313,
+          "operating_profit": null,
+          "net_profit": 36.1619321,
+          "total_debt": null,
+          "cash": null,
+          "net_debt": null,
+          "equity": 9141.11592274,
+          "sales_volume": null,
+          "sales_volume_unit": null,
+          "revenue_growth_pct": null,
+          "operating_margin_pct": null,
+          "source_ids": [
+            "huatai-fy2025"
+          ],
+          "period_start": "2024-01-01",
+          "period_end": "2024-12-31"
+        }
+      ],
+      "guidance": [],
+      "risks": [
+        {
+          "text": "분석: 제지뿐 아니라 화학제품 시황도 수익성에 영향을 준다. 2026H1 매출 감소와 순이익 감소가 동시에 발생해 사업 다각화가 이익 안정성을 보장하지 않는다.",
+          "source_ids": [
+            "huatai-fy2025",
+            "huatai-h1-mirror"
+          ]
+        },
+        {
+          "text": "2025년 지배주주 순손실로 현금배당을 제안하지 않았다. 2026H1 요약의 세전이익을 영업이익으로 비교하면 수익성을 왜곡할 수 있다.",
+          "source_ids": [
+            "huatai-fy2025",
+            "huatai-h1-mirror"
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "id": "huatai-fy2025",
+          "title": "2025 Annual Report Summary",
+          "url": "https://static.cninfo.com.cn/finalpage/2026-04-18/1225115896.PDF",
+          "published_at": "2026-04-18",
+          "accessed_at": "2026-10-09",
+          "kind": "filing"
+        },
+        {
+          "id": "huatai-h1-official",
+          "title": "2026 Half-Year Report Summary — issuer disclosure in Shanghai Securities News",
+          "url": "https://paper.cnstock.com/html/2026-08/22/content_2257875.htm",
+          "published_at": "2026-08-22",
+          "accessed_at": "2026-10-09",
+          "kind": "filing"
+        },
+        {
+          "id": "huatai-h1-mirror",
+          "title": "2026 Half-Year Report Summary — issuer filing mirrored by Sina",
+          "url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12514804&stockid=600308",
+          "published_at": "2026-08-22",
+          "accessed_at": "2026-10-09",
+          "kind": "filing"
+        }
+      ],
+      "metric_definitions": {
+        "net_profit": "연결 지배주주 귀속 순이익; 연결 전체 순이익과 구분.",
+        "equity": "연결 지배주주 귀속 순자산; 비지배지분 제외.",
+        "operating_profit": "확인한 요약 공시의 세전이익(利润总额)을 영업이익으로 대체하지 않음; 확인되지 않은 값은 null.",
+        "total_debt": "이자부 차입금 총액만 허용. 총부채·미지급금과 구분하며 이자부 총액 미확인 시 null.",
+        "cash": "현금성 자산과 제한성 자금을 구분할 직접 근거 부족 시 null.",
+        "evidence": "2026H1 issuer summary mirror: revenue 6,210,633,470.86 RMB; attributable net profit 18,890,609.66 RMB. 공식 신문 표는 이미지여서 미러 텍스트로 확인."
+      },
+      "coverage_note": "FY2025 CNINFO PDF 직접 확인. 2026H1 발행·회사명은 공식 신문 공시와 일치하며 수치는 Sina의 회사 공시 텍스트 미러에서 읽음. 이를 회사 호스팅 원문으로 보지 않는다. 부채·판매량·정량 전망 미확인.",
+      "verified_at": "2026-10-09"
+    },
+    {
+      "id": "sunpaper",
+      "business_model": "산둥·광시·라오스의 임업–펄프–제지 통합 3개 거점. 산업용지·바이오매스 신소재·소비재를 함께 운영하며 용해펄프까지 제품을 확장했다.",
+      "segments": [
+        "산업용지",
+        "바이오매스 신소재·용해펄프",
+        "생활용 소비재"
+      ],
+      "products": [
+        {
+          "name": "비코팅·코팅 인쇄용지",
+          "applications": "출판·상업 인쇄",
+          "competitive_position": "중국 주요 공급자라는 회사 설명; 실제 시장점유율 수치는 미검증.",
+          "source_ids": [
+            "sun-fy2025"
+          ]
+        },
+        {
+          "name": "크라프트 라이너·포장지",
+          "applications": "운송·상품 포장",
+          "competitive_position": "라오스 포함 통합 원료·제조 거점으로 제품군을 확대.",
+          "source_ids": [
+            "sun-fy2025"
+          ]
+        },
+        {
+          "name": "용해펄프·생활용지",
+          "applications": "특수섬유용 원료, 생활 위생",
+          "competitive_position": "펄프·종이·생활용지 포트폴리오를 결합해 단일 지종 의존도를 분산.",
+          "source_ids": [
+            "sun-fy2025"
+          ]
+        }
+      ],
+      "geographies": [
+        "중국: 산둥·광시",
+        "라오스",
+        "수출시장"
+      ],
+      "financials": [
+        {
+          "period": "2026H1",
+          "currency": "CNY",
+          "unit": "million",
+          "scope": "consolidated",
+          "revenue": 20861.74658683,
+          "operating_profit": null,
+          "net_profit": 1950.91886933,
+          "total_debt": null,
+          "cash": null,
+          "net_debt": null,
+          "equity": 31530.44810034,
+          "sales_volume": null,
+          "sales_volume_unit": null,
+          "revenue_growth_pct": 9.15,
+          "operating_margin_pct": null,
+          "source_ids": [
+            "sun-h1-mirror",
+            "sun-h1-official"
+          ],
+          "period_start": "2026-01-01",
+          "period_end": "2026-06-30"
+        },
+        {
+          "period": "FY2025",
+          "currency": "CNY",
+          "unit": "million",
+          "scope": "consolidated",
+          "revenue": 39191.56025674,
+          "operating_profit": null,
+          "net_profit": 3250.61658614,
+          "total_debt": null,
+          "cash": null,
+          "net_debt": null,
+          "equity": 30502.14595993,
+          "sales_volume": null,
+          "sales_volume_unit": null,
+          "revenue_growth_pct": -3.77,
+          "operating_margin_pct": null,
+          "source_ids": [
+            "sun-fy2025"
+          ],
+          "period_start": "2025-01-01",
+          "period_end": "2025-12-31"
+        },
+        {
+          "period": "FY2024",
+          "currency": "CNY",
+          "unit": "million",
+          "scope": "consolidated",
+          "revenue": 40726.52204623,
+          "operating_profit": null,
+          "net_profit": 3101.25640922,
+          "total_debt": null,
+          "cash": null,
+          "net_debt": null,
+          "equity": 28614.02883395,
+          "sales_volume": null,
+          "sales_volume_unit": null,
+          "revenue_growth_pct": null,
+          "operating_margin_pct": null,
+          "source_ids": [
+            "sun-fy2025"
+          ],
+          "period_start": "2024-01-01",
+          "period_end": "2024-12-31"
+        }
+      ],
+      "guidance": [],
+      "risks": [
+        {
+          "text": "분석: 2025 매출 감소 속 순이익은 증가했지만 영업현금흐름은 감소했다. 규모 확대만으로 현금창출 개선을 단정하기 어렵다.",
+          "source_ids": [
+            "sun-fy2025"
+          ]
+        },
+        {
+          "text": "회사의 연차 요약은 중국 시장에서 생산 증가에도 매출·이익이 하락했다고 설명한다. 통합 원료 구조의 장점과 신규 설비 투자·제품 가격 압력을 함께 봐야 한다.",
+          "source_ids": [
+            "sun-fy2025"
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "id": "sun-fy2025",
+          "title": "2025 Annual Report Summary",
+          "url": "https://static.cninfo.com.cn/finalpage/2026-04-11/1225093921.PDF",
+          "published_at": "2026-04-11",
+          "accessed_at": "2026-10-09",
+          "kind": "filing"
+        },
+        {
+          "id": "sun-h1-official",
+          "title": "2026 Half-Year Report Summary — issuer disclosure in Shanghai Securities News",
+          "url": "https://paper.cnstock.com/html/2026-08/26/content_2260114.htm",
+          "published_at": "2026-08-26",
+          "accessed_at": "2026-10-09",
+          "kind": "filing"
+        },
+        {
+          "id": "sun-h1-mirror",
+          "title": "2026 Half-Year Report Summary — issuer filing mirrored by Sina",
+          "url": "https://vip.stock.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12539062&stockid=002078",
+          "published_at": "2026-08-26",
+          "accessed_at": "2026-10-09",
+          "kind": "filing"
+        },
+        {
+          "id": "sun-products",
+          "title": "Sun Paper official corporate website",
+          "url": "https://www.sunpapergroup.com/en",
+          "published_at": null,
+          "accessed_at": "2026-10-09",
+          "kind": "company"
+        }
+      ],
+      "metric_definitions": {
+        "net_profit": "연결 지배주주 귀속 순이익; 연결 전체 순이익과 구분.",
+        "equity": "연결 지배주주 귀속 순자산; 비지배지분 제외.",
+        "operating_profit": "확인한 요약 공시의 세전이익(利润总额)을 영업이익으로 대체하지 않음; 확인되지 않은 값은 null.",
+        "total_debt": "이자부 차입금 총액만 허용. 총부채·미지급금과 구분하며 이자부 총액 미확인 시 null.",
+        "cash": "현금성 자산과 제한성 자금을 구분할 직접 근거 부족 시 null.",
+        "evidence": "FY2025 공식 표: revenue 39,191,560,256.74 RMB, attributable net profit 3,250,616,586.14 RMB. 2026H1은 issuer-summary mirror 직접 확인."
+      },
+      "coverage_note": "FY2025 공식 PDF 직접 확인. FY2025 말 연간 펄프·제지 능력 1,400만톤 초과는 생산능력이며 판매량 아님. 2026H1 공식 신문 표는 이미지이므로 Sina 회사 공시 텍스트로 수치를 확인했음. 부채·정량 가이던스·시장점유율 미확인.",
+      "verified_at": "2026-10-09"
+    },
+    {
+      "id": "oji",
+      "business_model": "포장·생활용품, 기능소재, 산림·펄프·에너지, 인쇄용지를 함께 운영하는 글로벌 그룹. 저수익 사업 구조조정과 지속가능 포장·산림 바이오매스로 포트폴리오를 전환한다.",
+      "segments": [
+        "가정·산업용 소재",
+        "기능성 소재",
+        "산림자원·환경 마케팅",
+        "인쇄·커뮤니케이션 미디어"
+      ],
+      "products": [
+        {
+          "name": "골판지·상자·액체포장·생활용품",
+          "applications": "소비재 포장, 운송, 위생",
+          "competitive_position": "일본·동남아 포장 네트워크와 Walki·IPI 등 해외 사업을 결합.",
+          "source_ids": [
+            "oji-fy2025"
+          ]
+        },
+        {
+          "name": "감열지·특수지·접착소재·필름",
+          "applications": "라벨, 영수증, 산업 기능소재",
+          "competitive_position": "열접착 종이·비불소 내유지 같은 전략 제품군 확대.",
+          "source_ids": [
+            "oji-fy2025"
+          ]
+        },
+        {
+          "name": "펄프·용해펄프·목재·바이오연료",
+          "applications": "제지·섬유 원료, 에너지",
+          "competitive_position": "브라질·뉴질랜드 산림·펄프와 AustroCel 인수를 통한 바이오매스 사업.",
+          "source_ids": [
+            "oji-fy2025"
+          ]
+        }
+      ],
+      "geographies": [
+        "일본",
+        "중국·동남아·인도",
+        "브라질·뉴질랜드",
+        "유럽"
+      ],
+      "financials": [
+        {
+          "period": "FY2025",
+          "currency": "JPY",
+          "unit": "million",
+          "scope": "consolidated",
+          "revenue": 1861709,
+          "operating_profit": 34582,
+          "net_profit": 55582,
+          "total_debt": null,
+          "cash": 74247,
+          "net_debt": 880900,
+          "equity": 1102315,
+          "sales_volume": null,
+          "sales_volume_unit": null,
+          "revenue_growth_pct": 0.7,
+          "operating_margin_pct": 1.9,
+          "source_ids": [
+            "oji-fy2025"
+          ],
+          "period_start": "2025-04-01",
+          "period_end": "2026-03-31"
+        },
+        {
+          "period": "FY2024",
+          "currency": "JPY",
+          "unit": "million",
+          "scope": "consolidated",
+          "revenue": 1849264,
+          "operating_profit": 67686,
+          "net_profit": 46171,
+          "total_debt": null,
+          "cash": 65508,
+          "net_debt": null,
+          "equity": 1101755,
+          "sales_volume": null,
+          "sales_volume_unit": null,
+          "revenue_growth_pct": null,
+          "operating_margin_pct": 3.7,
+          "source_ids": [
+            "oji-fy2025"
+          ],
+          "period_start": "2024-04-01",
+          "period_end": "2025-03-31"
+        }
+      ],
+      "guidance": [
+        {
+          "period": "FY2026 (2027-03-31 결산)",
+          "text": "2026-05-15 발표 전망: 매출 JPY 1,940,000m, 영업이익 60,000m, 지배주주 순이익 35,000m. 8월 최신 수치의 원문 재검증이 필요하며 현재 전망으로 단정하지 않음.",
+          "kind": "management_guidance",
+          "source_ids": [
+            "oji-fy2025"
+          ]
+        },
+        {
+          "period": "FY2027 (2028-03-31 결산)",
+          "text": "중기계획 목표: 연결 영업이익 JPY 120bn, 지배주주 순이익 80bn, ROE 8%. 목표이며 확정 실적이 아님.",
+          "kind": "management_guidance",
+          "source_ids": [
+            "oji-fy2025"
+          ]
+        }
+      ],
+      "risks": [
+        {
+          "text": "분석: FY2025 순이익 증가와 영업이익 급감이 엇갈렸다. 부동산 등 자산매각 이익이 순이익을 보완해 본업 회복 판단에는 영업이익을 우선해야 한다.",
+          "source_ids": [
+            "oji-fy2025"
+          ]
+        },
+        {
+          "text": "해외 펄프 시황, 일본 인쇄용지 수요 감소, 원료·물류비와 금리 상승에 노출. 순이자부채는 FY2025 말 JPY 880.9bn으로 증가했다.",
+          "source_ids": [
+            "oji-fy2025"
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "id": "oji-fy2025",
+          "title": "Summary of Consolidated Financial and Business Results for the Year Ended March 2026",
+          "url": "https://xml.irpocket.com/C3861/2026/en0515irnews01.pdf",
+          "published_at": "2026-05-15",
+          "accessed_at": "2026-10-09",
+          "kind": "results"
+        },
+        {
+          "id": "oji-business",
+          "title": "Oji Business Overview",
+          "url": "https://www.ojiholdings.co.jp/en/ir/",
+          "published_at": null,
+          "accessed_at": "2026-10-09",
+          "kind": "company"
+        },
+        {
+          "id": "oji-ir-latest",
+          "title": "Oji IR News Releases",
+          "url": "https://www.ojiholdings.co.jp/en/ir/news/",
+          "published_at": null,
+          "accessed_at": "2026-10-09",
+          "kind": "company"
+        }
+      ],
+      "metric_definitions": {
+        "operating_profit": "일본 GAAP 연결 영업이익(Operating profit); 경상이익·EBITDA와 구분.",
+        "net_profit": "연결 지배주주 귀속 순이익(Profit attributable to owners of parent).",
+        "equity": "비지배지분을 제외한 연결 자기자본(Reference: Equity / shareholders' equity).",
+        "total_debt": "이자부 부채의 회사 공시 총액만 사용; 총부채와 구분. 개별 차입금 항목을 임의 합산하지 않음.",
+        "cash": "명시된 연결 cash and cash equivalents; 별도 설명 없는 cash/deposits와 혼용하지 않음.",
+        "net_debt": "회사가 명시한 interest-bearing debt minus cash and cash equivalents. JPY 880.9bn을 880,900m으로 환산; 회사가 반올림한 숫자.",
+        "evidence": "FY2025 원문 표: net sales 1,861,709m; operating profit 34,582m; owner profit 55,582m. cash는 현금흐름표 기말 CCE.",
+        "fiscal_year": "FY2025 = 2025-04-01 ~ 2026-03-31; FY2024 = 2024-04-01 ~ 2025-03-31; FY2026Q1 = 2026-04-01 ~ 2026-06-30."
+      },
+      "coverage_note": "FY 명칭은 회사의 4월 시작 회계연도. 2026-08-05 Q1 공시가 IR 검색에 존재하지만 원문 PDF 본문을 확인하지 못해 최신 검증 재무는 March-2026 연간이다. 총차입금 임의 합산은 하지 않음.",
+      "verified_at": "2026-10-09"
+    },
+    {
+      "id": "nippon",
+      "business_model": "종이·판지와 생활용 제품, 에너지, 목재·건축 사업을 결합. 액체포장은 원지·가공·충전기 판매 및 유지보수까지 시스템 공급을 확대한다.",
+      "segments": [
+        "종이·판지",
+        "생활용 제품",
+        "에너지",
+        "목재·건축 관련"
+      ],
+      "products": [
+        {
+          "name": "인쇄용지·백판지·포장용지",
+          "applications": "출판, 소비재·식품 포장",
+          "competitive_position": "일본 제지 기반; 수익성이 지종과 가격전가에 민감.",
+          "source_ids": [
+            "nippon-fy2025",
+            "nippon-pricing"
+          ]
+        },
+        {
+          "name": "NSATOM 무균 액체용 카톤 시스템",
+          "applications": "입자·고점도·섬유질 음료 포장",
+          "competitive_position": "카톤과 충전 시스템 역량을 결합; 2026 신제품 실제 고객 채택 확인.",
+          "source_ids": [
+            "nippon-nsatom"
+          ]
+        },
+        {
+          "name": "생활용 제품·목재·에너지",
+          "applications": "위생, 건축, 발전",
+          "competitive_position": "기존 인쇄용지 외 이익 기반을 다변화.",
+          "source_ids": [
+            "nippon-fy2025"
+          ]
+        }
+      ],
+      "geographies": [
+        "일본",
+        "미국",
+        "호주",
+        "해외 목재·제품 사업"
+      ],
+      "financials": [
+        {
+          "period": "FY2025",
+          "currency": "JPY",
+          "unit": "million",
+          "scope": "consolidated",
+          "revenue": 1192606,
+          "operating_profit": 25205,
+          "net_profit": 11743,
+          "total_debt": null,
+          "cash": 207411,
+          "net_debt": null,
+          "equity": 508467,
+          "sales_volume": null,
+          "sales_volume_unit": null,
+          "revenue_growth_pct": 0.9,
+          "operating_margin_pct": 2.1,
+          "source_ids": [
+            "nippon-fy2025"
+          ],
+          "period_start": "2025-04-01",
+          "period_end": "2026-03-31"
+        },
+        {
+          "period": "FY2024",
+          "currency": "JPY",
+          "unit": "million",
+          "scope": "consolidated",
+          "revenue": 1182431,
+          "operating_profit": 19706,
+          "net_profit": 4539,
+          "total_debt": null,
+          "cash": 185941,
+          "net_debt": null,
+          "equity": 482026,
+          "sales_volume": null,
+          "sales_volume_unit": null,
+          "revenue_growth_pct": 1.3,
+          "operating_margin_pct": 1.7,
+          "source_ids": [
+            "nippon-fy2025"
+          ],
+          "period_start": "2024-04-01",
+          "period_end": "2025-03-31"
+        }
+      ],
+      "guidance": [],
+      "risks": [
+        {
+          "text": "분석: FY2025 연결 영업이익은 개선했지만 종이·판지 부문 영업이익은 JPY 564m에 그쳤다. 그룹 수익 개선이 인쇄용지 전체의 회복을 의미하지 않는다.",
+          "source_ids": [
+            "nippon-fy2025"
+          ]
+        },
+        {
+          "text": "2026-06-01 가격 인상 발표는 원료·연료 조달 비용 압력을 명시한다. 가격전가 실행률과 고객 수요를 함께 확인할 필요가 있다.",
+          "source_ids": [
+            "nippon-pricing"
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "id": "nippon-fy2025",
+          "title": "Consolidated Financial Results for Fiscal Year Ended March 31, 2026",
+          "url": "https://www.nipponpapergroup.com/assets/2603_e_Summary_FincialResults.pdf",
+          "published_at": "2026-05-15",
+          "accessed_at": "2026-10-09",
+          "kind": "results"
+        },
+        {
+          "id": "nippon-ir-latest",
+          "title": "Nippon Paper Investor Relations",
+          "url": "https://www.nipponpapergroup.com/english/ir/index.html",
+          "published_at": null,
+          "accessed_at": "2026-10-09",
+          "kind": "company"
+        },
+        {
+          "id": "nippon-nsatom",
+          "title": "Next-generation aseptic paper cartons system NSATOM 250ml new product released",
+          "url": "https://www.nipponpapergroup.com/english/news/2026/news260623110000.html",
+          "published_at": "2026-06-23",
+          "accessed_at": "2026-10-09",
+          "kind": "news"
+        },
+        {
+          "id": "nippon-pricing",
+          "title": "Price revision for white paperboards, cup base paper, processed base paper and packaging paper",
+          "url": "https://www.nipponpapergroup.com/english/news/2026/news260601150000.html",
+          "published_at": "2026-06-01",
+          "accessed_at": "2026-10-09",
+          "kind": "news"
+        }
+      ],
+      "metric_definitions": {
+        "operating_profit": "일본 GAAP 연결 영업이익(Operating profit); 경상이익·EBITDA와 구분.",
+        "net_profit": "연결 지배주주 귀속 순이익(Profit attributable to owners of parent).",
+        "equity": "비지배지분을 제외한 연결 자기자본(Reference: Equity / shareholders' equity).",
+        "total_debt": "이자부 부채의 회사 공시 총액만 사용; 총부채와 구분. 개별 차입금 항목을 임의 합산하지 않음.",
+        "cash": "명시된 연결 cash and cash equivalents; 별도 설명 없는 cash/deposits와 혼용하지 않음.",
+        "evidence": "March-2026 공식 PDF: revenue 1,192,606m, operating profit 25,205m, owner profit 11,743m; Reference Equity 508,467m.",
+        "fiscal_year": "FY2025 = 2025-04-01 ~ 2026-03-31; FY2024 = 2024-04-01 ~ 2025-03-31; FY2026Q1 = 2026-04-01 ~ 2026-06-30."
+      },
+      "coverage_note": "IR에 2026-08-05 Q1·전망수정 발표가 확인되나 현재 Q1 링크가 연간 PDF로 연결되어 최신 본문을 검증하지 못함. 변경 전 5월 가이던스를 현재 전망으로 재사용하지 않았음. 총이자부차입금·판매량 미확인.",
+      "verified_at": "2026-10-09"
+    },
+    {
+      "id": "hokuetsu",
+      "business_model": "종이·백판지·기능성 소재 및 해외 펄프 제조에 포장 가공·목재 사업을 결합. 일반 인쇄용지 외 전자부품 운송지·고급 판지로 제품 믹스를 넓힌다.",
+      "segments": [
+        "펄프·종이",
+        "포장·종이 가공",
+        "목재 소재",
+        "기타"
+      ],
+      "products": [
+        {
+          "name": "코팅 인쇄용지·백판지",
+          "applications": "출판·인쇄, 식품·과자 포장, 트레이딩 카드",
+          "competitive_position": "일본 수요 하락 속 고급 판지·트레이딩 카드 응용을 회사가 언급.",
+          "source_ids": [
+            "hokuetsu-fy2025"
+          ]
+        },
+        {
+          "name": "칩 캐리어 테이프 원지·기능지",
+          "applications": "전자부품 운송, 산업 가공",
+          "competitive_position": "자동차·AI 관련 수요 증가에 따른 판매량 개선을 회사가 설명.",
+          "source_ids": [
+            "hokuetsu-fy2025"
+          ]
+        },
+        {
+          "name": "시장 펄프·액체용 포장",
+          "applications": "제지 원료, 액체 포장",
+          "competitive_position": "해외 펄프 가격과 일본 가공품 판매를 함께 노출.",
+          "source_ids": [
+            "hokuetsu-fy2025",
+            "hokuetsu-q1-2026"
+          ]
+        }
+      ],
+      "geographies": [
+        "일본",
+        "해외 펄프 사업·수출시장"
+      ],
+      "financials": [
+        {
+          "period": "FY2026Q1",
+          "currency": "JPY",
+          "unit": "million",
+          "scope": "consolidated",
+          "revenue": 72557,
+          "operating_profit": 687,
+          "net_profit": 1634,
+          "total_debt": null,
+          "cash": null,
+          "net_debt": null,
+          "equity": 249774,
+          "sales_volume": null,
+          "sales_volume_unit": null,
+          "revenue_growth_pct": 0.3,
+          "operating_margin_pct": null,
+          "source_ids": [
+            "hokuetsu-q1-2026"
+          ],
+          "period_start": "2026-04-01",
+          "period_end": "2026-06-30"
+        },
+        {
+          "period": "FY2025",
+          "currency": "JPY",
+          "unit": "million",
+          "scope": "consolidated",
+          "revenue": 287736,
+          "operating_profit": 7539,
+          "net_profit": 7299,
+          "total_debt": 97350,
+          "cash": 26421,
+          "net_debt": null,
+          "equity": 251816,
+          "sales_volume": null,
+          "sales_volume_unit": null,
+          "revenue_growth_pct": -5.9,
+          "operating_margin_pct": null,
+          "source_ids": [
+            "hokuetsu-fy2025"
+          ],
+          "period_start": "2025-04-01",
+          "period_end": "2026-03-31"
+        },
+        {
+          "period": "FY2024",
+          "currency": "JPY",
+          "unit": "million",
+          "scope": "consolidated",
+          "revenue": 305718,
+          "operating_profit": 19727,
+          "net_profit": 15529,
+          "total_debt": 88972,
+          "cash": 25148,
+          "net_debt": null,
+          "equity": 265052,
+          "sales_volume": null,
+          "sales_volume_unit": null,
+          "revenue_growth_pct": null,
+          "operating_margin_pct": null,
+          "source_ids": [
+            "hokuetsu-fy2025"
+          ],
+          "period_start": "2024-04-01",
+          "period_end": "2025-03-31"
+        }
+      ],
+      "guidance": [
+        {
+          "period": "FY2026 (2027-03-31 결산)",
+          "text": "2026-08-07 유지 전망: 연결 매출 JPY 305,000m, 영업이익 3,000m, 지배주주 순이익 5,000m. 전년 대비 매출 +6.0%, 영업이익 -60.2%.",
+          "kind": "management_guidance",
+          "source_ids": [
+            "hokuetsu-q1-2026"
+          ]
+        }
+      ],
+      "risks": [
+        {
+          "text": "분석: 2026Q1 매출은 소폭 늘었으나 영업이익은 78.9% 감소했다. 원료·연료 상승과 해외 펄프 가격 하락이 동시에 마진을 압박했다.",
+          "source_ids": [
+            "hokuetsu-q1-2026"
+          ]
+        },
+        {
+          "text": "일본 인쇄용지 수요 감소·수출 시황 약화와 펄프 가격 변동에 노출. 기능성 소재의 성장과 대량 펄프·종이 사업의 경기성을 분리해 봐야 한다.",
+          "source_ids": [
+            "hokuetsu-fy2025"
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "id": "hokuetsu-q1-2026",
+          "title": "Consolidated Financial Results for Three Months Ended June 30, 2026",
+          "url": "https://www.hokuetsucorp.com/en/ir/financial_results/file/20260807_release01_en.pdf",
+          "published_at": "2026-08-07",
+          "accessed_at": "2026-10-09",
+          "kind": "results"
+        },
+        {
+          "id": "hokuetsu-fy2025",
+          "title": "Consolidated Financial Results for Fiscal Year Ended March 31, 2026",
+          "url": "https://www.hokuetsucorp.com/en/ir/financial_results/file/20260515_release01_en.pdf",
+          "published_at": "2026-05-15",
+          "accessed_at": "2026-10-09",
+          "kind": "results"
+        },
+        {
+          "id": "hokuetsu-business",
+          "title": "Hokuetsu Business Strategy",
+          "url": "https://www.hokuetsucorp.com/en/ir/index.html",
+          "published_at": null,
+          "accessed_at": "2026-10-09",
+          "kind": "company"
+        }
+      ],
+      "metric_definitions": {
+        "operating_profit": "일본 GAAP 연결 영업이익(Operating profit); 경상이익·EBITDA와 구분.",
+        "net_profit": "연결 지배주주 귀속 순이익(Profit attributable to owners of parent).",
+        "equity": "비지배지분을 제외한 연결 자기자본(Reference: Equity / shareholders' equity).",
+        "total_debt": "연차 결과의 Interest-bearing debt at year-end 직접 공시값. 2026Q1 총액은 미확인하므로 null.",
+        "cash": "연차 현금흐름표 cash and cash equivalents. Q1 cash/deposits 25,053m는 정의가 달라 cash에 넣지 않음.",
+        "evidence": "Q1 PDF 첫 페이지 net sales 72,557m, operating profit 687m, owner profit 1,634m; annual 3페이지 interest-bearing debt 97,350m.",
+        "fiscal_year": "FY2025 = 2025-04-01 ~ 2026-03-31; FY2024 = 2024-04-01 ~ 2025-03-31; FY2026Q1 = 2026-04-01 ~ 2026-06-30."
+      },
+      "coverage_note": "2026-08-07 최신 Q1 및 May-2026 연차 PDF 직접 검증. FY2026은 2026-04-01 시작; Q1은 3개월이므로 중국 6개월 H1과 직접 성장 규모 비교에 주의. 부문 구분은 2026Q1부터 변경되었음.",
+      "verified_at": "2026-10-09"
+    }
+  ],
+  "news": [
+    {
+      "id": "asia-app-fire",
+      "date": "2026-09-29",
+      "title": "APP, 산림 화재 현장 대응 체계 설명",
+      "summary": "공식 발표에서 예상 엘니뇨에 대비한 탐지·현장 확인·진화 연계를 설명하고 취약지역 대응 거점을 추가했다고 밝혔다.",
+      "company_ids": [
+        "app"
+      ],
+      "topic": "설비",
+      "url": "https://app.co.id/en/-/the-last-mile-of-a-hotspot",
+      "source": "APP Group",
+      "source_type": "official",
+      "significance": "원료 산림의 물리적 위험과 공급 연속성 관리 근거. 생산 중단이나 손실이 발생했다는 뜻은 아님."
+    },
+    {
+      "id": "asia-chenming-debt",
+      "date": "2026-09-29",
+      "title": "Chenming, 관계사 채권·채무 상계 안건 제출",
+      "summary": "회사·자회사 및 합작사 간 채권·채무 상계를 주주총회 안건으로 제시했다. 승인 일정은 2026-10-20이며 확인일 현재 완료로 보지 않는다.",
+      "company_ids": [
+        "chenming"
+      ],
+      "topic": "실적",
+      "url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0929/2026092902033.pdf",
+      "source": "Chenming / HKEX",
+      "source_type": "official",
+      "significance": "유동성·관련자 거래 모니터링이 필요한 사건. 상계안을 외부 이자부채 전액 해소로 해석하지 않음."
+    },
+    {
+      "id": "asia-app-units",
+      "date": "2026-09-18",
+      "title": "APP 주요 인도네시아 법인 3곳, 기업 매출 순위 재진입",
+      "summary": "APP는 Indah Kiat·Pindo Deli·Tjiwi Kimia의 Fortune Indonesia 100 포함을 발표했다. 순위의 대상은 개별 법인이며 APP 그룹 연결 재무가 아니다.",
+      "company_ids": [
+        "app"
+      ],
+      "topic": "시장",
+      "url": "https://app.co.id/-/three-app-group-business-units-return-to-the-fortune-indonesia-100-list-in-2026",
+      "source": "APP Group",
+      "source_type": "official",
+      "significance": "APP 분석 시 추적해야 할 법인명을 확인하는 근거. 시장점유율 지표로 사용하지 않음."
+    },
+    {
+      "id": "asia-chenming-h1",
+      "date": "2026-08-28",
+      "title": "Chenming 2026H1: 매출 회복, 순손실 지속",
+      "summary": "연결 매출은 CNY 6,865.43m로 225.90% 증가했으나 지배주주 순손실 CNY 786.48m가 지속됐다. 지배주주 순자산은 CNY 155.81m이다.",
+      "company_ids": [
+        "chenming"
+      ],
+      "topic": "실적",
+      "url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0828/2026082802744.pdf",
+      "source": "Chenming / HKEX",
+      "source_type": "official",
+      "significance": "재가동에 따른 성장과 재무 복원력을 분리해 평가할 필요."
+    },
+    {
+      "id": "asia-sun-h1",
+      "date": "2026-08-26",
+      "title": "Sun Paper, 2026H1 공시 발행",
+      "summary": "회사는 2026년 반기보고서 및 요약을 공시했다. 정량 수치는 대시보드 재무 표에 회사 공시 텍스트 미러라는 검증 경로와 함께 수록했다.",
+      "company_ids": [
+        "sunpaper"
+      ],
+      "topic": "실적",
+      "url": "https://paper.cnstock.com/html/2026-08/26/content_2260114.htm",
+      "source": "Sun Paper / Shanghai Securities News issuer disclosure",
+      "source_type": "official",
+      "significance": "최신 반기 실적 확인점. 공식 페이지의 재무표가 이미지인 점을 별도 표시."
+    },
+    {
+      "id": "asia-huatai-h1",
+      "date": "2026-08-22",
+      "title": "Huatai, 2026H1 공시와 실적 설명회 일정 공개",
+      "summary": "회사는 반기보고서를 공시하고 8월31일 온라인 실적 설명회 일정을 발표했다. 반기보고서 요약은 미감사로 명시됐다.",
+      "company_ids": [
+        "huatai"
+      ],
+      "topic": "실적",
+      "url": "https://paper.cnstock.com/html/2026-08/22/content_2257875.htm",
+      "source": "Huatai / Shanghai Securities News issuer disclosure",
+      "source_type": "official",
+      "significance": "최신 반기 자료와 경영진 설명 자료를 이어서 점검할 수 있는 공시."
+    },
+    {
+      "id": "asia-hokuetsu-q1",
+      "date": "2026-08-07",
+      "title": "Hokuetsu Q1: 영업이익 78.9% 감소",
+      "summary": "2026년 4~6월 연결 매출 JPY 72,557m, 영업이익 687m. 회사는 원료·연료 상승과 해외 펄프 가격 하락을 설명했으며 연간 전망은 유지했다.",
+      "company_ids": [
+        "hokuetsu"
+      ],
+      "topic": "실적",
+      "url": "https://www.hokuetsucorp.com/en/ir/financial_results/file/20260807_release01_en.pdf",
+      "source": "Hokuetsu Corporation",
+      "source_type": "official",
+      "significance": "매출 성장보다 마진 압박이 큰 상황을 보여주는 최신 직접 검증 결과."
+    },
+    {
+      "id": "asia-nippon-nsatom",
+      "date": "2026-06-23",
+      "title": "Nippon, NSATOM 무균 카톤의 신규 고객 제품 공개",
+      "summary": "Kyodo Nyugyo의 음료가 NSATOM 시스템을 채택해 6월30일부터 Seven-Eleven에서 단계적으로 출시된다고 발표했다. 회사는 고점도·입자 음료 대응을 강조했다.",
+      "company_ids": [
+        "nippon"
+      ],
+      "topic": "제품",
+      "url": "https://www.nipponpapergroup.com/english/news/2026/news260623110000.html",
+      "source": "Nippon Paper Industries",
+      "source_type": "official",
+      "significance": "원지뿐 아니라 카톤·충전 시스템으로 경쟁 범위가 확대되는 실제 고객 채택 사례."
+    },
+    {
+      "id": "asia-nippon-pricing",
+      "date": "2026-06-01",
+      "title": "Nippon, 백판지·컵원지·포장지 15% 초과 인상 발표",
+      "summary": "회사는 백판지·컵원지·가공원지·포장지의 7월21일 출하분부터 15% 초과 가격 인상을 발표하고 원료·연료 조달 부담을 이유로 들었다.",
+      "company_ids": [
+        "nippon"
+      ],
+      "topic": "시장",
+      "url": "https://www.nipponpapergroup.com/english/news/2026/news260601150000.html",
+      "source": "Nippon Paper Industries",
+      "source_type": "official",
+      "significance": "공표한 인상률이며 실제 매출 평균 가격·고객 수용률은 확인되지 않았다."
+    },
+    {
+      "id": "asia-oji-annual",
+      "date": "2026-05-15",
+      "title": "Oji FY2025: 영업이익 감소, 자산매각이 순이익 보완",
+      "summary": "2026년3월 결산 연결 매출은 JPY 1,861,709m, 영업이익 34,582m, 지배주주 순이익 55,582m. 회사는 자산매각과 저수익 사업 재편을 설명했다.",
+      "company_ids": [
+        "oji"
+      ],
+      "topic": "실적",
+      "url": "https://xml.irpocket.com/C3861/2026/en0515irnews01.pdf",
+      "source": "Oji Holdings",
+      "source_type": "official",
+      "significance": "본업 이익과 자산매각 이익의 구분이 중요. 8월 최신 공시 본문은 아직 검증 범위 밖."
+    },
+    {
+      "id": "asia-chenming-restart",
+      "date": "2026-03-13",
+      "title": "Chenming, 5개 주요 생산거점 전면 재가동 발표",
+      "summary": "Shouguang·Zhanjiang·Huanggang·Jiangxi·Jilin의 재가동과 회사 생산능력 100% 복원을 발표했다. 문서 일자는 3월13일, 거래소 게재는 3월16일이다.",
+      "company_ids": [
+        "chenming"
+      ],
+      "topic": "설비",
+      "url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0316/2026031600119.pdf",
+      "source": "Chenming / HKEX",
+      "source_type": "official",
+      "significance": "중국 인쇄·판지 공급 회복의 확인점. 가동능력 복원을 실제 판매량과 혼동하지 않음."
+    }
+  ],
+  "market": [
+    {
+      "id": "asia-china-volume-margin",
+      "title": "중국: 생산량 성장과 매출·이익의 괴리",
+      "summary": "Sun FY2025 공식 요약은 NBS 자료를 인용해 중국 제지·종이제품 산업 매출 -2.6%, 기계제지·판지 생산 +2.9%, 총이익 -13.6%를 설명한다. 회사가 인용한 산업 집계이며 회사 점유율 추정에 사용하지 않는다.",
+      "date": "2026-04-11",
+      "url": "https://static.cninfo.com.cn/finalpage/2026-04-11/1225093921.PDF",
+      "source": "Sun Paper official annual summary (NBS data cited)",
+      "source_type": "official",
+      "company_ids": [
+        "sunpaper",
+        "chenming",
+        "huatai",
+        "app"
+      ]
+    },
+    {
+      "id": "asia-japan-demand-cost",
+      "title": "일본·해외 펄프: 수요와 비용이 동시에 이익 압박",
+      "summary": "Hokuetsu Q1 회사 설명은 일본·해외 펄프·종이 사업에서 원료·연료 상승과 해외 펄프 가격 하락을 직접 언급한다. 분석: 원료 통합 정도와 시장펄프 판매 노출에 따라 같은 가격 변화의 이익 영향이 달라진다.",
+      "date": "2026-08-07",
+      "url": "https://www.hokuetsucorp.com/en/ir/financial_results/file/20260807_release01_en.pdf",
+      "source": "Hokuetsu Corporation",
+      "source_type": "official",
+      "company_ids": [
+        "hokuetsu",
+        "oji",
+        "nippon"
+      ]
+    },
+    {
+      "id": "asia-liquid-packaging",
+      "title": "액체포장 경쟁: 종이 등급에서 충전 시스템까지",
+      "summary": "Nippon의 NSATOM 고객 채택 발표는 원지·포장 가공·충전기와 유지보수를 묶는 공급 모델을 설명한다. 분석: 액체용지 경쟁은 톤당 가격 외에 충전 호환성·제품 지원과 연결된다.",
+      "date": "2026-06-23",
+      "url": "https://www.nipponpapergroup.com/english/news/2026/news260623110000.html",
+      "source": "Nippon Paper Industries",
+      "source_type": "official",
+      "company_ids": [
+        "nippon",
+        "oji",
+        "hokuetsu"
+      ]
+    }
+  ]
+}

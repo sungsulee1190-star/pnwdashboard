@@ -331,6 +331,7 @@ select:focus {
   transform: translateX(-50%) translateY(0);
 }
 </style>
+<link rel="stylesheet" href="competitor_intelligence.css">
 </head>
 <body>
 
@@ -599,7 +600,7 @@ select:focus {
       <div class="card !py-3 mb-3">
         <div class="flex flex-wrap items-center gap-3">
           <span class="text-xs font-bold text-gray-400">🔍 국가 검색</span>
-          <input id="krCountrySearch" type="text" placeholder="국가명 입력..."
+          <input id="krCountryTableSearch" type="text" placeholder="국가명 입력..."
             style="padding:6px 14px;border-radius:9999px;border:1px solid var(--colors-hairline);font-size:12px;width:240px;outline:none"
             oninput="krCountryFilter()">
           <span class="text-xs font-bold text-gray-400 ml-1">정렬</span>
@@ -913,51 +914,37 @@ function generateEmailDraft() {
 function copyDraftHTML() {
   const html = document.getElementById('emailPreviewHTML').innerHTML;
   const text = document.getElementById('emailPreviewText').value;
-  const blobHTML = new Blob([html], { type: "text/html" });
-  const blobText = new Blob([text], { type: "text/plain" });
-  const clipboardData = [new ClipboardItem({ "text/html": blobHTML, "text/plain": blobText })];
-  navigator.clipboard.write(clipboardData).then(() => showToast("HTML 메일 초안이 복사되었습니다!", "✅")).catch(err => console.error(err));
+  return writeEmailClipboard(html,text);
 }
 
 function copyDraftText() {
   const text = document.getElementById('emailPreviewText').value;
-  navigator.clipboard.writeText(text).then(() => showToast("텍스트 메일 초안이 복사되었습니다!", "✅"));
+  return writeEmailClipboard(null,text);
 }
 
-// Override go function to include our new tab
-const originalGo = window.go;
-window.go = function(id) {
-  document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('on'));
-  
-  const sec = document.getElementById('sec-' + id);
-  if (sec) sec.classList.add('active');
-  
-  const btn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(id));
-  if (btn) btn.classList.add('on');
-  
-  if (id === 'email') generateEmailDraft();
-  
-  if (originalGo) {
-    try { originalGo(id); } catch(e) {} // Fallback for specific tab logic
-  }
-  
-  // Fix Leaflet map sizing issue when tab is shown
-  if (id === 'map') {
-    setTimeout(() => {
-      if (window._M && window._M.mill) {
-        window._M.mill.invalidateSize();
+async function writeEmailClipboard(html,text){
+  try {
+    if(html&&typeof ClipboardItem==='function'&&navigator.clipboard?.write){
+      try {
+        await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([text],{type:'text/plain'})})]);
+        showToast('HTML 메일 본문이 복사되었습니다!','✉️');return;
+      } catch(error){
+        if(!navigator.clipboard?.writeText)throw error;
       }
-    }, 100);
-  }
-};
+    }
+    if(!navigator.clipboard?.writeText)throw new Error('Clipboard unavailable');
+    await navigator.clipboard.writeText(text);
+    showToast('텍스트 메일 본문이 복사되었습니다!','✉️');
+  } catch(error){showToast('클립보드 복사 불가 · 이메일 탭의 텍스트를 직접 선택해 복사해주세요.','❌');}
+}
+
 </script>
 <script>
 // ===================================
 // 공통 유틸 및 전역 변수
 // ===================================
-const fmt=n=>n==null||isNaN(n)?'-':Number(n).toLocaleString();
-const fmtF=n=>n==null||isNaN(n)?'-':Number(n).toFixed(1);
+const fmt=n=>n==null||!Number.isFinite(Number(n))?'-':Number(n).toLocaleString();
+const fmtF=n=>n==null||!Number.isFinite(Number(n))?'-':Number(n).toFixed(1);
 const pct=(a,b)=>b?((a-b)/b*100):0;
 const chg=v=>{if(v==null||isNaN(v))return'-';return v>0?`<span class="up">▲${Math.abs(v).toFixed(1)}%</span>`:v<0?`<span class="dn">▼${Math.abs(v).toFixed(1)}%</span>`:'─';};
 const CH={};
@@ -970,7 +957,7 @@ const CC={China:'#272729','South Korea':'#0066cc',Japan:'#f97316',Indonesia:'#10
 function tg(btn,grp){
   document.querySelectorAll(`[data-g="${grp}"]`).forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
-  if(grp==='kr-c'){KR.comp=btn.dataset.v;krRefresh();if(KR.view==='region')krRegion();}
+  if(grp==='kr-c'){KR.comp=btn.dataset.v;krRefresh();}
   if(grp==='kr-r'){KR.rg=btn.dataset.v;}
 }
 
@@ -978,12 +965,18 @@ function go(id){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById('sec-'+id)?.classList.add('active');
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));
-  event.target.classList.add('on');
+  document.querySelectorAll('.tab-btn').forEach(b=>{
+    const target = /go\(['"]([^'"]+)['"]\)/.exec(b.getAttribute('onclick')||'');
+    if(target && target[1]===id)b.classList.add('on');
+  });
+  if(id==='cnExport')cnInit();
+  if(id==='email')generateEmailDraft();
   if(id==='krExport')krInit();
   if(id==='price'&&!_priceInited){initPrice();_priceInited=true;}
   if(id==='map'&&!_mapInited){initMarket();_mapInited=true;}
   if(id==='company'&&!_coInited){initCompany();_coInited=true;}
   if(id==='news'&&!_newsInited){initNews();_newsInited=true;}
+  if(id==='map')setTimeout(()=>_M.mill?.invalidateSize(),100);
 }
 
 function toggleCollapse(id) {
@@ -1031,11 +1024,16 @@ const REGION_MAP = {
 };
 
 function cleanRg(rg) {
+  if(window.DashboardLogic?.cleanRegion)return window.DashboardLogic.cleanRegion(rg);
   if (!rg || typeof rg !== 'string') return '기타';
   if (rg.includes('-2146') || rg === '#N/A') return '기타';
   const k = rg.trim();
   return REGION_MAP[k] || REGION_MAP[k.replace(/^\d+_/,'')] || '기타';
 }
+
+// KR aggregated region codes differ from the detailed country region codes.
+const KR_REGION_MAP = {'01_미국':'북미','02_호주':'오세아니아','03_서유럽':'유럽','04_동유럽':'유럽','05_아프리카':'아프리카','06_남미':'중남미','07_일본':'동북아','08_중국':'동북아','09_동남아':'동남아','10_서남아':'인도/서남아','11_중동(기타)':'중동','12_중동(이란)':'중동'};
+const cleanKrRg=rg=>KR_REGION_MAP[rg]||cleanRg(rg);
 
 const CHART_COLORS = ['#0066cc','#10b981','#f97316','#8b5cf6','#06b6d4','#64748b','#ec4899','#14b8a6','#a855f7','#a3e635'];
 
@@ -1115,6 +1113,29 @@ function buildKpi5(cards) {
     </div>`).join('');
 }
 
+function exportRangeError(prefix){
+  const from=+document.getElementById(prefix+'MonthFrom').value,to=+document.getElementById(prefix+'MonthTo').value;
+  if(!Number.isInteger(from)||!Number.isInteger(to)||from<1||from>12||to<1||to>12)return '1~12월 범위를 선택해주세요.';
+  return from>to?'시작 월은 종료 월보다 늦을 수 없습니다.':'';
+}
+function clearExportCharts(registry,keys=Object.keys(registry)){
+  keys.forEach(key=>{registry[key]?.destroy();delete registry[key];});
+}
+function emptyExportMessage(message){return `<div class="text-sm text-gray-400 text-center py-6">${message}</div>`;}
+function cnUnavailable(message){
+  clearExportCharts(CH,['cnV','cnR']);
+  document.getElementById('cnKpi').innerHTML=buildKpi5(['총 수출량','수출국 수','최대 수출국','전월 대비','최대 수출 지역'].map(label=>({label,value:'-',sub:message})));
+  document.getElementById('cnTbl').innerHTML=emptyExportMessage(message);
+  document.getElementById('cnVolSubtitle').textContent=message;
+  document.getElementById('cnRegSubtitle').textContent=message;
+}
+function krUnavailable(message){
+  clearExportCharts(KC);clearExportCharts(KC2);
+  document.getElementById('krKpi').innerHTML=buildKpi5(['총 수출량','총 수출금액','평균 FOB'].map(label=>({label,value:'-',sub:message})));
+  ['krTbl','krRTbl','krCTbl','krIns'].forEach(id=>document.getElementById(id).innerHTML=emptyExportMessage(message));
+  document.getElementById('krCountryCount').textContent=message;
+}
+
 // ===================================
 // [Q1] 중국산 수출실적 분석 모드 확장
 // ===================================
@@ -1147,38 +1168,46 @@ function cnRefresh(){
   const mode = _S.cnMode || 'normal';
   const yr = +document.getElementById('cnYear').value;
   const rg = document.getElementById('cnRegion').value;
+  const mFrom = +document.getElementById('cnMonthFrom').value;
+  const mTo = +document.getElementById('cnMonthTo').value;
+  document.getElementById('cnParams').style.display = 'flex';
+  const rangeError=exportRangeError('cn');
+  if(rangeError){cnUnavailable(rangeError);return;}
+  const selectedData = DATA_EXPORT.filter(x=>(rg==='all'||cleanRg(x._rg)===rg)&&(!_cnSelectedCountries.length||_cnSelectedCountries.includes(x.c)));
   
   if(mode === 'normal') {
     document.getElementById('cnParams').style.display = 'flex';
-    const mFrom = +document.getElementById('cnMonthFrom').value;
-    const mTo = +document.getElementById('cnMonthTo').value;
     document.getElementById('cnVolTitle').innerHTML = `📊 <span>월별 수출량 (${yr}년 ${mFrom}~${mTo}월)</span>`;
     document.getElementById('cnVolSubtitle').textContent = `지역: ${rg==='all'?'전체':rg}${_cnSelectedCountries.length?' · 국가: '+_cnSelectedCountries.join(', ') : ''}`;
     document.getElementById('cnRegTitle').innerHTML = rg === 'all' ? '🌏 <span>지역별 수출 비중</span>' : `🌏 <span>[${rg}] 국가별 수출 비중</span>`;
     document.getElementById('cnRegSubtitle').textContent = rg === 'all' ? '슬라이스 클릭 → 지역 드릴다운' : '상위 10개국 비중';
     document.getElementById('cnTableTitle').textContent = `📋 국가별 수출 상세 (${yr}년 ${mFrom}~${mTo}월)`;
     
-    let d=DATA_EXPORT.filter(x=>x.y===yr && x.m>=mFrom && x.m<=mTo);
-    if(rg!=='all') d=d.filter(x=>cleanRg(x._rg)===rg);
-    if(_cnSelectedCountries.length>0) d=d.filter(x=>_cnSelectedCountries.includes(x.c));
+    const d=selectedData.filter(x=>x.y===yr && x.m>=mFrom && x.m<=mTo);
+    if(!d.length){cnUnavailable('선택한 기간·지역·국가의 데이터 없음');return;}
   
     const tv=d.reduce((s,x)=>s+x.v,0);
-    const countries=[...new Set(d.map(x=>x.c))].length;
+    const countries=[...new Set(d.filter(x=>x.v>0).map(x=>x.c))].length;
     const months=[...new Set(d.map(x=>x.m))].length;
     // 5-card KPI
     const cnByC={};d.forEach(x=>{if(!cnByC[x.c])cnByC[x.c]={c:x.c,rg:x._rg,v:0};cnByC[x.c].v+=x.v;});
     const cnTop=Object.values(cnByC).sort((a,b)=>b.v-a.v)[0];
-    // Prev period for MoM
-    const prevM = d.length>0 ? Math.min(...d.map(x=>x.m))-1 : null;
-    const prevD = prevM && prevM>0 ? DATA_EXPORT.filter(x=>x.y===yr&&x.m===prevM) : [];
+    const regionTotals={};d.forEach(x=>{const r=cleanRg(x._rg);regionTotals[r]=(regionTotals[r]||0)+x.v;});
+    const topRegion=Object.entries(regionTotals).sort((a,b)=>b[1]-a[1])[0];
+    // Compare one calendar month with the same geographic filters.
+    const latestM=d.length?Math.max(...d.map(x=>x.m)):null;
+    const prevM=latestM===1?12:latestM?latestM-1:null;
+    const prevY=latestM===1?yr-1:yr;
+    const currentTV=d.filter(x=>x.m===latestM).reduce((s,x)=>s+x.v,0);
+    const prevD=selectedData.filter(x=>x.y===prevY&&x.m===prevM);
     const prevTV = prevD.reduce((s,x)=>s+x.v,0);
-    const mom = prevTV>0 ? (tv-prevTV)/prevTV*100 : null;
+    const mom = prevD.length&&prevTV>0 ? (currentTV-prevTV)/prevTV*100 : null;
     document.getElementById('cnKpi').innerHTML = buildKpi5([
       {label:'총 수출량', value:fmt(tv), sub:`MT · ${yr}년 ${mFrom}~${mTo}월`},
       {label:'수출국 수', value:countries, sub:'개국'},
       {label:'최대 수출국', value:cnTop?cnTop.c:'-', sub:cnTop?`${fmt(cnTop.v)} MT`:''},
-      {label:'전월 대비', value:mom!=null?(mom>0?'▲':'▼')+Math.abs(mom).toFixed(1)+'%':'-', cls:mom>0?'up':mom<0?'dn':'', sub:prevM?`${yr}년 ${prevM}월 대비`:'비교 데이터 없음'},
-      {label:'최대 수출 지역', value:cnTop?cleanRg(cnTop.rg):'-', sub:'수출량 기준'}
+      {label:'전월 대비', value:mom!=null?(mom>0?'▲':mom<0?'▼':'')+Math.abs(mom).toFixed(1)+'%':'-', cls:mom>0?'up':mom<0?'dn':'', sub:mom!=null?`${yr}년 ${latestM}월 / ${prevY}년 ${prevM}월 대비`:'비교 데이터 없음'},
+      {label:'최대 수출 지역', value:topRegion?topRegion[0]:'-', sub:topRegion?`${fmt(topRegion[1])} MT`:''}
     ]);
   
     // 월별 차트
@@ -1199,7 +1228,9 @@ function cnRefresh(){
     } else {
       d.forEach(x=>{byCleanR[x.c]=(byCleanR[x.c]||0)+x.v;});
     }
-    const rArr=Object.entries(byCleanR).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    const rankedRegions=Object.entries(byCleanR).sort((a,b)=>b[1]-a[1]);
+    const rArr=rankedRegions.slice(0,10);
+    if(rankedRegions.length>10)rArr.push(['나머지 국가',rankedRegions.slice(10).reduce((s,x)=>s+x[1],0)]);
     if(CH.cnR)CH.cnR.destroy();
     const cnRegLabels = rArr.map(r=>r[0]);
     CH.cnR=new Chart(document.getElementById('cnCReg'),{
@@ -1224,31 +1255,31 @@ function cnRefresh(){
     let t='<table class="tbl"><thead><tr><th>#</th><th>국가</th><th>지역</th><th class="r">수출량(MT)</th><th class="r">전체 비중</th><th class="r">지역 내 비중</th></tr></thead><tbody>';
     cArr.forEach((r,i)=>{
       const rClean=cleanRg(r.rg);
-      const regTotal=cArr.filter(x=>cleanRg(x.rg)===rClean).reduce((s,x)=>s+x.v,0);
+      const regTotal=regionTotals[rClean]||0;
       const regShare=regTotal>0?(r.v/regTotal*100).toFixed(1)+'%':'-';
-      t+=`<tr><td>${i+1}</td><td class="font-semibold">${r.c}</td><td><span class="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">${rClean}</span></td><td class="r">${fmt(r.v)}</td><td class="r font-medium">${(r.v/tv*100).toFixed(1)}%</td><td class="r text-xs text-gray-400">${regShare}</td></tr>`;
+      t+=`<tr><td>${i+1}</td><td class="font-semibold">${r.c}</td><td><span class="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">${rClean}</span></td><td class="r">${fmt(r.v)}</td><td class="r font-medium">${tv>0?(r.v/tv*100).toFixed(1)+'%':'-'}</td><td class="r text-xs text-gray-400">${regShare}</td></tr>`;
     });
     t+='</tbody></table>';document.getElementById('cnTbl').innerHTML=t;
     
   } else {
     // [Q1] 비교 분석 모드 실행 (2m, 2y, yoy_q)
-    document.getElementById('cnParams').style.display = 'none'; // comparisons use latest global periods
-    let data = DATA_EXPORT;
-    if(rg!=='all')data=data.filter(x=>x._rg===rg);
+    const data=selectedData;
+    document.getElementById('cnVolSubtitle').textContent=`지역: ${rg==='all'?'전체':rg}${_cnSelectedCountries.length?' · 국가: '+_cnSelectedCountries.join(', '):''}`;
+    document.getElementById('cnRegSubtitle').textContent='동일 필터 · 동일 월 범위 기준';
     
     // Find latest year/month in dataset
-    const ymList = Array.from(new Set(DATA_EXPORT.map(d => `${d.y}-${String(d.m).padStart(2,'0')}`))).sort();
-    if (ymList.length < 2) return;
+    const ymList = Array.from(new Set(data.filter(x=>x.y===yr&&x.m>=mFrom&&x.m<=mTo).map(d => `${d.y}-${String(d.m).padStart(2,'0')}`))).sort();
+    if(!ymList.length){cnUnavailable('선택한 기간·지역·국가의 데이터 없음');return;}
     
     const latestYM = ymList[ymList.length - 1];
     const [latestY, latestM] = latestYM.split('-').map(Number);
     
     let pA_label = '', pB_label = '';
     let pA_filter = () => false, pB_filter = () => false;
+    let expectedMonths=[];
     
     if (mode === '2m') {
-      const prevYM = ymList[ymList.length - 2];
-      const [prevY, prevM] = prevYM.split('-').map(Number);
+      const prevY=latestM===1?latestY-1:latestY,prevM=latestM===1?12:latestM-1;
       pA_label = `${latestY}년 ${latestM}월 (A)`;
       pB_label = `${prevY}년 ${prevM}월 (B)`;
       pA_filter = x => x.y === latestY && x.m === latestM;
@@ -1258,19 +1289,26 @@ function cnRefresh(){
       document.getElementById('cnTableTitle').textContent = '📋 전월 대비 수출 비교 상세';
     } else if (mode === '2y') {
       const prevY = latestY - 1;
-      pA_label = `${latestY}년 (A)`;
-      pB_label = `${prevY}년 (B)`;
-      pA_filter = x => x.y === latestY;
-      pB_filter = x => x.y === prevY;
+      const monthsA=new Set(data.filter(x=>x.y===latestY&&x.m>=mFrom&&x.m<=mTo).map(x=>x.m));
+      const commonMonths=[...new Set(data.filter(x=>x.y===prevY&&monthsA.has(x.m)).map(x=>x.m))].sort((a,b)=>a-b);
+      expectedMonths=commonMonths;
+      const coverage=commonMonths.length?commonMonths.join(', ')+'월':'공통 월 없음';
+      pA_label = `${latestY}년 ${coverage} (A)`;
+      pB_label = `${prevY}년 ${coverage} (B)`;
+      pA_filter = x => x.y === latestY&&commonMonths.includes(x.m);
+      pB_filter = x => x.y === prevY&&commonMonths.includes(x.m);
       document.getElementById('cnVolTitle').textContent = `📊 최근 2개년 수출 비교 (${pB_label} vs ${pA_label})`;
       document.getElementById('cnRegTitle').textContent = '🌏 지역별 전년 대비 증감량 (MT)';
       document.getElementById('cnTableTitle').textContent = '📋 전년 대비 수출 비교 상세';
     } else if (mode === 'yoy_q') {
       const latestQ = Math.floor((latestM - 1) / 3) + 1;
       const prevY = latestY - 1;
-      pA_label = `${latestY}년 Q${latestQ} (A)`;
-      pB_label = `${prevY}년 Q${latestQ} (B)`;
-      const qMonths = [latestQ*3 - 2, latestQ*3 - 1, latestQ*3];
+      const monthsA=new Set(data.filter(x=>x.y===latestY&&x.m>=mFrom&&x.m<=mTo&&Math.ceil(x.m/3)===latestQ).map(x=>x.m));
+      const qMonths=[...new Set(data.filter(x=>x.y===prevY&&monthsA.has(x.m)).map(x=>x.m))].sort((a,b)=>a-b);
+      expectedMonths=qMonths;
+      const coverage=qMonths.length?qMonths.join(', ')+'월':'공통 월 없음';
+      pA_label = `${latestY}년 Q${latestQ} ${coverage} (A)`;
+      pB_label = `${prevY}년 Q${latestQ} ${coverage} (B)`;
       pA_filter = x => x.y === latestY && qMonths.includes(x.m);
       pB_filter = x => x.y === prevY && qMonths.includes(x.m);
       document.getElementById('cnVolTitle').textContent = `📊 동일 분기 대비 (YoY Quarter) 비교 (${pB_label} vs ${pA_label})`;
@@ -1278,7 +1316,8 @@ function cnRefresh(){
       document.getElementById('cnTableTitle').textContent = '📋 전년 동분기 대비 비교 상세';
     }
     
-    // Aggregating
+    if(mode!=='2m'&&!expectedMonths.length){cnUnavailable('비교할 공통 월 데이터 없음');return;}
+    // Aggregate observed values; missing country-month observations stay unavailable.
     const aggA = {}, aggB = {};
     data.forEach(x => {
       if (pA_filter(x)) aggA[x.c] = (aggA[x.c] || 0) + x.v;
@@ -1287,24 +1326,26 @@ function cnRefresh(){
     
     const allC = Array.from(new Set([...Object.keys(aggA), ...Object.keys(aggB)]));
     const compData = allC.map(c => {
-      const vA = aggA[c] || 0;
-      const vB = aggB[c] || 0;
-      const diff = vA - vB;
-      const chg_pct = vB > 0 ? (diff / vB) * 100 : 0;
+      const complete=filter=>!expectedMonths.length||expectedMonths.every(m=>data.some(x=>x.c===c&&x.m===m&&filter(x)));
+      const vA = Object.hasOwn(aggA,c)&&complete(pA_filter)?aggA[c]:null;
+      const vB = Object.hasOwn(aggB,c)&&complete(pB_filter)?aggB[c]:null;
+      const diff = vA!=null&&vB!=null?vA-vB:null;
+      const chg_pct = diff!=null&&vB>0 ? (diff / vB) * 100 : null;
       const ref = DATA_EXPORT.find(x => x.c === c);
       const region = ref ? ref._rg : '기타';
       return { c, region, vA, vB, diff, pct: chg_pct };
-    }).sort((a, b) => b.vA - a.vA);
+    }).sort((a, b) => (b.vA??-1) - (a.vA??-1));
     
-    const totalA = compData.reduce((s, x) => s + x.vA, 0);
-    const totalB = compData.reduce((s, x) => s + x.vB, 0);
-    const diffTotal = totalA - totalB;
-    const diffPct = totalB > 0 ? (diffTotal / totalB) * 100 : 0;
+    const totalA = Object.keys(aggA).length?Object.values(aggA).reduce((s,v)=>s+v,0):null;
+    const totalB = Object.keys(aggB).length?Object.values(aggB).reduce((s,v)=>s+v,0):null;
+    const comparable=compData.length&&compData.every(x=>x.diff!=null);
+    const diffTotal = comparable?totalA-totalB:null;
+    const diffPct = diffTotal!=null&&totalB>0 ? (diffTotal / totalB) * 100 : null;
     
     document.getElementById('cnKpi').innerHTML = `
       <div class="kpi"><div class="kpi-l">최신 기간 수출량 (A)</div><div class="kpi-v">${fmt(totalA)}</div><div class="kpi-s">MT (${pA_label})</div></div>
       <div class="kpi"><div class="kpi-l">대조 기간 수출량 (B)</div><div class="kpi-v">${fmt(totalB)}</div><div class="kpi-s">MT (${pB_label})</div></div>
-      <div class="kpi"><div class="kpi-l">기간 대비 증감량</div><div class="kpi-v ${diffTotal>=0?'up':'dn'}">${diffTotal>=0?'▲':'▼'}${fmt(Math.abs(diffTotal))}</div><div class="kpi-s ${diffTotal>=0?'up':'dn'}">${diffPct.toFixed(1)}%</div></div>
+      <div class="kpi"><div class="kpi-l">기간 대비 증감량</div><div class="kpi-v ${diffTotal==null?'':diffTotal>=0?'up':'dn'}">${diffTotal==null?'비교 불가':(diffTotal>=0?'▲':'▼')+fmt(Math.abs(diffTotal))}</div><div class="kpi-s">${diffPct==null?'비교 데이터 없음':diffPct.toFixed(1)+'%'}</div></div>
     `;
     
     // Group Bar Chart
@@ -1330,7 +1371,8 @@ function cnRefresh(){
     // Net difference bar chart
     const regDiff = {};
     compData.forEach(x => {
-      regDiff[x.region] = (regDiff[x.region] || 0) + x.diff;
+      if(x.diff==null)return;
+      const region=cleanRg(x.region);regDiff[region] = (regDiff[region] || 0) + x.diff;
     });
     const regArr = Object.entries(regDiff).sort((a,b) => b[1] - a[1]);
     
@@ -1358,10 +1400,10 @@ function cnRefresh(){
     let t = '<table class="tbl"><thead><tr><th>#</th><th>국가</th><th>지역</th>';
     t += `<th class="r">${pB_label} (B)</th><th class="r">${pA_label} (A)</th><th class="r">증감량 (A-B)</th><th class="r">증감률</th></tr></thead><tbody>`;
     compData.slice(0, 50).forEach((r, i) => {
-      const pct_badge = r.diff > 0 ? `<span class="up">▲${r.pct.toFixed(1)}%</span>` : r.diff < 0 ? `<span class="dn">▼${Math.abs(r.pct).toFixed(1)}%</span>` : '─';
+      const pct_badge = r.pct==null?'비교 불가':r.diff > 0 ? `<span class="up">▲${r.pct.toFixed(1)}%</span>` : r.diff < 0 ? `<span class="dn">▼${Math.abs(r.pct).toFixed(1)}%</span>` : '─';
       t += `<tr><td>${i+1}</td><td class="font-semibold">${r.c}</td><td><span class="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">${cleanRg(r.region)}</span></td>`;
-      t += `<td class="r">${fmt(r.vB)}</td><td class="r font-semibold">${fmt(r.vA)}</td>`;
-      t += `<td class="r ${r.diff>=0?'text-green-600 font-semibold':'text-red-600 font-semibold'}">${r.diff>=0?'+':''}${fmt(r.diff)}</td><td class="r">${pct_badge}</td></tr>`;
+      t += `<td class="r">${r.vB==null?'데이터 없음':fmt(r.vB)}</td><td class="r font-semibold">${r.vA==null?'데이터 없음':fmt(r.vA)}</td>`;
+      t += `<td class="r ${r.diff==null?'':r.diff>=0?'text-green-600 font-semibold':'text-red-600 font-semibold'}">${r.diff==null?'비교 불가':(r.diff>=0?'+':'')+fmt(r.diff)}</td><td class="r">${pct_badge}</td></tr>`;
     });
     t += '</tbody></table>';
     document.getElementById('cnTbl').innerHTML = t;
@@ -1395,35 +1437,64 @@ function krInit(){
       rgA.appendChild(b);
     });
   }
-  krRefresh();krTrend();krInsights();
+  krRefresh();
 }
 
-function krGetF(){let d=DATA_KR_EXPORT;if(KR.year!=='all')d=d.filter(x=>x.y===+KR.year);if(KR.comp!=='all')d=d.filter(x=>x.comp===KR.comp);return d;}
+function krBaseFilter(data){
+  if(exportRangeError('kr'))return [];
+  const from=+(document.getElementById('krMonthFrom')?.value||1),to=+(document.getElementById('krMonthTo')?.value||12);
+  return data.filter(x=>(KR.year==='all'||x.y===+KR.year)&&(KR.comp==='all'||krCompanyName(x.comp)===KR.comp)&&x.m>=from&&x.m<=to).map(x=>({...x,comp:krCompanyName(x.comp)}));
+}
+const krCompanyName=name=>name==='무림 울산+한국'?'무림+한국':name;
+function krGeoFilter(data){
+  const region=document.getElementById('krRegionFilter')?.value||'all';
+  return data.filter(x=>(region==='all'||cleanKrRg(x.rg)===region)&&(!_krSelectedCountries.length||_krSelectedCountries.includes(x.c)));
+}
+function krGetF(){
+  const region=document.getElementById('krRegionFilter')?.value||'all';
+  if(region!=='all'||_krSelectedCountries.length)return krGeoFilter(krBaseFilter(DATA_KR_COUNTRY));
+  return krBaseFilter(DATA_KR_EXPORT);
+}
 function krAgg(data,mode){const map={};data.forEach(d=>{let k;
   if(mode==='monthly')k=d.y+'-'+String(d.m).padStart(2,'0');else if(mode==='quarterly')k=d.y+' '+d.q;
   else if(mode==='half')k=d.y+' '+d.h;else k=''+d.y;
   const k2=k+'|'+d.comp;if(!map[k2])map[k2]={label:k,comp:d.comp,v:0,amt:0};map[k2].v+=d.v;map[k2].amt+=d.amt;});
-  return Object.values(map).map(d=>{d.fob=d.v>0?(d.amt/d.v):0;return d;});}
+  return Object.values(map).map(d=>{d.fob=d.v>0?(d.amt/d.v):null;return d;});}
 function krRefresh(){KR.period=document.getElementById('krPeriod')?.value||'quarterly';KR.year=document.getElementById('krYear')?.value||'all';
-  const d=krGetF(),a=krAgg(d,KR.period);krKpi(d);krVol(a);krFob(a);krShare(a);krTbl(a);}
+  const rangeError=exportRangeError('kr');if(rangeError){krUnavailable(rangeError);return;}
+  const d=krGetF();if(!d.length){krUnavailable('선택한 기간·지역·국가의 데이터 없음');return;}
+  const a=krAgg(d,KR.period);krKpi(d);krVol(a);krFob(a);krShare(a);krTbl(a);
+  if(KR.view==='region')krRegion();
+  if(KR.view==='country')krCountryFilter();
+  if(KR.view==='trend')krTrend();
+  if(KR.view==='insight')krInsights();
+}
 function krView(){KR.view=document.querySelector('[data-g="kr-v"].on')?.dataset.v||'overview';
   ['overview','trend','region','country','insight'].forEach(v=>{const el=document.getElementById('krV-'+v);if(el)el.style.display=v===KR.view?'':'none';});
-  if(KR.view==='region')krRegion();
-  if(KR.view==='country')krCountryFilter();}
+  krRefresh();}
 
 function krKpi(raw){
-  const tv=raw.reduce((s,d)=>s+d.v,0),ta=raw.reduce((s,d)=>s+d.amt,0),af=tv>0?(ta/tv):0;
+  if(!raw.length){krUnavailable('선택한 기간·지역·국가의 데이터 없음');return;}
+  const tv=raw.reduce((s,d)=>s+d.v,0),ta=raw.reduce((s,d)=>s+d.amt,0),af=tv>0?(ta/tv):null;
   const yrs=[...new Set(raw.map(d=>d.y))].sort();let yV=null,yF=null;
-  if(yrs.length>=2){const c=yrs[yrs.length-1],p=yrs[yrs.length-2];
-    const cv=raw.filter(d=>d.y===c).reduce((s,d)=>s+d.v,0),pv=raw.filter(d=>d.y===p).reduce((s,d)=>s+d.v,0);
-    const ca=raw.filter(d=>d.y===c).reduce((s,d)=>s+d.amt,0),pa=raw.filter(d=>d.y===p).reduce((s,d)=>s+d.amt,0);
-    yV=pct(cv,pv);yF=pct(cv>0?ca/cv:0,pv>0?pa/pv:0);}
+  let coverage='';
+  if(yrs.length>=2){const c=yrs[yrs.length-1],p=c-1;
+    const cm=new Set(raw.filter(d=>d.y===c).map(d=>d.m));
+    const months=[...new Set(raw.filter(d=>d.y===p&&cm.has(d.m)).map(d=>d.m))].sort((a,b)=>a-b);
+    const current=raw.filter(d=>d.y===c&&months.includes(d.m)),previous=raw.filter(d=>d.y===p&&months.includes(d.m));
+    const cv=current.reduce((s,d)=>s+d.v,0),pv=previous.reduce((s,d)=>s+d.v,0);
+    const ca=current.reduce((s,d)=>s+d.amt,0),pa=previous.reduce((s,d)=>s+d.amt,0);
+    if(months.length&&pv>0)yV=pct(cv,pv);
+    if(cv>0&&pv>0&&pa>0)yF=pct(ca/cv,pa/pv);
+    if(months.length)coverage=`${c}/${p}년 ${months.join(', ')}월 비교`;
+  }
   let h=`<div class="kpi"><div class="kpi-l">총 수출량</div><div class="kpi-v">${fmt(tv)}</div><div class="kpi-s">MT</div>${yV!=null?'<div>'+chg(yV)+'</div>':''}</div>`;
   h+=`<div class="kpi"><div class="kpi-l">총 수출금액</div><div class="kpi-v">$${fmt(Math.round(ta/1e6))}M</div><div class="kpi-s">백만달러</div></div>`;
-  h+=`<div class="kpi"><div class="kpi-l">평균 FOB</div><div class="kpi-v">$${fmtF(af)}</div><div class="kpi-s">USD/MT</div>${yF!=null?'<div>'+chg(yF)+'</div>':''}</div>`;
+  h+=`<div class="kpi"><div class="kpi-l">평균 FOB</div><div class="kpi-v">${af==null?'-':'$'+fmtF(af)}</div><div class="kpi-s">${af==null?'수출량 0 · 단가 계산 불가':'USD/MT'}</div>${yF!=null?'<div>'+chg(yF)+'</div>':''}</div>`;
   const bc={};raw.forEach(d=>{if(!bc[d.comp])bc[d.comp]={v:0,amt:0};bc[d.comp].v+=d.v;bc[d.comp].amt+=d.amt;});
   ['한솔','무림','한국','무림+한국'].forEach(c=>{const d=bc[c];if(!d||d.v===0)return;const sh=tv>0?(d.v/tv*100):0;
     h+=`<div class="kpi" style="border-top:3px solid ${kCC(c)}"><div class="kpi-l"><span class="tag ${kTC(c)}">${c}</span></div><div class="kpi-v">${fmt(d.v)}</div><div class="kpi-s">MT (${sh.toFixed(1)}%)</div><div style="color:${kCC(c)};font-size:11px;font-weight:600">FOB $${fmtF(d.v>0?d.amt/d.v:0)}</div></div>`;});
+  if(coverage)h+=`<div class="text-xs text-gray-400 col-span-full">${coverage}</div>`;
   document.getElementById('krKpi').innerHTML=h;}
 
 function krVol(a){if(KC.v)KC.v.destroy();const lb=[...new Set(a.map(d=>d.label))].sort(),cm=[...new Set(a.map(d=>d.comp))];
@@ -1445,16 +1516,22 @@ function krTbl(a){const lb=[...new Set(a.map(d=>d.label))].sort();
   h+='</tbody></table>';document.getElementById('krTbl').innerHTML=h;}
 
 function krTrend(){
-  const lb=DATA_KR_TOTAL.map(d=>d.y+'년'),vs=DATA_KR_TOTAL.map(d=>d.v),fs=DATA_KR_TOTAL.map(d=>d.fob);
+  const raw=krGetF(),yearly=krAgg(raw,'yearly'),totals={};
+  if(!raw.length){clearExportCharts(KC,['tv','tf','du','st']);return;}
+  raw.forEach(d=>{if(!totals[d.y])totals[d.y]={y:d.y,v:0,amt:0,months:new Set()};totals[d.y].v+=d.v;totals[d.y].amt+=d.amt;totals[d.y].months.add(d.m);});
+  const annual=Object.values(totals).sort((a,b)=>a.y-b.y);
+  const lb=annual.map(d=>`${d.y}년 (${[...d.months].sort((a,b)=>a-b).join(', ')}월)`),vs=annual.map(d=>d.v),fs=annual.map(d=>d.v?d.amt/d.v:null);
   if(KC.tv)KC.tv.destroy();KC.tv=new Chart(document.getElementById('krCTV'),{type:'bar',data:{labels:lb,datasets:[{data:vs,backgroundColor:vs.map((_,i)=>i===vs.length-1?'#f97316':'#0066cc'),borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>(v/10000).toFixed(0)+'만'},beginAtZero:true}}}});
   if(KC.tf)KC.tf.destroy();KC.tf=new Chart(document.getElementById('krCTF'),{type:'line',data:{labels:lb,datasets:[{data:fs,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',borderWidth:3,pointRadius:4,tension:0.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'$'+v},beginAtZero:false}}}});
   if(KC.du)KC.du.destroy();KC.du=new Chart(document.getElementById('krCDual'),{type:'bar',data:{labels:lb,datasets:[{label:'수출량(MT)',data:vs,backgroundColor:'rgba(0,102,204,.6)',borderRadius:6,yAxisID:'y'},{label:'FOB($/MT)',data:fs,type:'line',borderColor:'#ef4444',borderWidth:3,pointRadius:4,tension:0.3,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:10},usePointStyle:true}}},scales:{y:{position:'left',ticks:{callback:v=>(v/10000).toFixed(0)+'만'},beginAtZero:true},y1:{position:'right',grid:{drawOnChartArea:false},ticks:{callback:v=>'$'+v}}},interaction:{mode:'index',intersect:false}}});
-  const yrs=[...new Set(DATA_KR_YEARLY.map(d=>d.y))].sort(),sl=yrs.map(y=>y+'년'),cn=KR_COMPETITORS.map(c=>c.name);
-  if(KC.st)KC.st.destroy();KC.st=new Chart(document.getElementById('krCStk'),{type:'bar',data:{labels:sl,datasets:cn.map(c=>({label:c,data:yrs.map(y=>{const f=DATA_KR_YEARLY.find(d=>d.y===y&&d.comp===c);return f?f.v:0;}),backgroundColor:kCC(c),borderRadius:4}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:10},usePointStyle:true}}},scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>(v/10000).toFixed(0)+'만'}}},interaction:{mode:'index',intersect:false}}});}
+  const yrs=annual.map(d=>d.y),sl=lb,cn=[...new Set(raw.map(d=>d.comp))];
+  if(KC.st)KC.st.destroy();KC.st=new Chart(document.getElementById('krCStk'),{type:'bar',data:{labels:sl,datasets:cn.map(c=>({label:c,data:yrs.map(y=>{const f=yearly.find(d=>d.label===String(y)&&d.comp===c);return f?f.v:0;}),backgroundColor:kCC(c),borderRadius:4}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:10},usePointStyle:true}}},scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>(v/10000).toFixed(0)+'만'}}},interaction:{mode:'index',intersect:false}}});}
 
 function krRegion(){
   KR.rg=document.querySelector('[data-g="kr-r"].on')?.dataset.v||'all';
-  let d=DATA_KR_REGION;if(KR.year!=='all')d=d.filter(x=>x.y===+KR.year);if(KR.comp!=='all')d=d.filter(x=>x.comp===KR.comp);if(KR.rg!=='all')d=d.filter(x=>x.rg===KR.rg);
+  let d=krGeoFilter(krBaseFilter(_krSelectedCountries.length?DATA_KR_COUNTRY:DATA_KR_REGION));if(KR.rg!=='all')d=d.filter(x=>x.rg===KR.rg);
+  const rangeError=exportRangeError('kr');
+  if(rangeError||!d.length){clearExportCharts(KC,['rg','rc']);document.getElementById('krRTbl').innerHTML=emptyExportMessage(rangeError||'선택한 지역의 데이터 없음');return;}
   const br={};d.forEach(x=>{if(!br[x.rg])br[x.rg]={rg:x.rg,v:0,amt:0};br[x.rg].v+=x.v;br[x.rg].amt+=x.amt;});
   const ra=Object.values(br).sort((a,b)=>b.v-a.v);
   const rc=['#0066cc','#10b981','#f97316','#8b5cf6','#06b6d4','#64748b','#ec4899','#14b8a6','#a855f7','#a3e635'];
@@ -1463,22 +1540,24 @@ function krRegion(){
   if(KC.rc)KC.rc.destroy();KC.rc=new Chart(document.getElementById('krCRC'),{type:'bar',data:{labels:comps,datasets:top.map((r,i)=>({label:r.replace(/^\d+_/,''),data:comps.map(c=>d.filter(x=>x.comp===c&&x.rg===r).reduce((s,x)=>s+x.v,0)),backgroundColor:rc[i],borderRadius:4}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:9},usePointStyle:true}}},scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>v>=1000?(v/1000)+'k':v}}}}});
   const tv=ra.reduce((s,d)=>s+d.v,0);
   let t='<table class="tbl"><thead><tr><th>지역</th><th class="r">수출량(MT)</th><th class="r">금액($M)</th><th class="r">FOB($/MT)</th><th class="r">비중</th></tr></thead><tbody>';
-  ra.forEach(r=>{t+=`<tr><td>${r.rg}</td><td class="r">${fmt(r.v)}</td><td class="r">${(r.amt/1e6).toFixed(1)}</td><td class="r">${fmtF(r.v>0?r.amt/r.v:0)}</td><td class="r">${(r.v/tv*100).toFixed(1)}%</td></tr>`;});
+  ra.forEach(r=>{t+=`<tr><td>${r.rg}</td><td class="r">${fmt(r.v)}</td><td class="r">${(r.amt/1e6).toFixed(1)}</td><td class="r">${fmtF(r.v>0?r.amt/r.v:null)}</td><td class="r">${tv>0?(r.v/tv*100).toFixed(1)+'%':'-'}</td></tr>`;});
   t+='</tbody></table>';document.getElementById('krRTbl').innerHTML=t;}
 
 function krInsights(){
-  const ins=[
-    {i:'📉',c:'시장규모',t:'한국산 수출 구조적 축소',b:'18년 87.9만MT→25년 64.6만MT(-26.5%). 중국산 대체 압력으로 전체 파이 축소.'},
-    {i:'💰',c:'가격동향',t:'FOB단가 고점 후 하락 안정화',b:'20년 $755(저점)→23년 $1,025(고점)→25년 $920. 현재 안정화 구간.'},
-    {i:'🏭',c:'경쟁구도',t:'한솔 31~32% 안정적 포지션',b:'한솔 전기간 31~32%. 무림+한국 합산시 시장 약 69% 장악.'},
-    {i:'⚡',c:'구조변화',t:'23년 한국제지→무림 합산 전환',b:'"무림+한국" 23년 등장, 점유율 18%→43%. 분석시 23년 전후 구분 필수.'},
-    {i:'🚨',c:'최신동향',t:'26년Q1 전사 수출 급감',b:'한솔-40.3%, 무림-34.2%, 무림+한국-28.0% (YoY). 수출환경 급격 악화.'},
-    {i:'💡',c:'가격-물량',t:'가격인하→물량방어 실패',b:'25년 한솔 FOB-8.0%에도 수출량-8.4%. 차별화 필요.'},
-    {i:'🎯',c:'가격전략',t:'경쟁사간 가격대 차별화',b:'무림+한국 $870~888(최저)|한솔 $868~944|무림 $1,018~1,080(최고).'},
-    {i:'📅',c:'계절성',t:'Q2~Q3 성수기, Q1 비수기',b:'Q2~Q3 수출량 증가, Q1 비수기. YoY 비교가 더 신뢰.'},
+  const raw=krGetF(),total=raw.reduce((sum,x)=>sum+x.v,0),amount=raw.reduce((sum,x)=>sum+x.amt,0);
+  if(!raw.length){document.getElementById('krIns').innerHTML=emptyExportMessage(exportRangeError('kr')||'선택한 범위의 데이터 없음');return;}
+  const companies={};raw.forEach(x=>companies[x.comp]=(companies[x.comp]||0)+x.v);
+  const ranked=Object.entries(companies).sort((a,b)=>b[1]-a[1]);
+  const periods=[...new Set(raw.map(x=>x.y+'-'+String(x.m).padStart(2,'0')))].sort();
+  const region=document.getElementById('krRegionFilter')?.value||'all';
+  const cards=[
+    {title:'선택 범위 수출량',body:`${fmt(total)} MT · ${periods.length}개 월 · 경쟁사 ${ranked.length}개`},
+    {title:'선택 범위 평균 FOB',body:total>0?`$${fmtF(amount/total)}/MT · 수출금액/수출량 가중평균`:'데이터 없음'},
+    {title:'경쟁사 구성',body:ranked.length?ranked.map(([name,v])=>`${name} ${fmt(v)} MT (${total>0?(v/total*100).toFixed(1):'-'}%)`).join(' · '):'데이터 없음'},
+    {title:'분석 범위',body:`${periods.length?periods[0]+' ~ '+periods[periods.length-1]:'데이터 없음'} · ${region==='all'?'전체 지역':region}${_krSelectedCountries.length?' · '+_krSelectedCountries.join(', '):''} · 연간/분기 비교는 동일한 월 범위로 확인해주세요.`}
   ];
-  let h='';ins.forEach(x=>{h+=`<div class="ins card !p-5 border-l-4 border-l-[#0066cc]"><div style="font-size:11px;color:#0066cc;font-weight:700;margin-bottom:3px">${x.i} ${x.c}</div><h4 class="font-bold text-sm mb-1">${x.t}</h4><p class="text-xs text-gray-500 leading-relaxed">${x.b}</p></div>`;});
-  document.getElementById('krIns').innerHTML=h;}
+  document.getElementById('krIns').innerHTML=cards.map(x=>`<div class="ins card !p-5 border-l-4 border-l-[#0066cc]"><h4 class="font-bold text-sm mb-1">${x.title}</h4><p class="text-xs text-gray-500 leading-relaxed">${x.body}</p></div>`).join('');
+}
 
 // ===================================
 // 한국산 국가별 (DATA_KR_COUNTRY 활용)
@@ -1486,20 +1565,20 @@ function krInsights(){
 const KC2={};
 function krCountryGetData(){
   if(typeof DATA_KR_COUNTRY==='undefined'||!DATA_KR_COUNTRY.length)return null;
-  let d=DATA_KR_COUNTRY;
-  if(KR.year!=='all')d=d.filter(x=>x.y===+KR.year);
-  if(KR.comp!=='all')d=d.filter(x=>x.comp===KR.comp);
-  return d;
+  return krGeoFilter(krBaseFilter(DATA_KR_COUNTRY));
 }
 
 function krCountryFilter(){
   const raw=krCountryGetData();
-  if(!raw){
-    document.getElementById('krCTbl').innerHTML='<div style="padding:30px;text-align:center;color:#9ca3af;font-size:13px">📭 국가별 데이터가 없습니다.<br><small>Python 업데이트 스크립트 실행 후 DATA_KR_COUNTRY가 생성되면 자동으로 표시됩니다.</small></div>';
-    document.getElementById('krCountryCount').textContent='';
+  const rangeError=exportRangeError('kr');
+  if(rangeError||!raw?.length){
+    clearExportCharts(KC2);
+    const message=rangeError||'선택한 국가·지역의 데이터 없음';
+    document.getElementById('krCTbl').innerHTML=emptyExportMessage(message);
+    document.getElementById('krCountryCount').textContent=message;
     return;
   }
-  const q=(document.getElementById('krCountrySearch')?.value||'').trim().toLowerCase();
+  const q=(document.getElementById('krCountryTableSearch')?.value||'').trim().toLowerCase();
   const sort=document.getElementById('krCountrySort')?.value||'v_desc';
 
   const map={};
@@ -1510,6 +1589,7 @@ function krCountryFilter(){
   });
   let arr=Object.values(map);
   if(q)arr=arr.filter(r=>r.c.toLowerCase().includes(q)||(r.rg||'').toLowerCase().includes(q));
+  if(!arr.length){clearExportCharts(KC2);document.getElementById('krCTbl').innerHTML=emptyExportMessage('검색 결과 데이터 없음');document.getElementById('krCountryCount').textContent='검색 결과 없음';return;}
   if(sort==='v_desc')arr.sort((a,b)=>b.v-a.v);
   else if(sort==='v_asc')arr.sort((a,b)=>a.v-b.v);
   else if(sort==='country')arr.sort((a,b)=>a.c.localeCompare(b.c));
@@ -1554,10 +1634,10 @@ function krCountryFilter(){
   compNames.forEach(c=>h+=`<th class="r"><span class="tag ${kTC(c)}">${c}</span></th>`);
   h+='<th class="r">합계(MT)</th><th class="r">금액($K)</th><th class="r">FOB($/MT)</th><th class="r">비중</th></tr></thead><tbody>';
   arr.forEach((r,i)=>{
-    const fob=r.v>0?(r.amt/r.v):0;
+    const fob=r.v>0?(r.amt/r.v):null;
     h+=`<tr><td>${i+1}</td><td class="font-semibold">${r.c}</td><td style="font-size:11px;color:#747476">${(r.rg||'').replace(/^\d+_/,'')}</td>`;
-    compNames.forEach(c=>h+=`<td class="r">${r.comps[c]?fmt(r.comps[c]):'-'}</td>`);
-    h+=`<td class="r font-bold">${fmt(r.v)}</td><td class="r">${fmt(Math.round(r.amt/1000))}</td><td class="r">$${fmtF(fob)}</td><td class="r">${tv>0?(r.v/tv*100).toFixed(1)+'%':'-'}</td></tr>`;});
+    compNames.forEach(c=>h+=`<td class="r">${Object.hasOwn(r.comps,c)?fmt(r.comps[c]):'-'}</td>`);
+    h+=`<td class="r font-bold">${fmt(r.v)}</td><td class="r">${fmt(Math.round(r.amt/1000))}</td><td class="r">${fob==null?'-':'$'+fmtF(fob)}</td><td class="r">${tv>0?(r.v/tv*100).toFixed(1)+'%':'-'}</td></tr>`;});
   h+='</tbody></table>';
   document.getElementById('krCTbl').innerHTML=h;
 }
@@ -1576,7 +1656,7 @@ function initPrice(){
     document.getElementById('latestPriceReport').innerHTML = `
       <div class="flex items-center justify-between border-b pb-2 mb-3">
         <span class="text-xs text-gray-500">리포트 일자: ${reportItem.date} · 출처: ${reportItem.source}</span>
-        <a href="${reportItem.url}" target="_blank" class="text-blue-500 font-semibold text-xs">📖 번역 마크다운 보고서 전문 보기</a>
+        ${sourceLink(reportItem.url,'📖 번역 마크다운 보고서 전문 보기')}
       </div>
       <p class="leading-relaxed whitespace-pre-wrap">${reportItem.summary}</p>
     `;
@@ -1584,7 +1664,23 @@ function initPrice(){
     document.getElementById('latestPriceReport').innerHTML = '<p class="text-gray-400">수집된 시장 리포트가 없습니다.</p>';
   }
 }
-function dPr(){const pp=DATA_PRICE.prices.filter(d=>d.t===_S.pp),rgs=[...new Set(pp.map(d=>d.r))],sel=_S.prg==='all'?rgs:[_S.prg],periods=[...new Set(pp.map(d=>d.y+'/'+String(d.m).padStart(2,'0')))].sort(),lb=periods.map(p=>{const[y,m]=p.split('/');return m+'월'+(m==='01'?'\n'+y:'')});const ds=sel.map(r=>{const rd=pp.filter(d=>d.r===r),mp={};rd.forEach(d=>mp[d.y+'/'+String(d.m).padStart(2,'0')]=d.p);return{label:r,data:periods.map(p=>mp[p]||null),borderColor:PRC[r]||'#94a3b8',borderWidth:2,pointRadius:3,tension:.3,spanGaps:true}});if(CH.price)CH.price.destroy();CH.price=new Chart(document.getElementById('cPrice'),{type:'line',data:{labels:lb,datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:10},usePointStyle:true}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.parsed.y)+'CNY'}}},scales:{y:{ticks:{callback:v=>fmt(v),font:{size:10}},grid:{color:'#f1f5f9'}},x:{ticks:{font:{size:9},maxRotation:45},grid:{display:false}}}}});const lt=pp.filter(d=>d.r==='광동').sort((a,b)=>(b.y*100+b.m)-(a.y*100+a.m));if(lt.length>=4){const cu=lt[0],m1=lt[1],m3=lt[3];document.getElementById('priceKpi').innerHTML=`<div class="kpi"><div class="kpi-l">${_S.pp} 최신 (광동)</div><div class="kpi-v">${fmt(cu.p)}</div><div class="kpi-s">CNY/톤</div></div><div class="kpi"><div class="kpi-l">전월비</div><div class="kpi-v ${cu.p>=m1.p?'up':'dn'}">${cu.p>=m1.p?'▲':'▼'}${Math.abs(cu.p-m1.p).toFixed(0)}</div><div class="kpi-s ${cu.p>=m1.p?'up':'dn'}">${((cu.p-m1.p)/m1.p*100).toFixed(1)}%</div></div><div class="kpi"><div class="kpi-l">3개월 변화</div><div class="kpi-v ${cu.p>=m3.p?'up':'dn'}">${((cu.p-m3.p)/m3.p*100).toFixed(1)}%</div><div class="kpi-s">vs ${m3.m}월</div></div><div class="kpi"><div class="kpi-l">USD 환산</div><div class="kpi-v">$${Math.round(cu.p*0.14)}</div><div class="kpi-s">/톤</div></div>`;}}
+function dPr(){const pp=DATA_PRICE.prices.filter(d=>d.t===_S.pp),rgs=[...new Set(pp.map(d=>d.r))],sel=_S.prg==='all'?rgs:[_S.prg],periods=[...new Set(pp.map(d=>d.y+'/'+String(d.m).padStart(2,'0')))].sort(),lb=periods.map(p=>{const[y,m]=p.split('/');return m+'월'+(m==='01'?'\n'+y:'')});const ds=sel.map(r=>{const rd=pp.filter(d=>d.r===r),mp={};rd.forEach(d=>mp[d.y+'/'+String(d.m).padStart(2,'0')]=d.p);return{label:r,data:periods.map(p=>mp[p]||null),borderColor:PRC[r]||'#94a3b8',borderWidth:2,pointRadius:3,tension:.3,spanGaps:true}});if(CH.price)CH.price.destroy();CH.price=new Chart(document.getElementById('cPrice'),{type:'line',data:{labels:lb,datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:10},usePointStyle:true}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.parsed.y)+'CNY'}}},scales:{y:{ticks:{callback:v=>fmt(v),font:{size:10}},grid:{color:'#f1f5f9'}},x:{ticks:{font:{size:9},maxRotation:45},grid:{display:false}}}}});renderPriceKpi(pp);}
+function renderPriceKpi(prices){
+  const rows=prices.filter(x=>x.r==='광동').sort((a,b)=>(b.y*100+b.m)-(a.y*100+a.m));
+  const current=rows[0];
+  if(!current){document.getElementById('priceKpi').innerHTML=buildKpi5([{label:'가격',value:'-',sub:'데이터 없음'}]);return;}
+  const prior=offset=>{const date=new Date(Date.UTC(current.y,current.m-1-offset,1));return rows.find(x=>x.y===date.getUTCFullYear()&&x.m===date.getUTCMonth()+1);};
+  const one=prior(1),three=prior(3);
+  const comparison=(label,row)=>{
+    const change=row&&row.p>0?(current.p-row.p)/row.p*100:null;
+    return {label,value:change==null?'-':(change>0?'▲':change<0?'▼':'')+Math.abs(change).toFixed(1)+'%',cls:change>0?'up':change<0?'dn':'',sub:change==null?'비교 데이터 없음':`${current.y}년 ${current.m}월 / ${row.y}년 ${row.m}월 대비`};
+  };
+  document.getElementById('priceKpi').innerHTML=buildKpi5([
+    {label:`${_S.pp} 최신 (광동)`,value:fmt(current.p),sub:`CNY/톤 · ${current.y}년 ${current.m}월`},
+    comparison('전월비',one),comparison('3개월 변화',three),
+    {label:'USD 환산',value:'-',sub:'해당 월 환율 데이터 없음'}
+  ]);
+}
 function dPU(){const u=DATA_PRICE.usd;if(!u||!u.length)return;if(CH.pu)CH.pu.destroy();CH.pu=new Chart(document.getElementById('cPriceUsd'),{type:'line',data:{labels:u.map(d=>d.y+'.'+d.m),datasets:[{label:'내수USD',data:u.map(d=>d.d),borderColor:'#0066cc',borderWidth:2,pointRadius:3,tension:.3},{label:'수입가추정',data:u.map(d=>d.e),borderColor:'#ef4444',borderWidth:2,borderDash:[4,3],pointRadius:3,tension:.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:10},usePointStyle:true}}},scales:{y:{ticks:{callback:v=>'$'+v,font:{size:10}},grid:{color:'#f1f5f9'}},x:{ticks:{font:{size:9},maxRotation:45},grid:{display:false}}}}});}
 function dCorr(){const pr=DATA_PRICE.prices.filter(d=>d.t==='코트지'&&d.r==='광동'),cm=[];pr.forEach(p=>{const m=DATA_INDICATORS.find(i=>i.y===p.y&&i.m===p.m);if(m&&m.exp)cm.push({l:p.y+'.'+p.m,p:p.p,e:m.exp})});if(!cm.length)return;if(CH.corr)CH.corr.destroy();CH.corr=new Chart(document.getElementById('cCorr'),{type:'line',data:{labels:cm.map(d=>d.l),datasets:[{label:'가격',data:cm.map(d=>d.p),borderColor:'#ef4444',borderWidth:2,pointRadius:3,tension:.3,yAxisID:'y'},{label:'수출량',data:cm.map(d=>d.e),borderColor:'#0066cc',borderWidth:2,pointRadius:3,tension:.3,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{font:{size:10},usePointStyle:true}}},scales:{y:{position:'left',ticks:{callback:v=>fmt(v),font:{size:10}},grid:{color:'#f1f5f9'}},y1:{position:'right',ticks:{callback:v=>v>=1000?(v/1000)+'k':v,font:{size:10}},grid:{display:false}},x:{ticks:{font:{size:9},maxRotation:45},grid:{display:false}}}}});}
 
@@ -1613,7 +1709,7 @@ function dMM(){
       if(_S.mrg==='Europe'&&isA)return;
     }
     if(_S.mco!=='all'&&d.company!==_S.mco)return;
-    const k=d.mill;
+    const k=d.company+'|'+d.mill;
     if(!mills[k])mills[k]={mill:d.mill,company:d.company,region:d.region,lat:d.lat,lng:d.lng,loc:d.location_desc,capa:0,pulp:d.pulp_mty,fp:d.total_fp_mty,prods:[]};
     mills[k].capa+=d.capa_mty;
     mills[k].prods.push({p:d.product,c:d.capa_mty});
@@ -1638,13 +1734,10 @@ function dMM(){
 function openMillModal(m) {
   document.getElementById('modalMillName').textContent = `🏭 ${m.mill} (설비 스펙)`;
   
-  // Derive mock machinery specifications robustly based on capacity
-  const wireWidth = (3.5 + (m.capa % 7) * 0.8).toFixed(1);
-  const rollDiameter = 1200 + (m.capa % 4) * 100;
-  const pulpSelf = m.pulp > 0 ? `자체 조달 (${fmt(m.pulp)} MT/Y)` : '외부 구매 (자급율 0%)';
+  const pulpSelf = m.pulp > 0 ? `공장 펄프 생산 CAPA ${fmt(m.pulp)} MT/Y · 자급률 확인되지 않음` : '공장 펄프 CAPA 미기재 · 조달 방식 확인되지 않음';
   
   const gradeBars = m.prods.map(p => {
-    const pctVal = Math.max(8, (p.c / m.capa) * 100);
+    const pctVal = m.capa>0 ? (p.c / m.capa) * 100 : 0;
     return `
       <div class="mb-2">
         <div class="flex justify-between text-xs text-gray-500 mb-1">
@@ -1671,11 +1764,11 @@ function openMillModal(m) {
         </div>
         <div>
           <span class="text-gray-400 block mb-1">초지기 지폭 (Wire Width)</span>
-          <span class="font-bold text-gray-800">${wireWidth} m</span>
+          <span class="font-bold text-gray-800">확인되지 않음</span>
         </div>
         <div>
           <span class="text-gray-400 block mb-1">롤 외경 (Roll Diameter)</span>
-          <span class="font-bold text-gray-800">${rollDiameter} mm</span>
+          <span class="font-bold text-gray-800">확인되지 않음</span>
         </div>
         <div>
           <span class="text-gray-400 block mb-1">총 인쇄용지 CAPA</span>
@@ -1725,7 +1818,14 @@ function showCountryAnalysis(country) {
   }
   
   const totalCapa = countryMills.reduce((s, x) => s + x.capa_mty, 0);
-  const totalPulp = countryMills.reduce((s, x) => s + x.pulp_mty, 0);
+  const uniqueMills={};
+  countryMills.forEach(x=>{
+    const key=x.company+'|'+x.mill;
+    if(!uniqueMills[key])uniqueMills[key]={...x,capa_mty:0,pulp_mty:0};
+    uniqueMills[key].capa_mty+=x.capa_mty;
+    uniqueMills[key].pulp_mty=Math.max(uniqueMills[key].pulp_mty,x.pulp_mty||0);
+  });
+  const totalPulp = Object.values(uniqueMills).reduce((s, x) => s + x.pulp_mty, 0);
   
   // Group by Company
   const comMap = {};
@@ -1746,7 +1846,7 @@ function showCountryAnalysis(country) {
   
   // Comparison Table (Top 5 mills in country)
   let millRows = '';
-  const sortedMills = countryMills.sort((a,b) => b.capa_mty - a.capa_mty).slice(0, 5);
+  const sortedMills = Object.values(uniqueMills).sort((a,b) => b.capa_mty - a.capa_mty).slice(0, 5);
   sortedMills.forEach((m, idx) => {
     millRows += `
       <tr>
@@ -1805,24 +1905,30 @@ function dCB(){const bc={};DATA_CAPA.forEach(d=>{if(!bc[d.company])bc[d.company]
 // ===================================
 // 경쟁사 프로필
 // ===================================
+function legacyEscapeHTML(value){return String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));}
+function legacySourceLink(value,label){let url;try{url=new URL(value);if(url.protocol!=='https:'||url.username||url.password)throw new Error('unsafe');}catch{return `<span class="text-xs text-gray-400">${legacyEscapeHTML(label)} · 링크 확인 필요</span>`;}return `<a href="${legacyEscapeHTML(url.href)}" target="_blank" rel="noopener noreferrer" class="fb text-xs">${legacyEscapeHTML(label)}</a>`;}
 function initCompany(){renderCoGrid();document.querySelectorAll('.co-filter').forEach(b=>b.onclick=()=>{_S.cf=b.dataset.cf;document.querySelectorAll('.co-filter').forEach(x=>x.classList.toggle('on',x.dataset.cf===_S.cf));renderCoGrid();});}
 function renderCoGrid(){const cf=_S.cf;let list=DATA_COMPANIES;if(cf==='listed')list=list.filter(c=>c.listed);if(cf==='china')list=list.filter(c=>c.country.includes('중국'));if(cf==='japan')list=list.filter(c=>c.country.includes('일본'));if(cf==='korea')list=list.filter(c=>c.country.includes('한국'));if(cf==='europe')list=list.filter(c=>['남아공','핀란드','스웨덴','이탈리아'].some(x=>c.country.includes(x)));
 let h='';list.forEach(c=>{const sel=_S.selCo===c.id?'sel':'';const irBadge=c.ir_access==='✅'?'<span class="text-green-500 text-[10px]">✅ IR</span>':c.ir_access==='🟡'?'<span class="text-yellow-500 text-[10px]">🟡 IR</span>':'<span class="text-gray-400 text-[10px]">❌ IR</span>';h+=`<div class="co-card card !p-4 cursor-pointer" onclick="selectCo('${c.id}')"><div class="font-bold text-[14px] mb-1 truncate">${c.name.split('(')[0].trim()}</div><div class="text-[11px] text-gray-500 mb-2">${c.country} · ${c.listed?c.ticker:' 비상장'}</div><div class="flex justify-between items-center"><span class="text-[13px] font-bold text-blue-600">${c.capa_kt.toLocaleString()}K MT/Y</span>${irBadge}</div><div class="text-[10px] text-gray-400 mt-1">${c.mills.length}개 공장 · ${c.products.length} Grade</div></div>`});document.getElementById('coGrid').innerHTML=h;}
 function selectCo(id){_S.selCo=id;renderCoGrid();const c=DATA_COMPANIES.find(x=>x.id===id);if(!c)return;document.getElementById('coDetail').style.display='';
 const millList=c.mills.map(m=>'<div class="text-[11px]">🏭 '+m+'</div>').join('');const prodTags=c.products.map(p=>'<span class="rg-tag text-xs font-semibold px-2 py-1 bg-blue-50 text-blue-600 rounded-lg">'+p+'</span>').join(' ');
 document.getElementById('coProfile').innerHTML=`<div class="flex items-center gap-3 mb-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl" style="background:linear-gradient(135deg,#1d1d1f,#4b5563);color:#fff">🏢</div><div><div class="font-bold text-[15px]">${c.name}</div><div class="text-[11px] text-gray-500">${c.country} · ${c.listed?c.ticker:'비상장'} · ${c.currency}</div></div></div><div class="space-y-3"><div class="bg-gray-50 rounded-xl p-3"><div class="text-[11px] font-bold text-gray-400 mb-2">생산 능력</div><div class="text-2xl font-black text-blue-600">${c.capa_kt.toLocaleString()}<span class="text-sm font-normal text-gray-400"> K MT/Y</span></div><div class="mt-2 flex flex-wrap gap-1">${prodTags}</div></div><div class="bg-gray-50 rounded-xl p-3"><div class="text-[11px] font-bold text-gray-400 mb-2">공장 (${c.mills.length}개)</div>${millList}</div><div class="bg-gray-50 rounded-xl p-3"><div class="text-[11px] font-bold text-gray-400 mb-1">펄프 자급</div><div class="text-[13px] font-bold text-gray-700">${c.pulp_self?'✅ 자체 생산':'❌ 외부 구매'}</div></div></div>`;
-let links='';const lk=c.links;if(lk.ir)links+=`<a href="${lk.ir}" target="_blank" class="fb text-xs">📊 IR 페이지</a>`;if(lk.quarterly)links+=`<a href="${lk.quarterly}" target="_blank" class="fb text-xs">📋 분기보고서</a>`;if(lk.annual_report)links+=`<a href="${lk.annual_report}" target="_blank" class="fb text-xs">📕 연간보고서</a>`;if(lk.hk_ir)links+=`<a href="${lk.hk_ir}" target="_blank" class="fb text-xs">🇭🇰 HK 공시</a>`;if(lk.dart)links+=`<a href="${lk.dart}" target="_blank" class="fb text-xs">🇰🇷 DART</a>`;if(lk.homepage)links+=`<a href="${lk.homepage}" target="_blank" class="fb text-xs">🌐 홈페이지</a>`;if(lk.sustainability)links+=`<a href="${lk.sustainability}" target="_blank" class="fb text-xs">🌱 지속가능성</a>`;if(lk.note)links+=`<div class="text-[11px] text-gray-400 mt-2 w-full">💡 ${lk.note}</div>`;document.getElementById('coLinks').innerHTML=links;
+let links='';const lk=c.links||{};const linkLabels={ir:'📊 IR 페이지',quarterly:'📋 분기보고서',annual_report:'📕 연간보고서',hk_ir:'🇭🇰 HK 공시',dart:'🇰🇷 DART',homepage:'🌐 홈페이지',sustainability:'🌱 지속가능성'};Object.entries(linkLabels).forEach(([key,label])=>{if(lk[key])links+=legacySourceLink(lk[key],label);});if(lk.note)links+=`<div class="text-[11px] text-gray-400 mt-2 w-full">💡 ${legacyEscapeHTML(lk.note)}</div>`;document.getElementById('coLinks').innerHTML=links;
 if(c.financials&&c.financials.length>0){document.getElementById('coFinArea').style.display='none';document.getElementById('coChartWrap').style.display='block';document.getElementById('coFinTable').style.display='block';renderFinancials(c);}else{document.getElementById('coFinArea').style.display='';document.getElementById('coChartWrap').style.display='none';document.getElementById('coFinTable').style.display='none';}}
 function renderFinancials(c){const f=c.financials;const lb=f.map(x=>x.quarter);if(CH.fin)CH.fin.destroy();CH.fin=new Chart(document.getElementById('cFin'),{type:'bar',data:{labels:lb,datasets:[{label:'매출',data:f.map(x=>x.revenue_m),backgroundColor:'#0066cc',borderRadius:4},{label:'영업이익',data:f.map(x=>x.operating_profit_m),backgroundColor:'#10b981',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:10},usePointStyle:true}}},scales:{y:{ticks:{callback:v=>fmt(v)+'M',font:{size:10}},grid:{color:'#f1f5f9'}},x:{ticks:{font:{size:10}},grid:{display:false}}}}});
-document.getElementById('finThead').innerHTML='<tr><th>분기</th><th class="r">매출(M)</th><th class="r">영업이익(M)</th><th class="r">원가(M)</th><th class="r">생산(KT)</th><th class="r">CAPEX(M)</th><th>출처</th></tr>';let h='';f.forEach(r=>{h+=`<tr><td class="font-medium">${r.quarter}</td><td class="r mono">${fmt(r.revenue_m)}</td><td class="r mono">${fmt(r.operating_profit_m)}</td><td class="r mono">${fmt(r.cogs_m)}</td><td class="r mono">${fmt(r.production_kt)}</td><td class="r mono">${fmt(r.capex_m)}</td><td class="text-[11px]">${r.source_url?'<a href="'+r.source_url+'" target="_blank" class="text-blue-500 font-semibold">🔗</a>':''} ${r.source||''}</td></tr>`});document.getElementById('finTbody').innerHTML=h;}
+document.getElementById('finThead').innerHTML='<tr><th>분기</th><th class="r">매출(M)</th><th class="r">영업이익(M)</th><th class="r">원가(M)</th><th class="r">생산(KT)</th><th class="r">CAPEX(M)</th><th>출처</th></tr>';let h='';f.forEach(r=>{h+=`<tr><td class="font-medium">${r.quarter}</td><td class="r mono">${fmt(r.revenue_m)}</td><td class="r mono">${fmt(r.operating_profit_m)}</td><td class="r mono">${fmt(r.cogs_m)}</td><td class="r mono">${fmt(r.production_kt)}</td><td class="r mono">${fmt(r.capex_m)}</td><td class="text-[11px]">${r.source_url?legacySourceLink(r.source_url,'🔗'):''} ${legacyEscapeHTML(r.source||'')}</td></tr>`});document.getElementById('finTbody').innerHTML=h;}
 
 // ===================================
 // 뉴스
 // ===================================
+function sourceLink(url,label='🔗 원문'){
+  if(/^https?:\/\//i.test(url||''))return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="fb text-xs shrink-0 font-bold">${label}</a>`;
+  return url&&url!=='#'?'<span class="text-xs text-gray-400">로컬 자료 · 웹에서 원문 열기 불가</span>':'';
+}
 function initNews(){renderNews();const sel=document.getElementById('newsCoSel');DATA_COMPANIES.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.name.split('(')[0].trim();sel.appendChild(o)});sel.onchange=()=>renderNews();document.querySelectorAll('.nf').forEach(b=>b.onclick=()=>{_S.nk=b.dataset.nk;document.querySelectorAll('.nf').forEach(x=>x.classList.toggle('on',x.dataset.nk===_S.nk));renderNews();});}
 function renderNews(){const nk=_S.nk;const co=document.getElementById('newsCoSel')?.value||'all';let items=DATA_NEWS.items||[];if(nk!=='all')items=items.filter(n=>n.keywords&&n.keywords.some(k=>k.includes(nk)));if(co!=='all'){const coName=DATA_COMPANIES.find(c=>c.id===co)?.name||'';items=items.filter(n=>(n.keywords&&n.keywords.some(k=>coName.toLowerCase().includes(k.toLowerCase())))||n.title.toLowerCase().includes(co.toLowerCase()));}
 let h='';if(!items.length)h='<div class="text-center text-gray-400 py-10"><div class="text-2xl mb-2">📭</div><p>수집된 뉴스가 없습니다</p></div>';
-items.forEach(n=>{const tags=(n.keywords||[]).map(k=>'<span class="tag text-xs font-semibold px-2 py-0.5 bg-blue-50 text-blue-600 rounded-lg mr-1">'+k+'</span>').join('');h+=`<div class="news-item border-b pb-3 mb-3"><div class="flex items-start justify-between gap-3"><div><div class="text-[11px] text-gray-400 mb-1">${n.date} · ${n.source}</div><div class="font-bold text-[14px] text-gray-800 mb-1">${n.title}</div>${n.summary?'<div class="text-[12px] text-gray-500 mb-2">'+n.summary+'</div>':''}<div class="mt-1">${tags}</div></div>${n.url&&n.url!=='#'?'<a href="'+n.url+'" target="_blank" class="fb text-xs shrink-0 font-bold">🔗 원문</a>':''}</div></div>`;});
+items.forEach(n=>{const tags=(n.keywords||[]).map(k=>'<span class="tag text-xs font-semibold px-2 py-0.5 bg-blue-50 text-blue-600 rounded-lg mr-1">'+k+'</span>').join('');h+=`<div class="news-item border-b pb-3 mb-3"><div class="flex items-start justify-between gap-3"><div><div class="text-[11px] text-gray-400 mb-1">${n.date} · ${n.source}</div><div class="font-bold text-[14px] text-gray-800 mb-1">${n.title}</div>${n.summary?'<div class="text-[12px] text-gray-500 mb-2">'+n.summary+'</div>':''}<div class="mt-1">${tags}</div></div>${sourceLink(n.url)}</div></div>`;});
 document.getElementById('newsList').innerHTML=h;document.getElementById('newsUpdate').textContent='마지막 업데이트: '+(DATA_NEWS.last_updated||'-');}
 
 // ===================================
@@ -1835,15 +1941,17 @@ function copyEmailSummary() {
   // Aggregate top 5 China and Korea export countries for latest month
   const ymList = Array.from(new Set(DATA_EXPORT.map(d => `${d.y}-${String(d.m).padStart(2,'0')}`))).sort();
   const latestYM = ymList[ymList.length - 1];
+  if(!latestYM){showToast('공유할 수출 데이터가 없습니다.','📭');return;}
   const [latestY, latestM] = latestYM.split('-').map(Number);
   
   const chinaLatest = DATA_EXPORT.filter(x => x.y === latestY && x.m === latestM);
   const chinaTotal = chinaLatest.reduce((s, x) => s + x.v, 0);
-  const chinaTop5 = chinaLatest.sort((a,b) => b.v - a.v).slice(0, 5);
+  const countryRanking=rows=>{const totals={};rows.forEach(x=>{if(!totals[x.c])totals[x.c]={c:x.c,v:0};totals[x.c].v+=x.v;});return Object.values(totals).sort((a,b)=>b.v-a.v).slice(0,5);};
+  const chinaTop5 = countryRanking(chinaLatest);
   
   const krLatest = DATA_KR_COUNTRY.filter(x => x.y === latestY && x.m === latestM);
   const krTotal = krLatest.reduce((s, x) => s + x.v, 0);
-  const krTop5 = krLatest.sort((a,b) => b.v - a.v).slice(0, 5);
+  const krTop5 = countryRanking(krLatest);
 
   let cnRowsHTML = '', krRowsHTML = '';
   chinaTop5.forEach((x, i) => {
@@ -1948,23 +2056,7 @@ ${chinaTop5.map((x, i) => `${i+1}. ${x.c}: ${fmt(x.v)} MT (${((x.v/chinaTotal)*1
 ${krTop5.map((x, i) => `${i+1}. ${x.c}: ${fmt(x.v)} MT (${((x.v/krTotal)*100).toFixed(1)}%)`).join('\n')}
   `.trim();
 
-  const blobHTML = new Blob([htmlContent], { type: "text/html" });
-  const blobText = new Blob([plainText], { type: "text/plain" });
-  const clipboardData = [new ClipboardItem({ "text/html": blobHTML, "text/plain": blobText })];
-  
-  navigator.clipboard.write(clipboardData).then(() => {
-    showToast("아웃룩용 이메일 본문이 클립보드에 복사되었습니다!", "✉️");
-  }).catch(err => {
-    console.error("이메일 클립보드 복사 실패: ", err);
-    showToast("클립보드 쓰기 실패. 콘솔을 확인해주세요.", "❌");
-  });
-}
-
-function toggleCollapse(id) {
-  const container = document.getElementById(id);
-  if (container) {
-    container.classList.toggle('open');
-  }
+  return writeEmailClipboard(htmlContent,plainText);
 }
 
 // ===================================
@@ -1974,5 +2066,7 @@ window.addEventListener('load', function() {
   cnInit();
 });
 </script>
+<script src="intelligence_data.js"></script>
+<script src="competitor_intelligence.js"></script>
 </body>
 </html>

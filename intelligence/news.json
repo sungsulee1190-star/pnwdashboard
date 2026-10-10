@@ -1,0 +1,389 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-10-09",
+  "last_successful_fetch": null,
+  "entries": [
+    {
+      "id": "global-jv-regulatory-20261005",
+      "company": "upm",
+      "company_ids": [
+        "upm",
+        "sappi"
+      ],
+      "date": "2026-10-05",
+      "title": "UPM·Sappi 합작, EU 경쟁 우려 재확인",
+      "summary": "UPM은 EU 집행위의 Letter of Facts가 합작계획에 대한 중대한 우려를 재확인했다고 공시. 회사들은 대응과 구제방안을 준비 중이며 거래 종결은 아직 미확정.",
+      "url": "https://www.upm.com/news-and-stories/releases/2026/10/inside-information-european-commission-has-restated-its-serious-concerns-about-planned-graphic-paper-joint-venture-upm-and-sappi-continue-to-address-these-concerns/",
+      "source": "UPM",
+      "source_id": "research:global-jv-regulatory-20261005",
+      "category": "official",
+      "evidence_type": "official_release",
+      "review_status": "reviewed_source",
+      "collection_method": "manual_review",
+      "collected_at": "2026-10-09T00:00:00Z",
+      "topic": "시장",
+      "significance": "유럽 그래픽지 구조조정의 규제 불확실성"
+    },
+    {
+      "id": "asia-app-fire",
+      "company": "app",
+      "company_ids": [
+        "app"
+      ],
+      "date": "2026-09-29",
+      "title": "APP, 산림 화재 현장 대응 체계 설명",
+      "summary": "공식 발표에서 예상 엘니뇨에 대비한 탐지·현장 확인·진화 연계를 설명하고 취약지역 대응 거점을 추가했다고 밝혔다.",
+      "url": "https://app.co.id/en/-/the-last-mile-of-a-hotspot",
+      "source": "APP Group",
+      "source_id": "research:asia-app-fire",
+      "category": "official",
+      "evidence_type": "official_release",
+      "review_status": "reviewed_source",
+      "collection_method": "manual_review",
+      "collected_at": "2026-10-09T00:00:00Z",
+      "topic": "설비",
+      "significance": "원료 산림의 물리적 위험과 공급 연속성 관리 근거. 생산 중단이나 손실이 발생했다는 뜻은 아님."
+    },
+    {
+      "id": "asia-chenming-debt",
+      "company": "chenming",
+      "company_ids": [
+        "chenming"
+      ],
+      "date": "2026-09-29",
+      "title": "Chenming, 관계사 채권·채무 상계 안건 제출",
+      "summary": "회사·자회사 및 합작사 간 채권·채무 상계를 주주총회 안건으로 제시했다. 승인 일정은 2026-10-20이며 확인일 현재 완료로 보지 않는다.",
+      "url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0929/2026092902033.pdf",
+      "source": "Chenming / HKEX",
+      "source_id": "research:asia-chenming-debt",
+      "category": "official",
+      "evidence_type": "official_release",
+      "review_status": "reviewed_source",
+      "collection_method": "manual_review",
+      "collected_at": "2026-10-09T00:00:00Z",
+      "topic": "실적",
+      "significance": "유동성·관련자 거래 모니터링이 필요한 사건. 상계안을 외부 이자부채 전액 해소로 해석하지 않음."
+    },
+    {
+      "id": "asia-app-units",
+      "company": "app",
+      "company_ids": [
+        "app"
+      ],
+      "date": "2026-09-18",
+      "title": "APP 주요 인도네시아 법인 3곳, 기업 매출 순위 재진입",
+      "summary": "APP는 Indah Kiat·Pindo Deli·Tjiwi Kimia의 Fortune Indonesia 100 포함을 발표했다. 순위의 대상은 개별 법인이며 APP 그룹 연결 재무가 아니다.",
+      "url": "https://app.co.id/-/three-app-group-business-units-return-to-the-fortune-indonesia-100-list-in-2026",
+      "source": "APP Group",
+      "source_id": "research:asia-app-units",
+      "category": "official",
+      "evidence_type": "official_release",
+      "review_status": "reviewed_source",
+      "collection_method": "manual_review",
+      "collected_at": "2026-10-09T00:00:00Z",
+      "topic": "시장",
+      "significance": "APP 분석 시 추적해야 할 법인명을 확인하는 근거. 시장점유율 지표로 사용하지 않음."
+    },
+    {
+      "id": "asia-chenming-h1",
+      "company": "chenming",
+      "company_ids": [
+        "chenming"
+      ],
+      "date": "2026-08-28",
+      "title": "Chenming 2026H1: 매출 회복, 순손실 지속",
+      "summary": "연결 매출은 CNY 6,865.43m로 225.90% 증가했으나 지배주주 순손실 CNY 786.48m가 지속됐다. 지배주주 순자산은 CNY 155.81m이다.",
+      "url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0828/2026082802744.pdf",
+      "source": "Chenming / HKEX",
+      "source_id": "research:asia-chenming-h1",
+      "category": "official",
+      "evidence_type": "official_release",
+      "review_status": "reviewed_source",
+      "collection_method": "manual_review",
+      "collected_at": "2026-10-09T00:00:00Z",
+      "topic": "실적",
+      "significance": "재가동에 따른 성장과 재무 복원력을 분리해 평가할 필요."
+    },
+    {
+      "id": "asia-sun-h1",
+      "company": "sunpaper",
+      "company_ids": [
+        "sunpaper"
+      ],
+      "date": "2026-08-26",
+      "title": "Sun Paper, 2026H1 공시 발행",
+      "summary": "회사는 2026년 반기보고서 및 요약을 공시했다. 정량 수치는 대시보드 재무 표에 회사 공시 텍스트 미러라는 검증 경로와 함께 수록했다.",
+      "url": "https://paper.cnstock.com/html/2026-08/26/content_2260114.htm",
+      "source": "Sun Paper / Shanghai Securities News issuer disclosure",
+      "source_id": "research:asia-sun-h1",
+      "category": "official",
+      "evidence_type": "official_release",
+      "review_status": "reviewed_source",
+      "collection_method": "manual_review",
+      "collected_at": "2026-10-09T00:00:00Z",
+      "topic": "실적",
+      "significance": "최신 반기 실적 확인점. 공식 페이지의 재무표가 이미지인 점을 별도 표시."
+    },
+    {
+      "id": "asia-huatai-h1",
+      "company": "huatai",
+      "company_ids": [
+        "huatai"
+      ],
+      "date": "2026-08-22",
+      "title": "Huatai, 2026H1 공시와 실적 설명회 일정 공개",
+      "summary": "회사는 반기보고서를 공시하고 8월31일 온라인 실적 설명회 일정을 발표했다. 반기보고서 요약은 미감사로 명시됐다.",
+      "url": "https://paper.cnstock.com/html/2026-08/22/content_2257875.htm",
+      "source": "Huatai / Shanghai Securities News issuer disclosure",
+      "source_id": "research:asia-huatai-h1",
+      "category": "official",
+      "evidence_type": "official_release",
+      "review_status": "reviewed_source",
+      "collection_method": "manual_review",
+      "collected_at": "2026-10-09T00:00:00Z",
+      "topic": "실적",
+      "significance": "최신 반기 자료와 경영진 설명 자료를 이어서 점검할 수 있는 공시."
+    },
+    {
+      "id": "global-arctic-h1-20260811",
+      "company": "arctic",
+      "company_ids": [
+        "arctic"
+      ],
+      "date": "2026-08-11",
+      "title": "Arctic Paper, H1 매출 PLN1,564.8백만",
+      "summary": "그룹 H1 연결 매출은 전년 PLN1,656.2백만에서 감소. 연결 EBIT는 -PLN65.9백만, 순손실은 PLN70.4백만이며 종이 부문 가격 경쟁과 비용 상승을 설명.",
+      "url": "https://mb.cision.com/Main/5162/4382193/4215260.pdf",
+      "source": "Arctic Paper",
+      "source_id": "research:global-arctic-h1-20260811",
+      "category": "official",
+      "evidence_type": "official_release",
+      "review_status": "reviewed_source",
+      "collection_method": "manual_review",
+      "collected_at": "2026-10-09T00:00:00Z",
+      "topic": "실적",
+      "significance": "판매가격 하락과 손익 회복 속도 확인"
+    },
+    {
+      "id": "asia-hokuetsu-q1",
+      "company": "hokuetsu",
+      "company_ids": [
+        "hokuetsu"
+      ],
+      "date": "2026-08-07",
+      "title": "Hokuetsu Q1: 영업이익 78.9% 감소",
+      "summary": "2026년 4~6월 연결 매출 JPY 72,557m, 영업이익 687m. 회사는 원료·연료 상승과 해외 펄프 가격 하락을 설명했으며 연간 전망은 유지했다.",
+      "url": "https://www.hokuetsucorp.com/en/ir/financial_results/file/20260807_release01_en.pdf",
+      "source": "Hokuetsu Corporation",
+      "source_id": "research:asia-hokuetsu-q1",
+      "category": "official",
+      "evidence_type": "official_release",
+      "review_status": "reviewed_source",
+      "collection_method": "manual_review",
+      "collected_at": "2026-10-09T00:00:00Z",
+      "topic": "실적",
+      "significance": "매출 성장보다 마진 압박이 큰 상황을 보여주는 최신 직접 검증 결과."
+    },
+    {
+      "id": "global-sappi-q3-20260806",
+      "company": "sappi",
+      "company_ids": [
+        "sappi"
+      ],
+      "date": "2026-08-06",
+      "title": "Sappi FY2026 Q3 조정 EBITDA USD53백만",
+      "summary": "Sappi는 6월 말 종료 Q3 조정 EBITDA USD53백만을 발표하고 다음 분기 개선을 전망. 누적 GAAP 순손익과 조정 EBITDA는 다른 지표.",
+      "url": "https://www.sappi.com/en-gb/about-us/news-and-events/sappi-reports-results-its-third-financial-quarter-ended-30-june-2026",
+      "source": "Sappi",
+      "source_id": "research:global-sappi-q3-20260806",
+      "category": "official",
+      "evidence_type": "official_release",
+      "review_status": "reviewed_source",
+      "collection_method": "manual_review",
+      "collected_at": "2026-10-09T00:00:00Z",
+      "topic": "실적",
+      "significance": "순손실 및 차입금과 별개로 조정 영업성과 추적"
+    },
+    {
+      "id": "global-hansol-q2-20260730",
+      "company": "hansol",
+      "company_ids": [
+        "hansol"
+      ],
+      "date": "2026-07-30",
+      "title": "한솔제지 2026년 2분기 실적 공고",
+      "summary": "공식 전자공고 목록에 2026년 2분기 실적 발표가 게시됨. 본 데이터셋은 첨부 수치 미추출로 FY2025 공식 연결결산 수치를 유지.",
+      "url": "https://www.hansolpaper.co.kr/ir/announce",
+      "source": "한솔제지",
+      "source_id": "research:global-hansol-q2-20260730",
+      "category": "official",
+      "evidence_type": "official_release",
+      "review_status": "reviewed_source",
+      "collection_method": "manual_review",
+      "collected_at": "2026-10-09T00:00:00Z",
+      "topic": "실적",
+      "significance": "최신 발표의 존재와 수치 검증 상태를 구분"
+    },
+    {
+      "id": "global-upm-h1-20260723",
+      "company": "upm",
+      "company_ids": [
+        "upm"
+      ],
+      "date": "2026-07-23",
+      "title": "UPM H1 연결 매출 EUR4,945백만",
+      "summary": "중단영업까지 포함한 H1 그룹 매출은 EUR4,945백만, GAAP 영업이익 EUR472백만. 계속영업 H2 comparable EBIT 가이던스는 EUR375~575백만.",
+      "url": "https://www.upmpaper.com/knowledge-inspiration/news/2026/07/upm-half-year-financial-report-2026-improved-second-quarter-results-in-all-businesses-and-portfolio-change-progressing/",
+      "source": "UPM",
+      "source_id": "research:global-upm-h1-20260723",
+      "category": "official",
+      "evidence_type": "official_release",
+      "review_status": "reviewed_source",
+      "collection_method": "manual_review",
+      "collected_at": "2026-10-09T00:00:00Z",
+      "topic": "실적",
+      "significance": "연결 실적과 계속영업 조정 가이던스 범위 구분"
+    },
+    {
+      "id": "asia-nippon-nsatom",
+      "company": "nippon",
+      "company_ids": [
+        "nippon"
+      ],
+      "date": "2026-06-23",
+      "title": "Nippon, NSATOM 무균 카톤의 신규 고객 제품 공개",
+      "summary": "Kyodo Nyugyo의 음료가 NSATOM 시스템을 채택해 6월30일부터 Seven-Eleven에서 단계적으로 출시된다고 발표했다. 회사는 고점도·입자 음료 대응을 강조했다.",
+      "url": "https://www.nipponpapergroup.com/english/news/2026/news260623110000.html",
+      "source": "Nippon Paper Industries",
+      "source_id": "research:asia-nippon-nsatom",
+      "category": "official",
+      "evidence_type": "official_release",
+      "review_status": "reviewed_source",
+      "collection_method": "manual_review",
+      "collected_at": "2026-10-09T00:00:00Z",
+      "topic": "제품",
+      "significance": "원지뿐 아니라 카톤·충전 시스템으로 경쟁 범위가 확대되는 실제 고객 채택 사례."
+    },
+    {
+      "id": "asia-nippon-pricing",
+      "company": "nippon",
+      "company_ids": [
+        "nippon"
+      ],
+      "date": "2026-06-01",
+      "title": "Nippon, 백판지·컵원지·포장지 15% 초과 인상 발표",
+      "summary": "회사는 백판지·컵원지·가공원지·포장지의 7월21일 출하분부터 15% 초과 가격 인상을 발표하고 원료·연료 조달 부담을 이유로 들었다.",
+      "url": "https://www.nipponpapergroup.com/english/news/2026/news260601150000.html",
+      "source": "Nippon Paper Industries",
+      "source_id": "research:asia-nippon-pricing",
+      "category": "official",
+      "evidence_type": "official_release",
+      "review_status": "reviewed_source",
+      "collection_method": "manual_review",
+      "collected_at": "2026-10-09T00:00:00Z",
+      "topic": "시장",
+      "significance": "공표한 인상률이며 실제 매출 평균 가격·고객 수용률은 확인되지 않았다."
+    },
+    {
+      "id": "global-jv-binding-20260528",
+      "company": "upm",
+      "company_ids": [
+        "upm",
+        "sappi"
+      ],
+      "date": "2026-05-28",
+      "title": "UPM·Sappi, 그래픽지 합작 본계약 체결",
+      "summary": "UPM Communication Papers 전체와 Sappi 유럽 그래픽지의 50/50 합작 본계약을 체결. 승인 조건이 남아 있으며 10월 5일 공시에서 EU 우려가 재확인됨.",
+      "url": "https://www.upmpaper.com/knowledge-inspiration/news/2026/05/inside-information-upm-and-sappi-have-signed-a-definitive-agreement-on-the-graphic-paper-joint-venture/",
+      "source": "UPM",
+      "source_id": "research:global-jv-binding-20260528",
+      "category": "official",
+      "evidence_type": "official_release",
+      "review_status": "reviewed_source",
+      "collection_method": "manual_review",
+      "collected_at": "2026-10-09T00:00:00Z",
+      "topic": "시장",
+      "significance": "종결 전 합작 계획과 예상 효율 개선 검토"
+    },
+    {
+      "id": "asia-oji-annual",
+      "company": "oji",
+      "company_ids": [
+        "oji"
+      ],
+      "date": "2026-05-15",
+      "title": "Oji FY2025: 영업이익 감소, 자산매각이 순이익 보완",
+      "summary": "2026년3월 결산 연결 매출은 JPY 1,861,709m, 영업이익 34,582m, 지배주주 순이익 55,582m. 회사는 자산매각과 저수익 사업 재편을 설명했다.",
+      "url": "https://xml.irpocket.com/C3861/2026/en0515irnews01.pdf",
+      "source": "Oji Holdings",
+      "source_id": "research:asia-oji-annual",
+      "category": "official",
+      "evidence_type": "official_release",
+      "review_status": "reviewed_source",
+      "collection_method": "manual_review",
+      "collected_at": "2026-10-09T00:00:00Z",
+      "topic": "실적",
+      "significance": "본업 이익과 자산매각 이익의 구분이 중요. 8월 최신 공시 본문은 아직 검증 범위 밖."
+    },
+    {
+      "id": "global-hankuk-nanocellulose-20260512",
+      "company": "hankuk",
+      "company_ids": [
+        "hankuk"
+      ],
+      "date": "2026-05-12",
+      "title": "한국제지, 나노셀룰로오스 고기능 소재 사업 확대",
+      "summary": "한국제지는 2018년부터 축적한 연구개발을 바탕으로 나노셀룰로오스 소재 사업 확대를 발표. 특수 코팅 첨가제용 제품은 판매 중이며 다른 응용은 가능성 단계.",
+      "url": "https://www.hankukpaper.com/ko/main/main.do",
+      "source": "한국제지",
+      "source_id": "research:global-hankuk-nanocellulose-20260512",
+      "category": "official",
+      "evidence_type": "official_release",
+      "review_status": "reviewed_source",
+      "collection_method": "manual_review",
+      "collected_at": "2026-10-09T00:00:00Z",
+      "topic": "제품",
+      "significance": "종이 제조 기술의 소재 사업 확장"
+    },
+    {
+      "id": "global-arctic-price-20260505",
+      "company": "arctic",
+      "company_ids": [
+        "arctic"
+      ],
+      "date": "2026-05-05",
+      "title": "Arctic Paper 가격 인상 공고",
+      "summary": "공식 보고·발표 목록에 2026년 5월 5일 가격 인상 발표가 게시됨. 인상률과 시행일은 본 조사에서 검증하지 않아 기재하지 않음.",
+      "url": "https://www.arcticpaper.com/investor-relations/financial-reports/reports/",
+      "source": "Arctic Paper",
+      "source_id": "research:global-arctic-price-20260505",
+      "category": "official",
+      "evidence_type": "official_release",
+      "review_status": "reviewed_source",
+      "collection_method": "manual_review",
+      "collected_at": "2026-10-09T00:00:00Z",
+      "topic": "시장",
+      "significance": "가격 대응 발표의 검증 범위 표시"
+    },
+    {
+      "id": "asia-chenming-restart",
+      "company": "chenming",
+      "company_ids": [
+        "chenming"
+      ],
+      "date": "2026-03-13",
+      "title": "Chenming, 5개 주요 생산거점 전면 재가동 발표",
+      "summary": "Shouguang·Zhanjiang·Huanggang·Jiangxi·Jilin의 재가동과 회사 생산능력 100% 복원을 발표했다. 문서 일자는 3월13일, 거래소 게재는 3월16일이다.",
+      "url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0316/2026031600119.pdf",
+      "source": "Chenming / HKEX",
+      "source_id": "research:asia-chenming-restart",
+      "category": "official",
+      "evidence_type": "official_release",
+      "review_status": "reviewed_source",
+      "collection_method": "manual_review",
+      "collected_at": "2026-10-09T00:00:00Z",
+      "topic": "설비",
+      "significance": "중국 인쇄·판지 공급 회복의 확인점. 가동능력 복원을 실제 판매량과 혼동하지 않음."
+    }
+  ]
+}
