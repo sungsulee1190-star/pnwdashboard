@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "policy": "Public official announcements only. No inferred financial metrics. HTML sources retain title/link/date only. Failed sources preserve prior snapshots.",
+  "sources": [
+    {
+      "id": "upm",
+      "company": "upm",
+      "name": "UPM official releases",
+      "mode": "html",
+      "url": "https://www.upm.com/news-and-stories/releases/",
+      "allowed_hosts": [
+        "www.upm.com",
+        "upm.com"
+      ],
+      "release_path_pattern": "^/news-and-stories/releases/\\d{4}/",
+      "verified_at": "2026-10-09",
+      "verification_url": "https://www.upm.com/news-and-stories/releases/",
+      "verification_note": "Public official newsroom exposes dated releases. Raw runtime download was unavailable in this workspace; first workflow run must validate extraction."
+    },
+    {
+      "id": "oji",
+      "company": "oji",
+      "name": "Oji Holdings official news releases",
+      "mode": "html",
+      "url": "https://www.ojiholdings.co.jp/en/news/release/",
+      "allowed_hosts": [
+        "www.ojiholdings.co.jp"
+      ],
+      "release_path_pattern": "^/en/(?:uploads/(?:news|ir)/docs/|news/release/[^/]+/[^/]+)",
+      "verified_at": "2026-10-09",
+      "verification_url": "https://www.ojiholdings.co.jp/en/news/release/",
+      "verification_note": "Public archive exposes dates on official announcement links and PDFs. Confirmed example /en/uploads/news/docs/en0911irnews.pdf. Raw runtime download unavailable; extraction verified with representative fixtures."
+    },
+    {
+      "id": "hokuetsu",
+      "company": "hokuetsu",
+      "name": "Hokuetsu Corporation official press releases",
+      "mode": "html",
+      "url": "https://www.hokuetsucorp.com/en/newsrelease/",
+      "allowed_hosts": [
+        "www.hokuetsucorp.com"
+      ],
+      "release_path_pattern": "^/en/(?:ir/[^?#]+\\.pdf|newsrelease/[^/]+)",
+      "verified_at": "2026-10-09",
+      "verification_url": "https://www.hokuetsucorp.com/en/newsrelease/",
+      "verification_note": "Public archive exposes dated official financial-result PDFs. Confirmed example /en/ir/financial_results/file/20260807_release01_en.pdf. Current official hostname is .com. Raw runtime download unavailable; extraction verified with representative fixtures."
+    },
+    {
+      "id": "app",
+      "company": "app",
+      "name": "Asia Pulp & Paper official manual review",
+      "mode": "manual",
+      "url": "https://www.app.com.cn/",
+      "reason": "No verified public machine-readable feed; review group releases and sustainability reports."
+    },
+    {
+      "id": "chenming",
+      "company": "chenming",
+      "name": "Chenming Group official manual review",
+      "mode": "manual",
+      "url": "https://www1.hkexnews.hk/search/titlesearch.xhtml?lang=en",
+      "reason": "Review official exchange disclosures for stock 01812 and mainland 000488; no validated public feed."
+    },
+    {
+      "id": "huatai",
+      "company": "huatai",
+      "name": "Shandong Huatai Group official manual review",
+      "mode": "manual",
+      "url": "https://www.cninfo.com.cn/",
+      "reason": "Review official exchange disclosures for stock 600308; no validated public feed."
+    },
+    {
+      "id": "sunpaper",
+      "company": "sunpaper",
+      "name": "Shandong Sun Paper official manual review",
+      "mode": "manual",
+      "url": "https://www.sunpapergroup.com/",
+      "reason": "No validated public feed; review company releases and exchange filings for 002078."
+    },
+    {
+      "id": "sappi",
+      "company": "sappi",
+      "name": "Sappi official manual review",
+      "mode": "manual",
+      "url": "https://www.sappi.com/en-za/about-us/news-and-events",
+      "reason": "Official newsroom exists; automated browsing returned HTTP 403. Manual official review until permitted structured access is verified."
+    },
+    {
+      "id": "moorim",
+      "company": "moorim",
+      "name": "Moorim Group official manual review",
+      "mode": "manual",
+      "url": "https://dart.fss.or.kr/",
+      "reason": "Review Moorim P&P 009580 and Moorim Paper 009200 filings separately. OpenDART requires a separately configured API credential; no API enabled."
+    },
+    {
+      "id": "hankuk",
+      "company": "hankuk",
+      "name": "Hankuk Paper official manual review",
+      "mode": "manual",
+      "url": "https://dart.fss.or.kr/",
+      "reason": "Review current legal entity and reporting history in DART; no validated feed or configured OpenDART credential."
+    },
+    {
+      "id": "nippon",
+      "company": "nippon",
+      "name": "Nippon Paper Industries official manual review",
+      "mode": "manual",
+      "url": "https://www.nipponpapergroup.com/english/news/",
+      "reason": "Official newsroom requires dynamic search and exposes zero results without JavaScript; RSS help page currently has no feed URL. Manual IR review."
+    },
+    {
+      "id": "hansol",
+      "company": "hansol",
+      "name": "Hansol Paper official manual review",
+      "mode": "manual",
+      "url": "https://dart.fss.or.kr/",
+      "reason": "Review Hansol Paper 213500 filings in DART. No configured OpenDART credential; no API enabled."
+    },
+    {
+      "id": "arctic",
+      "company": "arctic",
+      "name": "Arctic Paper official manual review",
+      "mode": "manual",
+      "url": "https://www.arcticpaper.com/",
+      "reason": "Official site timed out during verification; no validated feed. Review official IR reports manually."
+    },
+    {
+      "id": "burgo",
+      "company": "burgo",
+      "name": "Burgo Group official manual review",
+      "mode": "manual",
+      "url": "https://www.burgo.com/",
+      "reason": "Unlisted group; no validated feed. Review official releases manually without inferring unavailable financial metrics."
+    }
+  ]
+}
