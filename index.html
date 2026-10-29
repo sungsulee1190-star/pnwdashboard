@@ -1590,6 +1590,7 @@ function weekOf(dateStr) {
 
 // 분기·연도 실적은 comp_financials.js(공시 기준)를 쓰고, 사업부문 비중은 기존 입력값(COMP_ENRICHED_DB)을 씀.
 // 공시가 없는 회사는 값을 만들어 넣지 않고 비워 둠
+const yearKey = p => String(p).replace(/^FY/, '').replace(/년$/, '');
 function getCompEnriched(compObj) {
   const fin = (typeof DATA_COMP_FIN !== 'undefined' && DATA_COMP_FIN[compObj.id]) || null;
   const base = COMP_ENRICHED_DB[compObj.id] || null;
@@ -1598,7 +1599,11 @@ function getCompEnriched(compObj) {
     unit: fin ? fin.unit : '',
     segMix: base ? base.segMix : [],
     quarterly: fin ? fin.quarterly : [],
-    yearly: fin && fin.yearly && fin.yearly.length ? fin.yearly : (base ? base.yearly.map(y => ({ ...y, note: y.note + ' (기존 입력값)' })) : [])
+    // 연도: 공시로 확인한 연도는 그 값, 나머지 과거 연도는 기존 입력값을 표시해 유지
+    yearly: [
+      ...(base ? base.yearly.filter(y => !(fin && fin.yearly.some(f => yearKey(f.p) === yearKey(y.p)))).map(y => ({ ...y, note: y.note + ' (기존 입력값)' })) : []),
+      ...(fin ? fin.yearly : [])
+    ]
   };
 }
 
@@ -1729,7 +1734,8 @@ function renderSelectedCompetitorView() {
     const u = enriched.unit ? ` (${enriched.unit})` : '';
     const opLabel = (fin && fin.op_label) || '영업이익';
     thead.innerHTML = `<tr><th class="text-left !pl-0">기간</th><th class="text-right">매출${u}</th><th class="text-right">${opLabel}${u}</th><th class="text-right">이익률</th><th class="text-left">코멘트·출처</th></tr>`;
-    const num1 = v => v == null || isNaN(v) ? '-' : (Math.abs(v) < 100 && v % 1 ? v.toFixed(1) : Math.round(v).toLocaleString());
+    // 1 미만은 소수 둘째 자리, 1,000 미만은 소수 첫째 자리까지 (억 위안·십억원 단위가 작아서)
+    const num1 = v => v == null || isNaN(v) ? '-' : v !== 0 && Math.abs(v) < 1 ? v.toFixed(2) : Math.abs(v) < 1000 && v % 1 ? v.toFixed(1) : Math.round(v).toLocaleString();
     tbody.innerHTML = rows.map(r => {
       const rev = isPrintOnly ? r.printRev : r.totalRev;
       const op = isPrintOnly ? r.printOp : r.totalOp;
@@ -1748,7 +1754,7 @@ function renderSelectedCompetitorView() {
         </tr>
       `;
     }).join('') || `<tr><td colspan="5" class="!pl-0 text-[color:var(--muted)]">${isPrintOnly ? '인쇄용지 부문 실적을 따로 공시하지 않습니다.' : '공시된 실적이 없습니다 (비상장).'}</td></tr>`;
-    if (isPrintOnly && rows.length && rows.every(r => r.printRev == null))
+    if (isPrintOnly && rows.length && rows.every(r => r.printRev == null && r.printOp == null))
       tbody.insertAdjacentHTML('afterbegin', `<tr><td colspan="5" class="!pl-0 text-[color:var(--muted)]">이 회사는 인쇄용지 부문 실적을 따로 공시하지 않습니다.</td></tr>`);
 
     coFinChartInstance = new Chart(document.getElementById('coFinChart'), {
