@@ -387,7 +387,7 @@ body { background: var(--ground); color: var(--text); -webkit-font-smoothing: an
     <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
       <div class="min-w-0">
         <h1 class="text-2xl font-bold tracking-[-0.02em]">마켓맵·경쟁사</h1>
-        <p class="text-[15px] text-[color:var(--muted)] mt-1">45개 설비의 위치와 CAPA, 14개 제지사의 실적과 동향</p>
+        <p class="text-[15px] text-[color:var(--muted)] mt-1">경쟁사 공장의 위치와 CAPA, 14개 제지사의 실적과 동향</p>
       </div>
       <button onclick="showToast('공시·뉴스 동기화를 요청했습니다. 반영까지 시간이 걸릴 수 있습니다.')" class="pill-btn">공시·뉴스 동기화</button>
     </div>
@@ -1188,7 +1188,7 @@ const COUNTRY_REGION = {
   'Thailand': '동남아', 'Indonesia': '동남아', 'India': '인도/서남아',
   'Germany': '유럽', 'Austria': '유럽', 'Sweden': '유럽', 'Finland': '유럽', 'Netherlands': '유럽', 'Belgium': '유럽'
 };
-const MILL_KO = { 'Janghang Mill': '장항', 'Shintanjin Mill': '신탄진', 'Jinju Mill': '진주', 'Ulsan Mill': '울산', 'Onsan Mill': '온산', 'Jinwi Mill': '진위' };
+const MILL_KO = { 'Indah Kiat Perawang Mill': 'IK 페라왕', 'Indah Kiat Serang Mill': 'IK 세랑', 'Indah Kiat Tangerang Mill': 'IK 탕그랑', 'Tjiwi Kimia Mill': '치위 키미아', 'Janghang Mill': '장항', 'Shintanjin Mill': '신탄진', 'Jinju Mill': '진주', 'Ulsan Mill': '울산', 'Onsan Mill': '온산', 'Jinwi Mill': '진위' };
 const countryKo = c => COUNTRY_KO[c] || c;
 const regionOf = c => COUNTRY_REGION[c] || '기타';
 const compIdOf = co => CAPA_COMPANY_ID[co] || 'other';
@@ -1197,12 +1197,15 @@ const regionColor = c => c === 'South Korea' ? C.kr : c === 'China' ? C.cn : C.o
 // 공시 기준 CAPA: 공장 단위 값, 합산으로만 공개된 공장은 group
 const DISC = typeof CAPA_DISCLOSED !== 'undefined' ? CAPA_DISCLOSED : {};
 const DISC_GROUPS = typeof CAPA_DISCLOSED_GROUPS !== 'undefined' ? CAPA_DISCLOSED_GROUPS : {};
+// 원본 엑셀에 없는 공장(APP 인도네시아 등)을 지도 데이터에 합침
+if (typeof CAPA_EXTRA_MILLS !== 'undefined' && typeof DATA_CAPA !== 'undefined') DATA_CAPA.push(...CAPA_EXTRA_MILLS);
+const EXTRA_MILLS = new Set((typeof CAPA_EXTRA_MILLS !== 'undefined' ? CAPA_EXTRA_MILLS : []).map(d => d.mill));
 const EXCEL_MILL_TOTAL = {};
 (typeof DATA_CAPA !== 'undefined' ? DATA_CAPA : []).forEach(d => { EXCEL_MILL_TOTAL[d.mill] = (EXCEL_MILL_TOTAL[d.mill] || 0) + (d.capa_mty || 0); });
 const discOf = mill => DISC[mill] || { capa: null, basis: '조사 대상 아님' };
 const discGroupOf = mill => { const g = discOf(mill).group; return g ? { id: g, ...DISC_GROUPS[g] } : null; };
 // 화면에 쓰는 CAPA (공시 기준에서 공장 수치가 없으면 null)
-const capaShown = m => STATE.capaBasis === 'disc' ? discOf(m.mill).capa : m.capa;
+const capaShown = m => STATE.capaBasis === 'disc' ? discOf(m.mill).capa : (EXTRA_MILLS.has(m.mill) ? null : m.capa);
 // 여러 공장 합계: 공장 수치 + 합산 공개 그룹은 한 번만
 function sumDisclosed(millNames) {
   let total = 0; const groups = new Set(); let missing = 0, skipped = 0;
@@ -1292,7 +1295,9 @@ function renderMapAndCapaChart() {
     if (d.product && !millGroups[k].products.includes(d.product)) millGroups[k].products.push(d.product);
   });
 
-  const mills = Object.values(millGroups).sort((a, b) => b.capa - a.capa);
+  // 선택한 CAPA 기준으로 큰 공장부터 (이름표 자리 우선순위도 이 순서)
+  const sortKey = m => capaShown(m) ?? (STATE.capaBasis === 'disc' && discGroupOf(m.mill) ? 1 : 0);
+  const mills = Object.values(millGroups).sort((a, b) => sortKey(b) - sortKey(a) || b.capa - a.capa);
   const located = mills.filter(m => m.lat && m.lng);
   const labelAll = located.length <= 12;   // 적을 때는 공장 이름을 지도에 상시 표기
   // 걸러낸 공장에 맞춰 지도 범위를 먼저 옮긴 뒤, 그 화면의 픽셀 위치로 이름표 자리를 정함
@@ -1347,10 +1352,10 @@ function renderMapAndCapaChart() {
       <td>${m.company}</td>
       <td><span class="legend inline-flex"><span><i style="background:${regionColor(m.region)};border-radius:50%"></i>${m.desc}</span></span></td>
       <td class="text-[color:var(--muted)]">${m.products.map(p => p.replace('WFC - ', '')).join(', ')}</td>
-      <td class="text-right ${STATE.capaBasis === 'excel' ? 'font-semibold' : ''}">${fmt(m.capa)}</td>
+      <td class="text-right ${STATE.capaBasis === 'excel' ? 'font-semibold' : ''}">${EXTRA_MILLS.has(m.mill) ? '<span class="text-[color:var(--muted)]">원본 없음</span>' : fmt(m.capa)}</td>
       ${(() => { const d = discOf(m.mill), g = discGroupOf(m.mill), ex = EXCEL_MILL_TOTAL[m.mill] || 0;
         const cell = d.capa != null ? fmt(d.capa) : g ? `<span class="text-[color:var(--muted)]">${g.label} ${fmt(g.capa)}</span>` : '<span class="text-[color:var(--muted)]">-</span>';
-        const diff = d.capa != null ? d.capa - ex : null;
+        const diff = d.capa != null && !EXTRA_MILLS.has(m.mill) ? d.capa - ex : null;
         const big = diff != null && ex > 0 && Math.abs(diff) / ex >= 0.2;
         return `<td class="text-right ${STATE.capaBasis === 'disc' ? 'font-semibold' : ''}">${cell}</td>
           <td class="text-right ${big ? 'font-semibold' : 'text-[color:var(--muted)]'}" title="엑셀 공장 전체 ${fmt(ex)} 대비">${diff != null ? fmtDiff(diff) : '-'}</td>`; })()}
@@ -1417,7 +1422,7 @@ function showMillDetail(m) {
     <div class="grid grid-cols-2 gap-4 mt-4">
       <div>
         <div class="text-xs text-[color:var(--muted)]">엑셀 원본 CAPA (선택 지종)</div>
-        <div class="num text-lg font-semibold">${fmt(m.capa)}<span class="unit">MT/년</span></div>
+        <div class="num text-lg font-semibold">${EXTRA_MILLS.has(m.mill) ? '<span class="text-[color:var(--muted)] font-normal text-sm">원본 엑셀에 없음</span>' : fmt(m.capa) + '<span class="unit">MT/년</span>'}</div>
       </div>
       <div>
         <div class="text-xs text-[color:var(--muted)]">공시 기준 CAPA</div>

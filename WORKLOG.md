@@ -6,6 +6,24 @@
 
 ---
 
+## 2026-10-30
+
+### APP(시나르마스) 인도네시아 인쇄용지 공장 추가
+
+- **왜:** APP는 시나르마스 그룹 소유라 인도네시아 공장까지 포함해야 하는데, 원본 엑셀(`data.js`)에는 Pindo Deli 카라왕 1곳만 있었음.
+- **추가한 공장** (`capa_disclosed.js`의 `CAPA_EXTRA_MILLS`, 지도에 합쳐 표시. 원본 엑셀 값은 "원본 없음"):
+  - Indah Kiat 페라왕(리아우)·세랑(반텐)·탕그랑(반텐): 문화용지 3개 공장 합산 160만 톤 (Indah Kiat Tbk 연차보고서 2025, 공장별 미공개)
+  - Tjiwi Kimia(동자바 시도아르조): 문화용지 130만 톤, 산업용지 58.2만 톤 별도 (Tjiwi Kimia Tbk 2025 연차보고서)
+- **수정:** Pindo Deli 카라왕 150만 톤(회사 홈페이지, 전 지종) → 91.3만 톤(종이, 화장지·포장재 제외, 2015 APP 수출자 브리핑). Pindo Deli는 비상장.
+- **APP 공시 기준 합계:** 239만 톤(원본) → 671.3만 톤 (중국 Gold East 200만·Hainan Jinhai 90만 + 인도네시아 381.3만).
+- **제외:** Pindo Deli 페라왕(화장지 전용), Lontar Papyrus·OKI(펄프·화장지), Ekamas Fortuna(산업용지). Indah Kiat 신규 카라왕 공장(2026.02 1단계 가동)은 백판지 300만 톤·산업용지 90만 톤 계획이라 인쇄용지에서 빼고 메모만 남김. 백판지(Duplex) 자료를 다룰 때 다시 볼 것.
+- **상장 여부:** Indah Kiat(INKP), Tjiwi Kimia(TKIM)는 인도네시아 증시 상장이라 연차보고서가 공시. Pindo Deli, APP 중국 법인은 비상장.
+- **원문 미확인:** app.co.id, indahkiat.co.id, tjiwikimia.co.id, pindodeli.co.id, sinarmas.com 모두 이 세션에서 차단. 검색 발췌로 확인. 허용 목록에 추가 필요.
+
+### 남은 일 추가
+
+6. **RZX(锐智信) 리포트 아카이빙.** 문화지(P&W)·백판지(Duplex) 월보(pdf·xlsx), 주보, 주간 가격표. Gmail로 전달한 메일이 아직 도착하지 않음(10/30 확인). 수신 경로, DRM 여부, 보관 위치(비공개) 결정 필요.
+
 ## 2026-10-29
 
 ### 바뀐 것 (모두 `main` 반영)

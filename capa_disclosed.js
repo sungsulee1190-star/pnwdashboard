@@ -11,6 +11,9 @@ const CAPA_DISCLOSED_GROUPS = {
   hansol_print: { capa: 500000, label: '장항+신탄진 합산', basis: '공시 인용', scope: '인쇄용지',
     source: 'KRX 체크포인트 기업분석 보고서 (한솔제지)', period: '2023.06', url: 'https://ssl.pstatic.net/imgstock/upload/research/company/1687851822764.pdf',
     note: '사업보고서는 장항·천안·신탄진을 인쇄용지·특수지 한 줄로만 공개(공장별 미공개). 특수지 34만 톤은 별도.' },
+  inkp_cultural: { capa: 1600000, label: 'Indah Kiat 3개 공장 합산', basis: '공시 인용', scope: '문화용지(인쇄용지)',
+    source: 'Indah Kiat Pulp & Paper Tbk 연차보고서 (공시 페이지 발췌)', period: '2025', url: 'https://financialfilings.com/filings/indah-kiat-pulp-paper-tbk/annual-report/2026/57422470/',
+    note: '페라왕·세랑·탕그랑 합계, 공장별 미공개. 2025년 문화용지 생산 139.3만 톤. 같은 회사의 신규 카라왕 공장(2026.02 1단계 가동)은 백판지 300만 톤·산업용지 90만 톤 계획이라 인쇄용지에서 제외.' },
   moorim_print: { capa: 840000, label: '진주+울산 합산', basis: '공시 인용', scope: '인쇄용지 (무림페이퍼+무림P&P)',
     source: '한국신용평가 무림페이퍼 신용평가 보고서', period: '2025년 말', url: '',
     note: '무림P&P 울산 단독은 2023 반기보고서에 FY2022 458,094톤(가동시간 기준 생산능력, 실제 생산 498,470톤). 진주 단독 공시는 찾지 못함.' }
@@ -53,8 +56,16 @@ const CAPA_DISCLOSED = {
     source: 'Voith twogether 2021 외', period: '2015~2021', url: 'https://www.voith.com/corp-en/voith-paper_twogether21_en.pdf', note: 'PM1 50만 + PM2 50만 + PM3 110만 톤.' },
   'Yangpu (Hainan Jinhai Pulp & Paper Industry) Mill': { capa: 900000, basis: '공시 인용', scope: '문화용지 (140~300g 고평량)',
     source: '중국신문망 하이난 2021', period: '2021', url: 'http://www.hi.chinanews.com.cn/hnnew/2021-09-07/4_142718.html', note: '150만 톤 개조 계획(2023 착공), 완공 미확인. 화장지 70만 톤 별도.' },
-  'Karawang No. 1 (PT Pindo Deli Pulp & Paper Mills) Mill': { capa: 1500000, basis: '회사 자료', scope: '전 지종, 카라왕 3개 공장 합계',
-    source: 'Pindo Deli 회사 소개', period: '현재', url: 'https://pindodeli.co.id/about-us', note: '코트지 단독 수치 없음.' },
+  'Karawang No. 1 (PT Pindo Deli Pulp & Paper Mills) Mill': { capa: 913000, basis: '공시 인용', scope: '종이(화장지·포장재 제외), Pindo Deli 회사 전체',
+    source: '호주 반덤핑위원회 공개 기록, APP 수출자 브리핑', period: '2015', url: 'https://www.industry.gov.au/sites/default/files/adc/public-record/033_-_indonesia_-_exporter_briefing.pdf',
+    note: '비상장. 카라왕 PM8·PM9 각 월 2만 톤(1998), Pindo 3 월 1.5만 톤(2014). 회사 홈페이지는 전 지종 150만 톤 이상, 2013 APP 지속가능성보고서는 카라왕 111.7만 톤. 페라왕 공장은 화장지 전용이라 제외.' },
+  // APP 인도네시아 인쇄용지 공장 (data.js 원본에 없어 CAPA_EXTRA_MILLS로 추가)
+  'Indah Kiat Perawang Mill': { capa: null, group: 'inkp_cultural', basis: '공시 인용' },
+  'Indah Kiat Serang Mill': { capa: null, group: 'inkp_cultural', basis: '공시 인용', note: '2013 APP 지속가능성보고서 생산능력 157만 톤(전 지종).' },
+  'Indah Kiat Tangerang Mill': { capa: null, group: 'inkp_cultural', basis: '공시 인용', note: '2013 APP 지속가능성보고서 생산능력 10.5만 톤.' },
+  'Tjiwi Kimia Mill': { capa: 1300000, basis: '공시', scope: '문화용지 (산업용지 58.2만 톤 별도)',
+    source: 'PT Pabrik Kertas Tjiwi Kimia Tbk 2025 연차보고서, 회사 개요', period: '2025', url: 'https://app.co.id/documents/20123/8250448/AR+TK+2025+section+-+Profil+Perseroan.pdf/e81ebb9a-265b-b831-5905-7f06f143d18a?t=1779696995080',
+    note: '2022 연차보고서는 문화용지 118만 톤. 동자바 시도아르조(모조케르토) 소재, PM 13대.' },
   'Shouguang (Shouguang Chenming Coated Woodfree Paper No. 3) Mill': { capa: 800000, basis: '공시 인용', scope: '코트지 1개 라인',
     source: '중국제지협회 방문 보고 외', period: '2020~2022', url: 'https://www.hstong.com/news/detail/25120415555592702', note: '2024.11 가동 중단 후 2025.03 재가동, 2026.03 전 기지 정상화 공시.' },
   'Shouguang (Shouguang Meilun Paper) Mill': { capa: 510000, basis: '공시 인용', scope: '고급 문화용지 (코트지 여부 미확인)',
@@ -76,3 +87,12 @@ const CAPA_DISCLOSED = {
   'Niigata Mill': { capa: 350000, basis: '회사 자료', scope: 'N9 온머신 코트지 PM만 (공장 전체 아님)',
     source: '호쿠에쓰 통합보고서 2025', period: '2025', url: 'https://hokuetsucorp.com/pdf/cr/cr2025_jp.pdf', note: '공장 전체 7개 PM, 전 지종 약 100만 톤. 1대는 골판지 원지로 전환.' }
 };
+
+// data.js 원본에 없는 APP(시나르마스) 인도네시아 인쇄용지 공장. index.html이 DATA_CAPA에 합쳐 지도에 표시
+// capa_mty는 0(엑셀 원본 없음), 수치는 위 CAPA_DISCLOSED에서 가져옴
+const CAPA_EXTRA_MILLS = [
+  { company: 'Asia Pulp & Paper (APP)', mill: 'Indah Kiat Perawang Mill', region: 'Indonesia', product: 'P&W (문화용지)', capa_mty: 0, pulp_mty: 0, lat: 0.65, lng: 101.60, location_desc: '인도네시아 리아우', extra: true },
+  { company: 'Asia Pulp & Paper (APP)', mill: 'Indah Kiat Serang Mill', region: 'Indonesia', product: 'P&W (문화용지)', capa_mty: 0, pulp_mty: 0, lat: -6.17, lng: 106.33, location_desc: '인도네시아 반텐', extra: true },
+  { company: 'Asia Pulp & Paper (APP)', mill: 'Indah Kiat Tangerang Mill', region: 'Indonesia', product: 'P&W (문화용지)', capa_mty: 0, pulp_mty: 0, lat: -6.31, lng: 106.67, location_desc: '인도네시아 반텐', extra: true },
+  { company: 'Asia Pulp & Paper (APP)', mill: 'Tjiwi Kimia Mill', region: 'Indonesia', product: 'P&W (문화용지)', capa_mty: 0, pulp_mty: 0, lat: -7.45, lng: 112.47, location_desc: '인도네시아 동자바', extra: true }
+];
