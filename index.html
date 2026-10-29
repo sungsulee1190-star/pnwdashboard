@@ -1061,6 +1061,13 @@ function initMarketMap() {
     maxZoom: 16,
     attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors'
   }).addTo(leafletMap);
+  // Light Gray Base는 지명이 없는 바탕 타일 → 국가·도시 이름은 Reference 레이어를 위에 겹쳐 표시
+  leafletMap.createPane('labels');
+  leafletMap.getPane('labels').style.zIndex = 350;  // 바탕(200) 위, 공장 마커(400) 아래
+  leafletMap.getPane('labels').style.pointerEvents = 'none';
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 16, pane: 'labels'
+  }).addTo(leafletMap);
   setTimeout(() => leafletMap.invalidateSize(), 100);
   markerLayer = L.layerGroup().addTo(leafletMap);
   renderMapAndCapaChart();
