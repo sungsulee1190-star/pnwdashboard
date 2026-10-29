@@ -15,6 +15,8 @@
 <script src="data.js"></script>
 <!-- 경쟁사 공시·뉴스 (주차별 헤드라인) -->
 <script src="news.js"></script>
+<!-- 공장별 CAPA (공시·회사 자료 기준, 출처 포함) -->
+<script src="capa_disclosed.js"></script>
 <style>
 /* Achromatic ledger: 크롬은 무채색, 데이터에만 색. 한국산 = --kr(파랑 3단계), 중국산 = 잉크, 기타 = 회색 */
 :root {
@@ -413,6 +415,11 @@ body { background: var(--ground); color: var(--text); -webkit-font-smoothing: an
         <label for="mapCompany" class="sr-only">제지사</label>
         <select id="mapCompany" onchange="STATE.mapCompany = this.value; renderMapAndCapaChart()" class="field max-w-full"></select>
         <button onclick="resetMapFilters()" class="btn-text ml-1">초기화</button>
+        <span class="ctl-label ml-3">CAPA 기준</span>
+        <div class="seg" role="group" aria-label="CAPA 기준">
+          <button class="pill-btn active" id="btnBasisExcel" onclick="setCapaBasis('excel')">엑셀 원본</button>
+          <button class="pill-btn" id="btnBasisDisc" onclick="setCapaBasis('disc')">공시 기준</button>
+        </div>
         <span class="legend ml-auto">
           <span><i style="background:var(--kr);border-radius:50%"></i>한국</span>
           <span><i style="background:var(--cn);border-radius:50%"></i>중국</span>
@@ -422,7 +429,7 @@ body { background: var(--ground); color: var(--text); -webkit-font-smoothing: an
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div class="lg:col-span-2">
-          <div id="millMap" class="h-[440px] rounded-lg border border-[color:var(--border)] z-10"></div>
+          <div id="millMap" class="h-[440px] lg:h-full lg:min-h-[440px] rounded-lg border border-[color:var(--border)] z-10"></div>
         </div>
         <div class="flex flex-col gap-4">
           <div id="millDetailCard" class="panel">
@@ -436,12 +443,13 @@ body { background: var(--ground); color: var(--text); -webkit-font-smoothing: an
       </div>
 
       <div class="mt-4">
-        <div class="panel-head"><h3 class="panel-title" id="millListTitle">공장 목록</h3><span class="panel-meta">CAPA는 선택한 지종 합계, MT/년</span></div>
+        <div class="panel-head flex-wrap"><h3 class="panel-title" id="millListTitle">공장 목록</h3><span class="panel-meta" id="millListMeta">MT/년 · 원본은 선택한 지종 합계, 공시는 공장 단위</span></div>
         <div class="overflow-auto max-h-[360px] border border-[color:var(--border)] rounded-lg">
           <table class="tbl w-full border-collapse">
             <thead class="sticky top-0 z-10"><tr>
               <th class="text-left pl-4">공장</th><th class="text-left">제지사</th><th class="text-left">국가</th>
-              <th class="text-left">지종</th><th class="text-right">CAPA</th><th class="text-right pr-4">자체 펄프</th>
+              <th class="text-left">지종</th><th class="text-right">원본 CAPA</th><th class="text-right">공시 CAPA</th><th class="text-right">차이</th>
+              <th class="text-left">근거</th><th class="text-right pr-4">자체 펄프</th>
             </tr></thead>
             <tbody id="millListBody"></tbody>
           </table>
@@ -569,6 +577,7 @@ const STATE = {
   mapGradeFilter: 'all',
   mapPlace: 'all',     // all | rg:<권역> | ct:<국가(영문)>
   mapCompany: 'all',   // all | <경쟁사 id> | other
+  capaBasis: 'excel',  // excel(data.js 원본) | disc(capa_disclosed.js 공시·회사 자료)
   compCountryFilter: 'all',
   selectedCompId: 'hankuk',
   compPeriodMode: 'quarterly', // quarterly | yearly
@@ -1130,6 +1139,8 @@ function initMarketMap() {
     sc.onerror = () => showToast('국가 경계 데이터를 불러오지 못했습니다. 공장 위치는 그대로 표시됩니다.'); document.head.appendChild(sc); }
 
   setTimeout(() => leafletMap.invalidateSize(), 100);
+  // 오른쪽 상세 카드 길이에 맞춰 지도 높이가 바뀌면 다시 그림
+  if (window.ResizeObserver) new ResizeObserver(() => leafletMap.invalidateSize()).observe(document.getElementById('millMap'));
   renderMapAndCapaChart();
 }
 
@@ -1182,6 +1193,42 @@ const countryKo = c => COUNTRY_KO[c] || c;
 const regionOf = c => COUNTRY_REGION[c] || '기타';
 const compIdOf = co => CAPA_COMPANY_ID[co] || 'other';
 const regionColor = c => c === 'South Korea' ? C.kr : c === 'China' ? C.cn : C.other;
+
+// 공시 기준 CAPA: 공장 단위 값, 합산으로만 공개된 공장은 group
+const DISC = typeof CAPA_DISCLOSED !== 'undefined' ? CAPA_DISCLOSED : {};
+const DISC_GROUPS = typeof CAPA_DISCLOSED_GROUPS !== 'undefined' ? CAPA_DISCLOSED_GROUPS : {};
+const EXCEL_MILL_TOTAL = {};
+(typeof DATA_CAPA !== 'undefined' ? DATA_CAPA : []).forEach(d => { EXCEL_MILL_TOTAL[d.mill] = (EXCEL_MILL_TOTAL[d.mill] || 0) + (d.capa_mty || 0); });
+const discOf = mill => DISC[mill] || { capa: null, basis: '조사 대상 아님' };
+const discGroupOf = mill => { const g = discOf(mill).group; return g ? { id: g, ...DISC_GROUPS[g] } : null; };
+// 화면에 쓰는 CAPA (공시 기준에서 공장 수치가 없으면 null)
+const capaShown = m => STATE.capaBasis === 'disc' ? discOf(m.mill).capa : m.capa;
+// 여러 공장 합계: 공장 수치 + 합산 공개 그룹은 한 번만
+function sumDisclosed(millNames) {
+  let total = 0; const groups = new Set(); let missing = 0, skipped = 0;
+  millNames.forEach(n => { const d = discOf(n);
+    if (d.capa != null) total += d.capa; else if (d.group) groups.add(d.group);
+    else if (d.basis === '조사 대상 아님') skipped++; else missing++; });
+  groups.forEach(g => total += (DISC_GROUPS[g] || {}).capa || 0);
+  return { total, missing, skipped, groups: groups.size };
+}
+const BASIS_CLASS = { '공시': 'badge-opp', '공시 인용': 'badge-neutral', '회사 자료': 'badge-neutral', '업계 추정': 'badge-neutral', '미확인': '' };
+function basisCell(name) {
+  const d = discOf(name), g = discGroupOf(name), src = g || d;
+  if (d.basis === '조사 대상 아님') return `<span class="text-[color:var(--muted)]">14개 경쟁사 외</span>`;
+  if (d.basis === '미확인') return `<span class="text-[color:var(--muted)]" title="${(d.note || '').replace(/"/g, '&quot;')}">미확인</span>`;
+  return `<span class="inline-flex items-center gap-2" title="${[src.scope, src.note].filter(Boolean).join(' · ').replace(/"/g, '&quot;')}">
+    <span class="${BASIS_CLASS[d.basis] || 'badge-neutral'}">${d.basis}</span>
+    <span class="text-xs text-[color:var(--muted)]">${src.period || ''}</span>
+    ${src.url ? `<a href="${src.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="text-xs hover:underline">원문 ↗</a>` : ''}</span>`;
+}
+
+function setCapaBasis(b) {
+  STATE.capaBasis = b;
+  document.getElementById('btnBasisExcel').classList.toggle('active', b === 'excel');
+  document.getElementById('btnBasisDisc').classList.toggle('active', b === 'disc');
+  renderMapAndCapaChart();
+}
 
 function setMapGradeFilter(grade, btn) {
   STATE.mapGradeFilter = grade;
@@ -1256,10 +1303,12 @@ function renderMapAndCapaChart() {
   STATE._millLabels = labelAll;
   const markers = {}, placed = [];
   located.forEach(m => {
-    const radius = Math.max(6, Math.min(16, Math.sqrt(m.capa / 10000) * 1.4));
-    const circle = L.circleMarker([m.lat, m.lng], {
-      radius, fillColor: regionColor(m.region), color: '#fff', weight: 1.5, fillOpacity: 0.8
-    }).addTo(markerLayer);
+    const cv = capaShown(m);
+    // 공시 기준에서 공장 수치가 없으면 속이 빈 원
+    const radius = cv == null ? 6 : Math.max(6, Math.min(16, Math.sqrt(cv / 10000) * 1.4));
+    const circle = L.circleMarker([m.lat, m.lng], cv == null
+      ? { radius, fillColor: '#fff', color: regionColor(m.region), weight: 2, fillOpacity: 1 }
+      : { radius, fillColor: regionColor(m.region), color: '#fff', weight: 1.5, fillOpacity: 0.8 }).addTo(markerLayer);
     const short = MILL_KO[m.mill] || m.mill.replace(/ Mill$/, '').replace(/ \(.*\)/, '');
     // 이름표 상자(대략 글자 수 × 7px)가 먼저 놓인 이름표와 겹치지 않는 쪽을 고르고, 양쪽 다 막히면 마우스를 올릴 때만 표시
     const pt = leafletMap.latLngToContainerPoint([m.lat, m.lng]);
@@ -1268,7 +1317,8 @@ function renderMapAndCapaChart() {
     const free = d => { const bx = box(d); return !placed.some(o => bx.x1 < o.x2 && o.x1 < bx.x2 && Math.abs(o.y - pt.y) < hgt); };
     const dir = !labelAll ? null : free('right') ? 'right' : free('left') ? 'left' : null;
     if (dir) placed.push({ ...box(dir), y: pt.y });
-    const full = `<b>${m.company}</b> · ${m.mill} · ${fmt(m.capa)} MT/년`;
+    const g = discGroupOf(m.mill);
+    const full = `<b>${m.company}</b> · ${m.mill} · ${cv != null ? fmt(cv) + ' MT/년' : g && STATE.capaBasis === 'disc' ? g.label + ' ' + fmt(g.capa) + ' MT/년' : '공장 단위 수치 없음'}`;
     circle.bindTooltip(dir ? short : full,
       dir ? { permanent: true, direction: dir, offset: [dir === 'right' ? radius : -radius, 0], className: 'mill-label' } : { direction: 'top' });
     circle.on('click', () => showMillDetail(m));
@@ -1279,9 +1329,12 @@ function renderMapAndCapaChart() {
 
   STATE._shownCountries = [...new Set(mills.map(m => m.region))];
   styleCountries();
-  const capaSum = mills.reduce((t, m) => t + m.capa, 0);
+  const disc = sumDisclosed(mills.map(m => m.mill));
+  const capaSum = STATE.capaBasis === 'disc' ? disc.total : mills.reduce((t, m) => t + m.capa, 0);
+  const discNote = STATE.capaBasis !== 'disc' ? '' :
+    `${disc.missing ? ` · 공시 수치 없음 ${disc.missing}곳(빈 원)` : ''}${disc.skipped ? ` · 14개 경쟁사 외 ${disc.skipped}곳 제외` : ''}${disc.groups ? ` · 합산 공개 ${disc.groups}건 포함` : ''}${STATE.mapGradeFilter !== 'all' ? ' · 공시 수치는 지종 구분 없는 공장 단위' : ''}`;
   document.getElementById('mapSummary').innerHTML = mills.length
-    ? `공장 ${mills.length}곳 · CAPA 합계 <span class="num">${fmt(capaSum / 1000)}</span>천 톤/년${mills.length > located.length ? ` · 좌표 없음 ${mills.length - located.length}곳` : ''} · 원의 크기는 CAPA`
+    ? `공장 ${mills.length}곳 · ${STATE.capaBasis === 'disc' && capaSum === 0 ? '공시 기준 CAPA 수치 없음' : `${STATE.capaBasis === 'disc' ? '공시 기준' : '엑셀 원본'} CAPA 합계 <span class="num">${fmt(capaSum / 1000)}</span>천 톤/년`}${discNote}${mills.length > located.length ? ` · 좌표 없음 ${mills.length - located.length}곳` : ''}`
     : '조건에 맞는 공장이 없습니다.';
   if (mills.length > 0) showMillDetail(mills[0]);
   else document.getElementById('millDetailCard').innerHTML = '<p class="text-[13px] text-[color:var(--muted)]">조건에 맞는 공장이 없습니다. 지종이나 지역을 바꿔 보세요.</p>';
@@ -1294,16 +1347,29 @@ function renderMapAndCapaChart() {
       <td>${m.company}</td>
       <td><span class="legend inline-flex"><span><i style="background:${regionColor(m.region)};border-radius:50%"></i>${m.desc}</span></span></td>
       <td class="text-[color:var(--muted)]">${m.products.map(p => p.replace('WFC - ', '')).join(', ')}</td>
-      <td class="text-right">${fmt(m.capa)}</td>
+      <td class="text-right ${STATE.capaBasis === 'excel' ? 'font-semibold' : ''}">${fmt(m.capa)}</td>
+      ${(() => { const d = discOf(m.mill), g = discGroupOf(m.mill), ex = EXCEL_MILL_TOTAL[m.mill] || 0;
+        const cell = d.capa != null ? fmt(d.capa) : g ? `<span class="text-[color:var(--muted)]">${g.label} ${fmt(g.capa)}</span>` : '<span class="text-[color:var(--muted)]">-</span>';
+        const diff = d.capa != null ? d.capa - ex : null;
+        const big = diff != null && ex > 0 && Math.abs(diff) / ex >= 0.2;
+        return `<td class="text-right ${STATE.capaBasis === 'disc' ? 'font-semibold' : ''}">${cell}</td>
+          <td class="text-right ${big ? 'font-semibold' : 'text-[color:var(--muted)]'}" title="엑셀 공장 전체 ${fmt(ex)} 대비">${diff != null ? fmtDiff(diff) : '-'}</td>`; })()}
+      <td>${basisCell(m.mill)}</td>
       <td class="text-right pr-4 ${m.pulp > 0 ? '' : 'text-[color:var(--muted)]'}">${m.pulp > 0 ? fmt(m.pulp) : '-'}</td>
-    </tr>`).join('') || '<tr><td colspan="6" class="pl-4 text-[color:var(--muted)]">조건에 맞는 공장이 없습니다.</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="9" class="pl-4 text-[color:var(--muted)]">조건에 맞는 공장이 없습니다.</td></tr>';
 
   // 회사별 CAPA 순위 차트
-  const byCo = {}, coRegion = {};
+  const byCo = {}, coRegion = {}, coMills = {};
   filtered.forEach(d => {
     byCo[d.company] = (byCo[d.company] || 0) + (d.capa_mty || 0);
     coRegion[d.company] = d.region;
+    (coMills[d.company] = coMills[d.company] || new Set()).add(d.mill);
   });
+  if (STATE.capaBasis === 'disc') {
+    // 같은 경쟁사의 자회사(예: Jiangsu Oji)는 법인별로 그대로 두고, 공시 합계로 대체 (수치 없는 회사는 제외)
+    Object.keys(byCo).forEach(co => { const t = sumDisclosed([...coMills[co]]).total; if (t > 0) byCo[co] = t; else delete byCo[co]; });
+  }
+  document.getElementById('capaChartTitle').textContent = `제지사별 CAPA · ${STATE.capaBasis === 'disc' ? '공시 기준' : '엑셀 원본'}`;
   const sortedCo = Object.entries(byCo).sort((a,b) => b[1] - a[1]).slice(0, 10);
 
   if (capaBarChartInstance) capaBarChartInstance.destroy();
@@ -1350,8 +1416,14 @@ function showMillDetail(m) {
     <p class="text-xs text-[color:var(--muted)] mt-0.5">${m.company} · ${m.region}${m.desc ? ' · ' + m.desc : ''}</p>
     <div class="grid grid-cols-2 gap-4 mt-4">
       <div>
-        <div class="text-xs text-[color:var(--muted)]">선택 지종 CAPA</div>
+        <div class="text-xs text-[color:var(--muted)]">엑셀 원본 CAPA (선택 지종)</div>
         <div class="num text-lg font-semibold">${fmt(m.capa)}<span class="unit">MT/년</span></div>
+      </div>
+      <div>
+        <div class="text-xs text-[color:var(--muted)]">공시 기준 CAPA</div>
+        <div class="num text-lg font-semibold">${(() => { const d = discOf(m.mill), g = discGroupOf(m.mill);
+          return d.capa != null ? fmt(d.capa) + '<span class="unit">MT/년</span>'
+            : g ? `<span class="text-sm font-normal">${g.label} ${fmt(g.capa)}</span>` : '<span class="text-[color:var(--muted)] font-normal text-sm">공장 단위 수치 없음</span>'; })()}</div>
       </div>
       <div>
         <div class="text-xs text-[color:var(--muted)]">자체 펄프</div>
@@ -1359,6 +1431,12 @@ function showMillDetail(m) {
       </div>
     </div>
     <div class="flex flex-wrap gap-1.5 mt-4">${m.products.map(p => `<span class="badge-neutral">${p}</span>`).join('')}</div>
+    ${(() => { const d = discOf(m.mill), g = discGroupOf(m.mill), src = g || d;
+      const lines = [src.scope && `범위: ${src.scope}`, src.source && `출처: ${src.source}${src.period ? ' (' + src.period + ')' : ''}`, src.note, d.note && d.note !== src.note ? d.note : ''].filter(Boolean);
+      return lines.length ? `<div class="mt-4 pt-3 border-t border-[color:var(--rule)] text-xs text-[color:var(--muted)] space-y-1">
+        ${lines.map(l => `<p>${l}</p>`).join('')}
+        ${src.url ? `<a href="${src.url}" target="_blank" rel="noopener" class="text-[color:var(--text)] hover:underline">원문 보기 ↗</a>` : ''}
+        <p>검색 발췌로 확인한 값이며 원문 대조 전입니다.</p></div>` : ''; })()}
   `;
 }
 
