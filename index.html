@@ -3,74 +3,140 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>인쇄용지 경쟁 분석 대시보드 v3</title>
+<title>인쇄용지 수출·경쟁사 대시보드</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.css">
 <!-- 실제 data.js 로드 -->
 <script src="data.js"></script>
 <style>
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-* { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; box-sizing: border-box; scroll-behavior: smooth; }
-body { background: #f5f5f7; color: #1d1d1f; -webkit-font-smoothing: antialiased; }
-.card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
-.pill-btn { padding: 6px 13px; border-radius: 9999px; font-size: 12px; font-weight: 500; border: 1px solid #e5e7eb; background: #fafafc; color: #1d1d1f; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
-.pill-btn:hover { background: #f3f4f6; }
-.pill-btn.active { background: #0066cc; color: #fff; border-color: #0066cc; font-weight: 600; }
-.page-tab { padding: 7px 16px; border-radius: 9999px; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
-.page-tab.active { background: #0066cc; color: #ffffff; box-shadow: 0 2px 8px rgba(0,102,204,0.35); }
-.page-tab.inactive { color: #d1d5db; background: rgba(255,255,255,0.08); }
-.page-tab.inactive:hover { background: rgba(255,255,255,0.16); color: #ffffff; }
-.tbl th { padding: 9px 10px; font-size: 11.5px; font-weight: 600; border-bottom: 2px solid #e5e7eb; white-space: nowrap; }
-.tbl td { padding: 9px 10px; font-size: 12.5px; border-bottom: 1px solid #f1f5f9; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.reg-row { background: #ffffff; cursor: pointer; font-weight: 600; transition: background 0.15s; }
-.reg-row:hover { background: #f8fafc; }
-.cty-row { background: #fafbfc; font-size: 12px; color: #374151; }
-.cty-row:hover { background: #f0f7ff; }
-.cn-col { background-color: rgba(254, 242, 242, 0.35); }
-.kr-col { background-color: rgba(239, 246, 255, 0.35); }
-.up-red { color: #dc2626; font-weight: 600; }
-.dn-blue { color: #2563eb; font-weight: 600; }
-.badge-warn { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; }
-.badge-opp { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; }
-.co-card { border: 1px solid #e5e7eb; border-radius: 14px; padding: 12px; background: #fff; cursor: pointer; transition: all 0.15s; }
-.co-card:hover { border-color: #0066cc; box-shadow: 0 4px 12px rgba(0,102,204,0.08); }
-.co-card.selected { border: 2px solid #0066cc; background: #f0f7ff; }
-@media (max-width: 767px) {
-  .card { padding: 14px; border-radius: 14px; }
-  .page-tab { padding: 6px 12px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
-  nav::-webkit-scrollbar { display: none; }
-  #millMap { height: 340px; }
+/* Achromatic ledger: 크롬은 무채색, 데이터에만 색. 한국산 = --kr(파랑 3단계), 중국산 = 잉크, 기타 = 회색 */
+:root {
+  --ground: #f4f4f2;  /* 코트지 원지 톤 */
+  --surface: #ffffff; --raised: #f7f7f6; --active: #eaeae8;
+  --border: #e6e6e4;  --rule: #f0f0ee;  --control: #d4d4d2;
+  --text: #0a0a0a;    --muted: #626262; --faint: #6b6b6b;
+  --primary: #141414;
+  --kr: #1d5fbf; --kr-2: #6f9ad8; --kr-3: #b9cdea;
+  --cn: #141414; --other: #8a8a8a;
+  --positive: #247b50; --negative: #c4242a;
+  --pill-positive-bg: #dcfae5; --pill-positive-ink: #04250e;
+  --pill-negative-bg: #ffedea; --pill-negative-ink: #831c1e;
+  --pill-neutral-bg: #eeeeec;  --pill-neutral-ink: #3d3d3d;
+  --radius-card: 8px; --radius-control: 6px;
 }
-[contenteditable="true"]:focus { outline: 2px solid #0066cc; background: #f8fafc; border-radius: 6px; }
+* { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--ground); color: var(--text); -webkit-font-smoothing: antialiased; font-size: 14px; line-height: 20px; }
+.num, .tbl td, .kpi-value { font-variant-numeric: tabular-nums; }
+
+/* 셸 */
+.topbar { background: var(--ground); border-bottom: 1px solid var(--border); }
+.mark { width: 22px; height: 22px; border-radius: 5px; background: var(--primary); color: #fff; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; letter-spacing: -0.02em; }
+.page-tab { height: 48px; padding: 0 2px; margin-right: 20px; font-size: 14px; font-weight: 500; color: var(--muted); border-bottom: 2px solid transparent; display: inline-flex; align-items: center; white-space: nowrap; flex-shrink: 0; transition: color .15s; }
+.page-tab:hover { color: var(--text); }
+.page-tab.active { color: var(--text); border-bottom-color: var(--text); }
+.page-tab.inactive { color: var(--muted); }
+
+/* 컨트롤 */
+.seg { display: inline-flex; background: var(--active); border-radius: var(--radius-control); padding: 2px; gap: 2px; flex-shrink: 0; }
+.seg .pill-btn { border: 0; background: transparent; height: 28px; }
+.seg .pill-btn.active { background: var(--surface); color: var(--text); font-weight: 600; }
+.pill-btn { height: 32px; padding: 0 12px; border-radius: var(--radius-control); font-size: 13px; font-weight: 500; border: 1px solid var(--control); background: var(--surface); color: var(--text); cursor: pointer; transition: background-color .15s, border-color .15s; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
+.pill-btn:hover { background: var(--raised); }
+.pill-btn.active { background: var(--active); border-color: var(--active); font-weight: 600; }
+.btn-primary { height: 32px; padding: 0 14px; border-radius: var(--radius-control); background: var(--primary); color: #fff; font-size: 13px; font-weight: 600; white-space: nowrap; transition: opacity .15s; }
+.btn-primary:hover { opacity: .88; }
+.btn-text { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; }
+.btn-text:hover { text-decoration: underline; text-underline-offset: 3px; }
+.field { height: 32px; border: 1px solid var(--control); border-radius: var(--radius-control); background: var(--surface); padding: 0 10px; font-size: 13px; color: var(--text); }
+.field:focus, .pill-btn:focus-visible, .btn-primary:focus-visible, .page-tab:focus-visible, .btn-text:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.ctl-label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+
+/* 패널 */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 24px; }
+.card-title { font-size: 16px; line-height: 24px; font-weight: 600; color: var(--text); }
+.card-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 16px; }
+.panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.panel-title { font-size: 14px; font-weight: 600; }
+.panel-meta { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+/* KPI: 하나의 컨테이너를 1px 구분선으로 분할 */
+.kpi-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--border); border-radius: var(--radius-card); }
+.kpi-strip > div { padding: 16px 20px; border-left: 1px solid var(--border); min-width: 0; }
+.kpi-strip > div:first-child { border-left: 0; }
+.kpi-label { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.kpi-value { font-size: 26px; line-height: 32px; font-weight: 600; letter-spacing: -0.02em; color: var(--text); }
+.kpi-value .unit, .unit { font-size: 13px; font-weight: 400; color: var(--muted); letter-spacing: 0; margin-left: 2px; }
+.kpi-note { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+/* 표 */
+.tbl th { padding: 9px 12px; font-size: 12px; font-weight: 400; color: var(--muted); white-space: nowrap; background: var(--surface); }
+.tbl td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+.tbl thead tr:last-child th { border-bottom: 1px solid var(--border); }
+.reg-row { background: var(--surface); cursor: pointer; font-weight: 600; transition: background-color .15s; }
+.reg-row:hover, .cty-row:hover { background: var(--raised); }
+.cty-row { background: var(--surface); color: #262626; cursor: pointer; }
+.grp-l { border-left: 1px solid var(--border); }
+.up-red { color: var(--negative); font-weight: 500; }   /* 나쁜 방향 */
+.dn-blue { color: var(--positive); font-weight: 500; }  /* 좋은 방향 */
+.flat { color: var(--muted); }
+.badge-warn, .badge-opp, .badge-neutral { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 4px; font-size: 12px; font-weight: 500; white-space: nowrap; flex: none; }
+.badge-warn { background: var(--pill-negative-bg); color: var(--pill-negative-ink); }
+.badge-opp { background: var(--pill-positive-bg); color: var(--pill-positive-ink); }
+.badge-neutral { background: var(--pill-neutral-bg); color: var(--pill-neutral-ink); }
+.row-action { font-size: 12px; font-weight: 500; color: var(--text); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--control); background: var(--surface); white-space: nowrap; }
+.row-action:hover { background: var(--active); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: 0; }
+
+/* 경쟁사 */
+.co-card { border: 1px solid var(--border); border-radius: var(--radius-card); padding: 12px; background: var(--surface); cursor: pointer; transition: border-color .15s; text-align: left; }
+.co-card:hover { border-color: #b5b5b3; }
+.co-card.selected { border: 1.5px solid var(--text); padding: 11.5px; }
+
+/* 메일 초안: Outlook으로 복사되는 본문 자체의 서식 */
+[contenteditable="true"] { border-radius: 6px; transition: background-color .15s; }
+[contenteditable="true"]:hover { background: var(--raised); }
+[contenteditable="true"]:focus { outline: 2px solid var(--text); outline-offset: 2px; background: var(--surface); }
+
+.leaflet-container { font-family: 'Pretendard', system-ui, sans-serif; background: #e9e9e7; }
+
+@media (max-width: 767px) {
+  .card { padding: 16px; }
+  .kpi-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi-strip > div { border-left: 0; border-top: 1px solid var(--border); padding: 14px 16px; }
+  .kpi-strip > div:nth-child(-n+2) { border-top: 0; }
+  .kpi-strip > div:nth-child(even) { border-left: 1px solid var(--border); }
+  .kpi-value { font-size: 22px; line-height: 28px; }
+  .scroll-row { overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap !important; }
+  .scroll-row::-webkit-scrollbar { display: none; }
+  #millMap { height: 320px !important; }
+}
 </style>
 </head>
 <body class="pb-16">
 
-<!-- 상단 글로벌 헤더 (페이지 1 vs 페이지 2 전환) -->
-<header class="bg-[#1d1d1f] text-white min-h-14 px-3 md:px-6 py-2 md:py-0 flex flex-wrap md:flex-nowrap items-center justify-between gap-x-3 gap-y-2 sticky top-0 z-50 shadow-md">
-  <div class="flex items-center gap-3 md:gap-4 min-w-0 order-1">
-    <div class="font-bold text-sm flex items-center gap-2 whitespace-nowrap">
-      <span>📊</span>
-      <span><span class="hidden sm:inline">인쇄용지 </span>경쟁 분석 대시보드 <span class="hidden lg:inline text-[11px] font-normal text-emerald-300 bg-emerald-950 border border-emerald-700 px-2 py-0.5 rounded-full ml-1">실데이터(data.js) 연동 v3</span></span>
+<!-- 상단 바: 워드마크 · 화면 탭 · 데이터 기준일 · 메일 초안 -->
+<header class="topbar sticky top-0 z-50">
+  <div class="max-w-[1440px] mx-auto px-4 md:px-6 flex items-center gap-4 sm:gap-6 h-12">
+    <div class="flex items-center gap-2 shrink-0">
+      <span class="mark" aria-hidden="true">PN</span>
+      <span class="hidden sm:inline text-sm font-semibold whitespace-nowrap">인쇄용지 수출 대시보드</span>
     </div>
-  </div>
-
-    <nav class="flex items-center gap-2 order-3 md:order-2 w-full md:w-auto md:mr-auto overflow-x-auto [scrollbar-width:none]">
-      <button id="btn-page1" onclick="switchPage(1)" class="page-tab active">
-        <span class="xl:hidden">📈 수출·단가 분석</span><span class="hidden xl:inline">📈 Page 1. 수출·단가 다차원 분석 & 메일 초안</span>
-      </button>
-      <button id="btn-page2" onclick="switchPage(2)" class="page-tab inactive">
-        <span class="xl:hidden">🗺️ 마켓맵·경쟁사</span><span class="hidden xl:inline">🗺️ Page 2. 글로벌 마켓맵 & 14대 경쟁사 동향 (한솔·무림·한국제지·Sappi·Burgo 등)</span>
-      </button>
+    <nav class="flex items-stretch h-12 min-w-0 overflow-x-auto [scrollbar-width:none]" aria-label="화면">
+      <button id="btn-page1" onclick="switchPage(1)" class="page-tab active">수출·단가</button>
+      <button id="btn-page2" onclick="switchPage(2)" class="page-tab inactive">마켓맵·경쟁사</button>
     </nav>
-
-  <div class="flex items-center gap-3 text-xs text-gray-400 order-2 md:order-3 shrink-0">
-    <span id="metaStatusText" class="hidden xl:inline">실데이터 로드 완료</span>
-    <button onclick="switchPage(1); setTimeout(()=>document.getElementById('sec-email').scrollIntoView(), 50);" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3.5 py-1.5 rounded-full transition whitespace-nowrap">
-      ✉️ <span class="hidden sm:inline">메일 초안 바로가기</span><span class="sm:hidden">메일</span> <span id="pinCountBadge" class="bg-white text-blue-700 font-extrabold px-1.5 py-0.2 rounded-full ml-1 text-[10px]">2</span>
-    </button>
+    <div class="ml-auto flex items-center gap-4 shrink-0">
+      <span id="metaStatusText" class="hidden xl:inline text-xs text-[color:var(--muted)]">데이터 불러오는 중</span>
+      <button onclick="switchPage(1); setTimeout(()=>document.getElementById('sec-email').scrollIntoView(), 50);" class="btn-text">
+        메일 초안 <span id="pinCountBadge" class="num ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded bg-[color:var(--active)] text-xs font-semibold">2</span>
+      </button>
+    </div>
   </div>
 </header>
 
@@ -78,232 +144,225 @@ body { background: #f5f5f7; color: #1d1d1f; -webkit-font-smoothing: antialiased;
 <!-- [PAGE 1] 수출·단가 다차원 통합 분석 & 메일 초안                              -->
 <!-- ========================================================================= -->
 <div id="page-1">
-  <!-- 상단 고정 다차원 뷰 컨트롤 바 (Sticky) -->
-  <div class="bg-white/95 backdrop-blur-md border-b border-gray-200 px-4 md:px-6 py-2.5 md:sticky md:top-14 z-40 shadow-sm">
-    <div class="max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-2">
-      <!-- 좌측: 집계 단위 뷰 (월별 / 분기별 / 반기별 / 연도별) & 기간 선택 -->
-      <div class="flex flex-wrap items-center gap-1.5">
-        <span class="text-xs font-bold text-gray-500 mr-1">📊 실적 집계 단위</span>
-        <button class="pill-btn active" data-period="monthly" onclick="setPeriodGranularity('monthly', this)">월별</button>
-        <button class="pill-btn" data-period="quarterly" onclick="setPeriodGranularity('quarterly', this)">분기별(Q)</button>
-        <button class="pill-btn" data-period="half" onclick="setPeriodGranularity('half', this)">반기별(H)</button>
-        <button class="pill-btn" data-period="yearly" onclick="setPeriodGranularity('yearly', this)">연도별(Y)</button>
-
-        <span class="h-4 w-px bg-gray-200 mx-1"></span>
-        <span class="text-xs font-bold text-gray-500">기준 연도·월</span>
-        <select id="selYear" onchange="refreshPage1()" class="text-xs border rounded-full px-2.5 py-1.5 bg-gray-50 font-semibold"></select>
-        <select id="selMonthFrom" onchange="refreshPage1()" class="text-xs border rounded-full px-2.5 py-1.5 bg-gray-50 font-medium"></select>
-        <span class="text-xs text-gray-400">~</span>
-        <select id="selMonthTo" onchange="refreshPage1()" class="text-xs border rounded-full px-2.5 py-1.5 bg-gray-50 font-medium"></select>
-
-        <span class="h-4 w-px bg-gray-200 mx-1"></span>
-        <span class="text-xs font-bold text-gray-500">지종(가격/수급)</span>
-        <button class="pill-btn active" onclick="setPaperGrade('코트지', this)">코트지(아트지)</button>
-        <button class="pill-btn" onclick="setPaperGrade('옵셋지', this)">백상지(옵셋지)</button>
+  <main class="max-w-[1440px] mx-auto px-4 md:px-6 pt-6 md:pt-8 space-y-4">
+    <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+      <div class="min-w-0">
+        <h1 class="text-2xl font-bold tracking-[-0.02em]">수출·단가</h1>
+        <p id="overviewFinding" class="text-[15px] text-[color:var(--muted)] mt-1">중국산과 한국산(한솔·무림·한국제지)의 권역별 수출 물량과 FOB 단가</p>
       </div>
+      <span id="overviewPeriodLabel" class="num text-sm text-[color:var(--muted)]"></span>
+    </div>
 
-      <!-- 우측: 권역/국가 빠른 필터 -->
-      <div class="flex items-center gap-2 w-full sm:w-auto">
-        <select id="regionFilter" onchange="renderPivot()" class="text-xs border rounded-full px-3 py-1.5 bg-gray-50 font-medium">
-          <option value="all">전체 9대 권역</option>
-          <option value="동남아">동남아</option>
-          <option value="인도/서남아">인도/서남아</option>
-          <option value="북미">북미</option>
-          <option value="유럽">유럽</option>
-          <option value="중동">중동</option>
-          <option value="오세아니아">오세아니아</option>
-          <option value="동북아">동북아</option>
-          <option value="중남미">중남미</option>
-          <option value="아프리카">아프리카</option>
-        </select>
-        <input type="text" id="countrySearch" oninput="renderPivot()" placeholder="🔍 국가명 검색 (예: 베트남, 미국)..." class="text-xs border rounded-full px-3 py-1.5 w-full sm:w-44 min-w-0 focus:outline-none focus:border-blue-600">
+    <!-- 필터: 집계 단위 · 기간 · 지종 · 권역/국가 -->
+    <div class="md:sticky md:top-12 z-40 bg-[color:var(--ground)] py-2 -mx-4 px-4 md:-mx-6 md:px-6">
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div class="seg scroll-row" role="group" aria-label="집계 단위">
+          <button class="pill-btn active" data-period="monthly" onclick="setPeriodGranularity('monthly', this)">월별</button>
+          <button class="pill-btn" data-period="quarterly" onclick="setPeriodGranularity('quarterly', this)">분기</button>
+          <button class="pill-btn" data-period="half" onclick="setPeriodGranularity('half', this)">반기</button>
+          <button class="pill-btn" data-period="yearly" onclick="setPeriodGranularity('yearly', this)">연도</button>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <label for="selYear" class="sr-only">기준 연도</label>
+          <select id="selYear" onchange="refreshPage1()" class="field font-semibold"></select>
+          <label for="selMonthFrom" class="sr-only">시작 월</label>
+          <select id="selMonthFrom" onchange="refreshPage1()" class="field"></select>
+          <span class="ctl-label">~</span>
+          <label for="selMonthTo" class="sr-only">종료 월</label>
+          <select id="selMonthTo" onchange="refreshPage1()" class="field"></select>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="ctl-label">중국 내수가</span>
+          <div class="seg" role="group" aria-label="지종">
+            <button class="pill-btn active" onclick="setPaperGrade('코트지', this)">코트지</button>
+            <button class="pill-btn" onclick="setPaperGrade('옵셋지', this)">백상지</button>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
+          <label for="regionFilter" class="sr-only">권역</label>
+          <select id="regionFilter" onchange="renderPivot()" class="field">
+            <option value="all">전체 권역</option>
+            <option value="동남아">동남아</option>
+            <option value="인도/서남아">인도/서남아</option>
+            <option value="북미">북미</option>
+            <option value="유럽">유럽</option>
+            <option value="중동">중동</option>
+            <option value="오세아니아">오세아니아</option>
+            <option value="동북아">동북아</option>
+            <option value="중남미">중남미</option>
+            <option value="아프리카">아프리카</option>
+          </select>
+          <label for="countrySearch" class="sr-only">국가 검색</label>
+          <input type="search" id="countrySearch" oninput="renderPivot()" placeholder="국가 검색 (예: 베트남)" class="field w-full sm:w-48 min-w-0 placeholder:text-[color:var(--faint)]">
+        </div>
       </div>
     </div>
-  </div>
 
-  <main class="max-w-[1440px] mx-auto px-3 md:px-6 py-4 md:py-6 space-y-6">
-    <!-- [섹션 1] Executive Overview + 다차원 추이 차트 (월별/분기별/반기별/연도별) -->
-    <section id="sec-overview" class="card border-l-4 border-l-[#0066cc]">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-gray-100">
-        <div class="flex items-center gap-2">
-          <h2 class="text-base font-bold text-gray-900">1️⃣ Executive Overview: 중국 내수 수급 & 한·중 수출 다차원 추이 (실데이터 연동)</h2>
-          <span id="overviewPeriodLabel" class="text-xs text-blue-600 font-semibold bg-blue-50 px-2.5 py-0.5 rounded-full"></span>
+    <!-- [섹션 1] 개요: KPI + 물량·단가 추이 -->
+    <section id="sec-overview" aria-label="개요">
+      <div class="kpi-strip bg-[color:var(--surface)] mb-4">
+        <div>
+          <div class="kpi-label">중국산 수출량</div>
+          <div class="kpi-value" id="kpiCnExpVol">-</div>
+          <div class="kpi-note" id="kpiCnExpYoY">-</div>
+          <div class="kpi-note hidden" id="kpiCnExpTopReg"></div>
         </div>
-        <div class="flex items-center gap-2">
-          <button onclick="toggleSupplyDrawer()" class="pill-btn text-blue-600 border-blue-200 bg-blue-50/50 hover:bg-blue-100/50">
-            📈 중국 내수 가격(지종별) & 월별 수급표 펼치기 <span id="drawer-arrow">▼</span>
-          </button>
+        <div>
+          <div class="kpi-label">한국산 수출량</div>
+          <div class="kpi-value" id="kpiKrExpVol">-</div>
+          <div class="kpi-note" id="kpiKrExpYoY">-</div>
+          <div class="kpi-note num" id="kpiKrCompSplit">-</div>
         </div>
-      </div>
-
-      <!-- 4대 핵심 KPI 카드 (data.js 실시간 계산) -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-        <div class="bg-[#f8fafc] p-4 rounded-xl border border-gray-100">
-          <div class="text-xs text-gray-500 font-medium mb-1">🇨🇳 중국 수급 & 내수가 (<span id="kpiGradeLabel">코트지</span>)</div>
-          <div class="text-lg font-bold text-gray-900" id="kpiCnSupplyTitle">수급 데이터 로드 중...</div>
-          <div class="text-xs text-gray-600 mt-1.5 space-y-0.5" id="kpiCnSupplySub"></div>
+        <div>
+          <div class="kpi-label">한국산 평균 FOB</div>
+          <div class="kpi-value" id="kpiKrFobAvg">-</div>
+          <div class="kpi-note" id="kpiKrFobYoY">-</div>
+          <div class="kpi-note num" id="kpiKrFobComp">-</div>
         </div>
-
-        <div class="bg-[#fef2f2]/40 p-4 rounded-xl border border-red-100">
-          <div class="text-xs text-red-700 font-semibold mb-1">🇨🇳 중국산 총 수출량 (선택 기간)</div>
-          <div class="text-2xl font-extrabold text-gray-900" id="kpiCnExpVol">-</div>
-          <div class="text-xs mt-1.5" id="kpiCnExpYoY">-</div>
-          <div class="text-[11px] text-gray-500 mt-1" id="kpiCnExpTopReg">-</div>
-        </div>
-
-        <div class="bg-[#eff6ff]/50 p-4 rounded-xl border border-blue-100">
-          <div class="text-xs text-blue-800 font-semibold mb-1">🇰🇷 한국산 총 수출량 (한솔·무림·한국)</div>
-          <div class="text-2xl font-extrabold text-gray-900" id="kpiKrExpVol">-</div>
-          <div class="text-xs mt-1.5" id="kpiKrExpYoY">-</div>
-          <div class="text-[11px] text-gray-600 mt-1" id="kpiKrCompSplit">-</div>
-        </div>
-
-        <div class="bg-[#f8fafc] p-4 rounded-xl border border-gray-100">
-          <div class="text-xs text-gray-500 font-medium mb-1">💵 한국산 경쟁사별 평균 FOB 단가</div>
-          <div class="text-2xl font-extrabold text-gray-900" id="kpiKrFobAvg">-</div>
-          <div class="text-xs mt-1.5" id="kpiKrFobYoY">-</div>
-          <div class="text-[11px] text-gray-600 mt-1" id="kpiKrFobComp">-</div>
+        <div>
+          <div class="kpi-label">중국 광동 내수가 · <span id="kpiGradeLabel">코트지</span></div>
+          <div class="kpi-value" id="kpiCnSupplyTitle">-</div>
+          <div class="kpi-note" id="kpiCnSupplySub"></div>
         </div>
       </div>
 
-      <!-- 다차원 실적 비교 차트 (집계 단위: 월별/분기별/반기별/연도별 자동 반응) -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-3">
-        <div class="bg-gray-50/70 p-3.5 rounded-xl border">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-xs font-bold text-gray-800" id="chart1Title">📊 [분기별] 중국산 vs 한국산(한솔·무림·한국제지) 수출량 추이</h3>
-            <span class="text-[11px] text-gray-400">상단 집계단위(월/분기/반기/연도) 연동</span>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="panel">
+          <div class="panel-head">
+            <h2 class="panel-title" id="chart1Title">수출 물량 · 월별</h2>
+            <span class="panel-meta">MT</span>
           </div>
-          <div style="height: 200px;"><canvas id="overviewTrendChart"></canvas></div>
-        </div>
-        <div class="bg-gray-50/70 p-3.5 rounded-xl border">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-xs font-bold text-gray-800" id="chart2Title">💵 [분기별] 한국산 경쟁사별(한솔·무림·한국제지·무림+한국) FOB 단가 추이</h3>
-            <span class="text-[11px] text-gray-400">단위: USD/MT</span>
+          <div class="legend mb-2">
+            <span><i style="background:var(--cn)"></i>중국산</span>
+            <span><i style="background:var(--kr)"></i>한솔</span>
+            <span><i style="background:var(--kr-2)"></i>무림</span>
+            <span><i style="background:var(--kr-3)"></i>한국제지·무림+한국</span>
           </div>
-          <div style="height: 200px;"><canvas id="overviewFobChart"></canvas></div>
+          <div style="height: 220px;"><canvas id="overviewTrendChart" aria-label="중국산과 한국산 수출 물량 추이"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <h2 class="panel-title" id="chart2Title">한국산 FOB 단가 · 월별</h2>
+            <span class="panel-meta">USD/MT</span>
+          </div>
+          <div class="legend mb-2">
+            <span><i style="background:var(--kr)"></i>한솔</span>
+            <span><i style="background:var(--kr-2)"></i>무림</span>
+            <span><i style="background:var(--kr-3)"></i>한국제지·무림+한국</span>
+          </div>
+          <div style="height: 220px;"><canvas id="overviewFobChart" aria-label="한국산 제지사별 FOB 단가 추이"></canvas></div>
         </div>
       </div>
 
-      <!-- 접이식(Collapsible) 중국 지종별 가격 & 월별 수급표 상세 드로어 -->
-      <div id="supply-drawer" class="hidden mt-4 pt-4 border-t border-gray-200">
+      <button onclick="toggleSupplyDrawer()" class="btn-text mt-3">
+        중국 월별 수급표와 월보 요약 <span id="drawer-arrow" aria-hidden="true">▾</span>
+      </button>
+
+      <!-- 접이식 중국 수급표 & 월보 요약 -->
+      <div id="supply-drawer" class="hidden mt-3">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div class="bg-gray-50 p-4 rounded-xl border">
-            <h3 class="text-xs font-bold text-gray-700 mb-2">📋 중국 월별 수급 밸런스 추이 (실데이터 DATA_INDICATORS, 단위: MT)</h3>
+          <div class="panel">
+            <div class="panel-head"><h3 class="panel-title">중국 월별 수급</h3><span class="panel-meta">MT · 재고는 일</span></div>
             <div class="overflow-x-auto" id="cnIndicatorsTableWrap"></div>
           </div>
-          <div class="bg-gray-50 p-4 rounded-xl border flex flex-col justify-between">
-            <div>
-              <h3 class="text-xs font-bold text-gray-700 mb-2">📰 최신 중국 시장 월보 PDF AI 번역 요약 (실데이터 DATA_NEWS)</h3>
-              <div id="cnNewsSummaryBox" class="text-xs text-gray-700 leading-relaxed bg-white p-3 rounded-lg border whitespace-pre-line max-h-48 overflow-y-auto"></div>
-            </div>
+          <div class="panel">
+            <div class="panel-head"><h3 class="panel-title">중국 시장 월보 요약</h3></div>
+            <div id="cnNewsSummaryBox" class="text-[13px] leading-relaxed whitespace-pre-line max-h-56 overflow-y-auto"></div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- [섹션 2] 중·한 통합 수출 & 단가 드릴다운 피벗 표 (실데이터 연동) -->
+    <!-- [섹션 2] 권역 → 국가 피벗 -->
     <section id="sec-pivot" class="card">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+      <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
-          <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
-            2️⃣ 권역 → 국가별 중·한 수출 물량 & 한국 경쟁사(한솔 / 무림 / 한국제지 / 무림+한국) 통합 피벗
-          </h2>
-          <p class="text-xs text-gray-500 mt-0.5">
-            💡 실제 <code class="bg-gray-100 px-1 rounded">DATA_EXPORT</code>와 <code class="bg-gray-100 px-1 rounded">DATA_KR_COUNTRY</code>를 실시간 집계합니다. <b>권역(▶)</b>을 클릭하면 하위 국가가 펼쳐지고, <b>국가 행</b>을 클릭하면 아래 차트가 갱신됩니다.
-          </p>
+          <h2 class="card-title">권역·국가별 수출</h2>
+          <p class="card-sub">당기와 전년 동기 비교. 권역 행을 누르면 국가가 펼쳐집니다.</p>
         </div>
-        <div class="flex items-center gap-2">
-          <button onclick="expandAllRegions(true)" class="pill-btn">➕ 전체 권역 펼치기</button>
-          <button onclick="expandAllRegions(false)" class="pill-btn">➖ 전체 권역 접기</button>
+        <div class="flex items-center gap-4">
+          <button onclick="expandAllRegions(true)" class="btn-text">모두 펼치기</button>
+          <button onclick="expandAllRegions(false)" class="btn-text">모두 접기</button>
         </div>
       </div>
 
-      <div class="overflow-x-auto border rounded-xl max-h-[540px]">
+      <div class="overflow-auto border border-[color:var(--border)] rounded-lg max-h-[560px]">
         <table class="tbl w-full border-collapse">
           <thead class="sticky top-0 z-20">
-            <tr class="bg-gray-100 text-gray-700">
-              <th rowspan="2" class="text-left pl-4 bg-gray-100 sticky left-0 z-30 border-r">권역 / 국가 (클릭 시 드릴다운)</th>
-              <th colspan="3" class="text-center bg-red-50 text-red-900 border-r">🇨🇳 중국산 수출 실적 (DATA_EXPORT)</th>
-              <th colspan="6" class="text-center bg-blue-50 text-blue-900 border-r">🇰🇷 한국산 수출 실적 & 경쟁사 비교 (DATA_KR_COUNTRY)</th>
-              <th rowspan="2" class="text-center bg-gray-100">진단 / 메일 추가</th>
+            <tr>
+              <th rowspan="2" class="text-left pl-4 sticky left-0 z-30 align-bottom">권역 / 국가</th>
+              <th colspan="3" class="text-left grp-l !text-[color:var(--text)] !font-semibold">중국산</th>
+              <th colspan="6" class="text-left grp-l !text-[color:var(--text)] !font-semibold">한국산</th>
+              <th rowspan="2" class="text-left grp-l align-bottom">진단</th>
             </tr>
-            <tr class="bg-gray-50 text-gray-600 text-[11px]">
-              <th class="text-right bg-red-50/70">당기 물량(MT)</th>
-              <th class="text-right bg-red-50/70">전년동기(MT)</th>
-              <th class="text-right bg-red-50/70 border-r">YoY 증감률</th>
-              <th class="text-right bg-blue-50/70">한국 합계(MT)</th>
-              <th class="text-right bg-blue-50/70">YoY 증감률</th>
-              <th class="text-right bg-blue-50/70 text-blue-700">🟦 한솔</th>
-              <th class="text-right bg-blue-50/70 text-emerald-700">🟩 무림</th>
-              <th class="text-right bg-blue-50/70 text-amber-700">🟧 한국/무림+한국</th>
-              <th class="text-right bg-blue-50/70 border-r">평균 FOB($)</th>
+            <tr>
+              <th class="text-right grp-l">당기 MT</th>
+              <th class="text-right">전년 동기</th>
+              <th class="text-right">YoY</th>
+              <th class="text-right grp-l">합계 MT</th>
+              <th class="text-right">YoY</th>
+              <th class="text-right">한솔</th>
+              <th class="text-right">무림</th>
+              <th class="text-right">한국·무림+한국</th>
+              <th class="text-right">평균 FOB</th>
             </tr>
           </thead>
           <tbody id="pivotBody"></tbody>
         </table>
       </div>
 
-      <!-- 국가 클릭 시 열리는 실데이터 기반 다차원 추이 비교 뷰 -->
-      <div id="countryDetailBox" class="mt-4 bg-[#f8fafc] border border-blue-200 rounded-xl p-4">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <div class="flex items-center gap-2">
-            <span class="bg-blue-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">선택 국가 실데이터 추이</span>
-            <h3 id="detailTitle" class="text-sm font-bold text-gray-900">국가를 클릭하면 중국산 vs 한솔·무림·한국제지 추이가 표시됩니다</h3>
+      <!-- 선택 국가 추이 -->
+      <div id="countryDetailBox" class="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="panel lg:col-span-2">
+          <div class="panel-head flex-wrap">
+            <h3 id="detailTitle" class="panel-title">국가를 선택하세요</h3>
+            <button onclick="addCountryToEmail(STATE.focusedCountry)" class="btn-text">메일 초안에 추가</button>
           </div>
-          <button onclick="addCountryToEmail(STATE.focusedCountry)" class="pill-btn !bg-blue-600 !text-white !border-blue-600 font-semibold">
-            📌 이 국가 실데이터 코멘트를 하단 메일 초안에 추가
-          </button>
-        </div>
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center">
-          <div class="lg:col-span-2 bg-white p-3 rounded-lg border" style="height: 220px;">
-            <canvas id="focusChart"></canvas>
+          <div class="legend mb-2">
+            <span><i style="background:var(--cn)"></i>중국산</span>
+            <span><i style="background:var(--kr)"></i>한솔</span>
+            <span><i style="background:var(--kr-2)"></i>무림</span>
+            <span><i style="background:var(--kr-3)"></i>한국제지·무림+한국</span>
+            <span><i style="background:var(--other);height:2px;width:12px"></i>한국 평균 FOB (우축)</span>
           </div>
-          <div id="detailNarrative" class="bg-white p-4 rounded-lg border text-xs leading-relaxed text-gray-700 space-y-2"></div>
+          <div style="height: 220px;"><canvas id="focusChart" aria-label="선택 국가 수출 추이"></canvas></div>
         </div>
+        <div id="detailNarrative" class="panel text-[13px] leading-relaxed space-y-3"></div>
       </div>
     </section>
 
-    <!-- [섹션 3] 편집 가능한 이메일 초안 빌더 -->
-    <section id="sec-email" class="card border-2 border-blue-600/20">
-      <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b">
+    <!-- [섹션 3] 메일 초안 -->
+    <section id="sec-email" class="card">
+      <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
-          <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
-            3️⃣ 실무 보고용 메일 초안 빌더 (화면에서 직접 문구 수정 후 원클릭 복사)
-          </h2>
-          <p class="text-xs text-gray-500 mt-0.5">
-            ✏️ 파란색 점선 영역은 <b>마우스로 클릭해 직접 문장을 수정</b>할 수 있으며, Page 1의 국가 표나 Page 2의 경쟁사 동향에서 <b>[📌메일추가]</b>를 누르면 아래 본문에 바로 들어갑니다.
-          </p>
+          <h2 class="card-title">보고 메일 초안</h2>
+          <p class="card-sub">본문은 직접 고칠 수 있습니다. 표와 수치는 현재 필터 기준입니다.</p>
         </div>
-        <div class="flex items-center gap-2">
-          <button onclick="syncEmailTableFromRealData()" class="pill-btn">🔄 현재 필터 기준으로 표/수치 자동 갱신</button>
-          <button onclick="copyEmailRich()" class="px-4 py-2 rounded-full bg-[#0066cc] hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition">
-            📋 아웃룩(Outlook) 서식 그대로 복사 (HTML)
-          </button>
-          <button onclick="copyEmailPlain()" class="pill-btn font-semibold">
-            📄 텍스트만 복사
-          </button>
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="syncEmailTableFromRealData()" class="pill-btn">수치 다시 불러오기</button>
+          <button onclick="copyEmailPlain()" class="pill-btn">텍스트만 복사</button>
+          <button onclick="copyEmailRich()" class="btn-primary">Outlook 서식으로 복사</button>
         </div>
       </div>
 
-      <div id="emailEditorArea" class="bg-white border border-gray-300 rounded-xl p-6 max-w-[940px] mx-auto shadow-inner space-y-5">
-        <div contenteditable="true" class="p-2 border border-dashed border-blue-300 rounded-lg">
-          <div class="text-xs text-gray-400 mb-1">[메일 제목 - 클릭하여 수정 가능]</div>
-          <div id="emailSubjectLine" class="text-lg font-bold text-[#004488]">[공유] 한·중 인쇄용지 수출입 통계 및 글로벌 경쟁사 동향 보고</div>
+      <div id="emailEditorArea" class="bg-white border border-[color:var(--border)] rounded-lg p-5 md:p-8 max-w-[940px] space-y-6">
+        <div contenteditable="true" class="p-2 -m-2">
+          <div id="emailSubjectLine" class="text-lg font-bold">[공유] 한·중 인쇄용지 수출입 통계 및 글로벌 경쟁사 동향 보고</div>
         </div>
 
-        <div contenteditable="true" class="p-3 border border-dashed border-blue-300 rounded-lg text-sm leading-relaxed space-y-2">
-          <div class="font-bold text-[#0066cc] border-b pb-1">1. 중국 내수 수급 및 월보 핵심 요약</div>
-          <div id="emailSupplySummary" class="text-xs text-gray-800 space-y-1"></div>
+        <div contenteditable="true" class="p-2 -m-2 text-sm leading-relaxed space-y-2">
+          <div class="font-bold pb-1 border-b border-[color:var(--border)]">1. 중국 내수 수급 및 월보 핵심 요약</div>
+          <div id="emailSupplySummary" class="text-[13px] space-y-1"></div>
         </div>
 
         <div class="space-y-2">
-          <div class="font-bold text-sm text-[#0066cc] border-b pb-1">2. 권역별 중·한 수출 비교 요약표 (실데이터 자동 연동)</div>
-          <div id="emailRegionTableWrap"></div>
+          <div class="font-bold text-sm pb-1 border-b border-[color:var(--border)]">2. 권역별 중·한 수출 비교</div>
+          <div id="emailRegionTableWrap" class="overflow-x-auto"></div>
         </div>
 
-        <div contenteditable="true" class="p-3 border border-dashed border-blue-300 rounded-lg text-sm leading-relaxed space-y-2">
-          <div class="font-bold text-[#0066cc] border-b pb-1">3. 주요 주목 국가 및 경쟁사 동향 시사점 (📌핀 클릭 시 자동 추가)</div>
-          <ul id="emailPinnedList" class="list-disc pl-5 space-y-1.5 text-xs text-gray-800"></ul>
+        <div contenteditable="true" class="p-2 -m-2 text-sm leading-relaxed space-y-2">
+          <div class="font-bold pb-1 border-b border-[color:var(--border)]">3. 주요 국가 및 경쟁사 동향 시사점</div>
+          <ul id="emailPinnedList" class="list-disc pl-5 space-y-1.5 text-[13px]"></ul>
         </div>
       </div>
     </section>
@@ -311,147 +370,114 @@ body { background: #f5f5f7; color: #1d1d1f; -webkit-font-smoothing: antialiased;
 </div>
 
 <!-- ========================================================================= -->
-<!-- [PAGE 2] 글로벌 마켓맵 & 14대 경쟁사 다차원 동향 (한솔·무림·한국제지·Sappi·Burgo) -->
+<!-- [PAGE 2] 글로벌 마켓맵 & 14대 경쟁사 동향                                    -->
 <!-- ========================================================================= -->
 <div id="page-2" class="hidden">
-  <div class="bg-white border-b border-gray-200 px-4 md:px-6 py-3 md:sticky md:top-14 z-40 shadow-sm">
-    <div class="max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full">Page 2. 마켓맵 & 14대 경쟁사 인텔리전스</span>
-        <span class="text-xs text-gray-600">실제 <code class="bg-gray-100 px-1 rounded">DATA_CAPA</code>(45개 공장) 및 <code class="bg-gray-100 px-1 rounded">DATA_COMPANIES</code>(한국제지·Sappi·Burgo 포함 14개사) 다차원 뷰</span>
+  <main class="max-w-[1440px] mx-auto px-4 md:px-6 pt-6 md:pt-8 space-y-4">
+    <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+      <div class="min-w-0">
+        <h1 class="text-2xl font-bold tracking-[-0.02em]">마켓맵·경쟁사</h1>
+        <p class="text-[15px] text-[color:var(--muted)] mt-1">45개 설비의 위치와 CAPA, 14개 제지사의 실적과 동향</p>
       </div>
-      <div class="flex items-center gap-2">
-        <button onclick="showToast('🔄 DART(한솔·무림·한국제지) 및 글로벌 상장사(Sappi·UPM·Sun·OJI 등) 공시/뉴스 크롤러를 실행합니다.')" class="pill-btn !border-blue-300 !text-blue-700 bg-blue-50 font-semibold">
-          🤖 공시·뉴스 자동 크롤링 & 엑셀 동기화
-        </button>
-        <button onclick="switchPage(1)" class="pill-btn">
-          ← Page 1 (수출·단가 분석 & 메일 초안)으로 돌아가기
-        </button>
-      </div>
+      <button onclick="showToast('공시·뉴스 동기화를 요청했습니다. 반영까지 시간이 걸릴 수 있습니다.')" class="pill-btn">공시·뉴스 동기화</button>
     </div>
-  </div>
 
-  <main class="max-w-[1440px] mx-auto px-3 md:px-6 py-4 md:py-6 space-y-6">
-    <!-- [Page 2 - 상단] 글로벌 공장 마켓맵 & 지종별 설비 CAPA 현황 (실데이터 DATA_CAPA 45개 공장) -->
+    <!-- 마켓맵 & CAPA -->
     <section class="card">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b">
+      <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
-          <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
-            🗺️ 글로벌 경쟁사 공장 분포 마켓맵 & 지종별 설비 CAPA (실데이터 45개 설비)
-          </h2>
-          <p class="text-xs text-gray-500 mt-0.5">
-            <b>권역별</b> 또는 <b>생산 지종(WFC-Commodity / Premium / C1S / LW·MW·HW / 자체 펄프)</b>별로 필터링하면 지도와 CAPA 순위 차트가 즉시 바뀝니다.
-          </p>
+          <h2 class="card-title">공장 분포와 설비 CAPA</h2>
+          <p class="card-sub">원의 크기는 CAPA. <span style="color:var(--kr)">●</span> 한국 <span class="ml-1">●</span> 중국 <span class="ml-1" style="color:var(--other)">●</span> 기타</p>
         </div>
-        <div class="flex flex-wrap items-center gap-1.5">
-          <span class="text-xs font-bold text-gray-400">지종 구분:</span>
-          <button class="pill-btn active" onclick="setMapGradeFilter('all', this)">전체 지종</button>
-          <button class="pill-btn" onclick="setMapGradeFilter('WFC - Commodity', this)">일반아트(Commodity)</button>
-          <button class="pill-btn" onclick="setMapGradeFilter('WFC - Premium', this)">고급아트(Premium)</button>
-          <button class="pill-btn" onclick="setMapGradeFilter('WFC - C1S', this)">편면아트(C1S/라벨)</button>
-          <button class="pill-btn" onclick="setMapGradeFilter('WFC - LW', this)">유럽 코트지(LW/MW/HW)</button>
-          <button class="pill-btn" onclick="setMapGradeFilter('pulp', this)">🌲 자체 펄프 보유공장</button>
+        <div class="seg scroll-row max-w-full" role="group" aria-label="지종">
+          <button class="pill-btn active" onclick="setMapGradeFilter('all', this)">전체</button>
+          <button class="pill-btn" onclick="setMapGradeFilter('WFC - Commodity', this)">일반아트</button>
+          <button class="pill-btn" onclick="setMapGradeFilter('WFC - Premium', this)">고급아트</button>
+          <button class="pill-btn" onclick="setMapGradeFilter('WFC - C1S', this)">편면아트(C1S)</button>
+          <button class="pill-btn" onclick="setMapGradeFilter('WFC - LW', this)">유럽 LW·MW·HW</button>
+          <button class="pill-btn" onclick="setMapGradeFilter('pulp', this)">자체 펄프</button>
         </div>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div class="lg:col-span-2">
-          <div id="millMap" class="h-[400px] rounded-xl border border-gray-200 z-10"></div>
+          <div id="millMap" class="h-[440px] rounded-lg border border-[color:var(--border)] z-10"></div>
         </div>
-        <div class="flex flex-col justify-between space-y-3">
-          <div id="millDetailCard" class="bg-[#f8fafc] border rounded-xl p-4">
-            <div class="text-xs text-gray-500">지도에서 공장 마커를 클릭하면 상세 설비 CAPA와 지종 구성이 여기에 표시됩니다.</div>
+        <div class="flex flex-col gap-4">
+          <div id="millDetailCard" class="panel">
+            <div class="text-[13px] text-[color:var(--muted)]">지도에서 공장을 고르면 설비 정보가 표시됩니다.</div>
           </div>
-          <div class="bg-white border rounded-xl p-3 flex-1" style="min-height: 210px;">
-            <div class="text-xs font-bold text-gray-700 mb-1" id="capaChartTitle">📊 제지사별 연간 CAPA 순위 (실데이터 DATA_CAPA, 천톤/년)</div>
-            <div style="height: 185px;"><canvas id="capaBarChart"></canvas></div>
+          <div class="panel flex-1">
+            <div class="panel-head"><h3 class="panel-title" id="capaChartTitle">제지사별 CAPA</h3><span class="panel-meta">천 톤/년</span></div>
+            <div style="height: 210px;"><canvas id="capaBarChart" aria-label="제지사별 연간 CAPA 순위"></canvas></div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- [Page 2 - 하단] 14대 글로벌 경쟁사 다차원 실적 뷰 (분기 vs 연도 / 지종·산업 부문 구분) -->
+    <!-- 14개 경쟁사 실적 & 동향 -->
     <section class="card">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b">
+      <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
-          <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
-            🏢 14대 글로벌 경쟁사 실적 & 동향 (한국제지 · Sappi · Burgo · 한솔 · 무림 · 중국/일본 빅밀 전체)
-          </h2>
-          <p class="text-xs text-gray-500 mt-0.5">
-            <b>[분기별 vs 연도별]</b> 실적 추이와 <b>[사업부문/산업 구분 (인쇄용지 vs 산업·포장용지 vs 특수지 vs 펄프)]</b> 매출 구조를 다각도로 비교합니다.
-          </p>
+          <h2 class="card-title">경쟁사 실적과 동향</h2>
+          <p class="card-sub">전사·인쇄용지 부문 실적, 사업부문 비중</p>
         </div>
-
-        <!-- 경쟁사 국가군 필터 -->
-        <div class="flex flex-wrap items-center gap-1.5">
-          <span class="text-xs font-bold text-gray-400">국가군:</span>
-          <button class="pill-btn active" onclick="filterCompCountry('all', this)">전체 (14개사)</button>
-          <button class="pill-btn" onclick="filterCompCountry('한국', this)">🇰🇷 한국 (한솔·무림·한국제지)</button>
-          <button class="pill-btn" onclick="filterCompCountry('중국', this)">🇨🇳 중국 (APP·Sun·Chenming·Huatai)</button>
-          <button class="pill-btn" onclick="filterCompCountry('유럽', this)">🇪🇺 유럽/남아공 (Sappi·UPM·Burgo·Arctic)</button>
-          <button class="pill-btn" onclick="filterCompCountry('일본', this)">🇯🇵 일본 (OJI·Nippon·Hokuetsu)</button>
+        <div class="seg scroll-row max-w-full" role="group" aria-label="국가군">
+          <button class="pill-btn active" onclick="filterCompCountry('all', this)">전체 14</button>
+          <button class="pill-btn" onclick="filterCompCountry('한국', this)">한국</button>
+          <button class="pill-btn" onclick="filterCompCountry('중국', this)">중국</button>
+          <button class="pill-btn" onclick="filterCompCountry('유럽', this)">유럽·남아공</button>
+          <button class="pill-btn" onclick="filterCompCountry('일본', this)">일본</button>
         </div>
       </div>
 
-      <!-- 14개 경쟁사 선택 그리드 -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-2.5 mb-5" id="compCardGrid"></div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-7 gap-3 mb-5" id="compCardGrid"></div>
 
-      <!-- 다차원 실적 컨트롤 바: (1) 분기별 / 연도별 전환 + (2) 전사 실적 / 지종·산업부문별 비중 전환 -->
-      <div class="bg-gray-100/80 p-3 rounded-xl mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="text-xs font-bold text-gray-600">① 기간 기준 뷰:</span>
-          <button class="pill-btn active" id="btnCompQ" onclick="setCompPeriodMode('quarterly')">분기별 실적 (25.1Q ~ 26.1Q)</button>
-          <button class="pill-btn" id="btnCompY" onclick="setCompPeriodMode('yearly')">연도별 실적 (2022 ~ 2025년)</button>
-
-          <span class="h-4 w-px bg-gray-300 mx-1"></span>
-          <span class="text-xs font-bold text-gray-600">② 산업/지종 구분 뷰:</span>
-          <button class="pill-btn active" id="btnSegTotal" onclick="setCompSegMode('total')">전사 매출·영업이익 추이</button>
-          <button class="pill-btn" id="btnSegPrint" onclick="setCompSegMode('printing')">인쇄용지(Graphic/Cultural) 부문 단독</button>
-          <button class="pill-btn" id="btnSegMix" onclick="setCompSegMode('mix')">지종·산업 부문별(인쇄 vs 산업·포장 vs 특수지·펄프) 비중</button>
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="seg" role="group" aria-label="기간">
+            <button class="pill-btn active" id="btnCompQ" onclick="setCompPeriodMode('quarterly')">분기 25.2Q–26.1Q</button>
+            <button class="pill-btn" id="btnCompY" onclick="setCompPeriodMode('yearly')">연도 2022–2025</button>
+          </div>
+          <div class="seg scroll-row max-w-full" role="group" aria-label="범위">
+            <button class="pill-btn active" id="btnSegTotal" onclick="setCompSegMode('total')">전사</button>
+            <button class="pill-btn" id="btnSegPrint" onclick="setCompSegMode('printing')">인쇄용지 부문</button>
+            <button class="pill-btn" id="btnSegMix" onclick="setCompSegMode('mix')">사업부문 비중</button>
+          </div>
         </div>
-        <div id="selectedCompLinks" class="flex items-center gap-1.5"></div>
+        <div id="selectedCompLinks" class="flex items-center gap-4"></div>
       </div>
 
-      <!-- 하단 좌우 분할: [좌] 선택 경쟁사 다차원 실적 차트 & 테이블 / [우] AI 실시간 경쟁사 뉴스 피드 -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="bg-[#f8fafc] border rounded-xl p-4 space-y-3">
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="text-sm font-bold text-gray-900" id="coFinTitle">-</h3>
-              <p class="text-[11px] text-gray-500" id="coFinSub">-</p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        <div class="panel space-y-3">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <h3 class="panel-title" id="coFinTitle">-</h3>
+              <p class="text-xs text-[color:var(--muted)] mt-0.5" id="coFinSub">-</p>
             </div>
-            <span id="coPulpBadge" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-white border"></span>
+            <span id="coPulpBadge" class="badge-neutral"></span>
           </div>
-
-          <div class="bg-white p-3 rounded-lg border" style="height: 200px;">
-            <canvas id="coFinChart"></canvas>
-          </div>
-
+          <div class="legend" id="coFinLegend"></div>
+          <div style="height: 210px;"><canvas id="coFinChart" aria-label="선택 경쟁사 실적"></canvas></div>
           <div class="overflow-x-auto">
-            <table class="w-full text-xs border-collapse bg-white rounded-lg overflow-hidden border">
-              <thead class="bg-gray-100 text-gray-600" id="coFinThead"></thead>
-              <tbody id="coFinTbody" class="divide-y"></tbody>
+            <table class="tbl w-full border-collapse">
+              <thead id="coFinThead"></thead>
+              <tbody id="coFinTbody"></tbody>
             </table>
           </div>
         </div>
 
-        <div class="bg-[#f8fafc] border rounded-xl p-4 flex flex-col justify-between">
-          <div>
-            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <h3 class="text-sm font-bold text-gray-900">📰 경쟁사 핵심 동향 & AI 뉴스 브리핑</h3>
-              <div class="flex flex-wrap gap-1">
-                <button class="pill-btn active !px-2.5 !py-1 text-[11px]" onclick="filterNews('all', this)">전체</button>
-                <button class="pill-btn !px-2.5 !py-1 text-[11px]" onclick="filterNews('한국', this)">한솔·무림·한국제지</button>
-                <button class="pill-btn !px-2.5 !py-1 text-[11px]" onclick="filterNews('유럽', this)">Sappi·Burgo·UPM</button>
-                <button class="pill-btn !px-2.5 !py-1 text-[11px]" onclick="filterNews('중국', this)">중국 빅밀</button>
-              </div>
+        <div class="panel">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h3 class="panel-title">경쟁사 동향</h3>
+            <div class="seg" role="group" aria-label="뉴스 분류">
+              <button class="pill-btn active" onclick="filterNews('all', this)">전체</button>
+              <button class="pill-btn" onclick="filterNews('한국', this)">한국</button>
+              <button class="pill-btn" onclick="filterNews('유럽', this)">유럽</button>
+              <button class="pill-btn" onclick="filterNews('중국', this)">중국</button>
             </div>
-            <div id="newsFeedList" class="space-y-2.5 max-h-[360px] overflow-y-auto pr-1"></div>
           </div>
-          <div class="mt-3 pt-2 border-t text-[11px] text-gray-500 flex items-center justify-between">
-            <span>💡 뉴스 우측 <b>[📌메일추가]</b> 클릭 시 Page 1 이메일 초안에 즉시 삽입됩니다.</span>
-            <span>실데이터 + 공시/뉴스 자동 연동</span>
-          </div>
+          <div id="newsFeedList" class="max-h-[520px] overflow-y-auto"></div>
         </div>
       </div>
     </section>
@@ -459,8 +485,8 @@ body { background: #f5f5f7; color: #1d1d1f; -webkit-font-smoothing: antialiased;
 </div>
 
 <!-- 토스트 알림 -->
-<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs font-semibold px-5 py-3 rounded-full shadow-lg opacity-0 pointer-events-none transition-opacity duration-200 z-50">
-  복사 완료!
+<div id="toast" role="status" aria-live="polite" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#141414] text-white text-[13px] font-medium px-4 py-2.5 rounded-md opacity-0 pointer-events-none transition-opacity duration-200 z-50 max-w-[90vw]">
+  복사 완료
 </div>
 
 <script>
@@ -519,7 +545,33 @@ let CURRENT_PIVOT_DATA = [];
 
 function fmt(n) { return n == null || isNaN(n) ? '-' : Math.round(n).toLocaleString(); }
 function fmtDiff(n) { return n == null || isNaN(n) ? '-' : (n >= 0 ? '+' : '') + Math.round(n).toLocaleString(); }
-function fmtPct(n) { return n == null || isNaN(n) ? '-' : (n >= 0 ? '▲' : '▼') + Math.abs(n).toFixed(1) + '%'; }
+function fmtPct(n) { return n == null || isNaN(n) ? '-' : Math.abs(n) < 0.05 ? '0.0%' : (n > 0 ? '▲' : '▼') + Math.abs(n).toFixed(1) + '%'; }
+// 월보 요약의 **굵게** 표기를 화면에서 굵은 글씨로
+function mdBold(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>'); }
+const nw = t => `<span class="whitespace-nowrap">${t}</span>`;
+// 색은 방향이 아니라 좋고 나쁨: 중국산 증가·한국산 감소 = 빨강, 한국산 증가 = 초록, 변화 없음 = 회색
+function tone(n, goodWhenUp) {
+  if (n == null || isNaN(n) || Math.abs(n) < 0.05) return 'flat';
+  return (n > 0) === goodWhenUp ? 'dn-blue' : 'up-red';
+}
+const CSSV = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const C = { kr: '#1d5fbf', kr2: '#6f9ad8', kr3: '#b9cdea', cn: '#141414', other: '#8a8a8a', soft: '#d4d4d2', grid: '#ececea' };
+if (typeof Chart !== 'undefined') {
+  Chart.defaults.font.family = "'Pretendard', system-ui, sans-serif";
+  Chart.defaults.font.size = 12;
+  Chart.defaults.color = '#626262';
+  Chart.defaults.plugins.legend.display = false;
+  Chart.defaults.plugins.tooltip.backgroundColor = '#141414';
+  Chart.defaults.plugins.tooltip.cornerRadius = 4;
+  Chart.defaults.plugins.tooltip.boxPadding = 4;
+  Chart.defaults.scale.grid.color = C.grid;
+  Chart.defaults.scale.border.display = false;
+  Chart.defaults.elements.bar.borderRadius = 0;
+  Chart.defaults.elements.line.tension = 0;
+  Chart.defaults.elements.point.radius = 0;
+  Chart.defaults.elements.point.hoverRadius = 4;
+}
+const X_NOGRID = { grid: { display: false }, ticks: { maxRotation: 0, autoSkipPadding: 12 } };
 
 // ============================================================================
 // 2. 페이지 1 초기화 및 실데이터(data.js) 바인딩
@@ -527,7 +579,7 @@ function fmtPct(n) { return n == null || isNaN(n) ? '-' : (n >= 0 ? '▲' : '▼
 function initApp() {
   if (typeof DATA_META !== 'undefined') {
     document.getElementById('metaStatusText').textContent =
-      `실데이터 기준: 중국수출(${DATA_META.cn_monthly_latest}) · 한국수출(${DATA_META.kr_monthly_latest}) · 중국가격(${DATA_META.cn_price_latest})`;
+      `기준 · 중국 수출 ${DATA_META.cn_monthly_latest} · 한국 수출 ${DATA_META.kr_monthly_latest} · 중국 가격 ${DATA_META.cn_price_latest}`;
   }
 
   // 연도/월 셀렉트 초기화
@@ -577,14 +629,24 @@ function refreshPage1() {
   if (STATE.mFrom > STATE.mTo) STATE.mTo = STATE.mFrom;
 
   document.getElementById('overviewPeriodLabel').textContent =
-    `${STATE.year}년 ${STATE.mFrom}~${STATE.mTo}월 실데이터 기준 (집계뷰: ${STATE.granularity === 'monthly' ? '월별' : STATE.granularity === 'quarterly' ? '분기별' : STATE.granularity === 'half' ? '반기별' : '연도별'})`;
+    `${STATE.year}년 ${STATE.mFrom === STATE.mTo ? STATE.mFrom + '월' : STATE.mFrom + '–' + STATE.mTo + '월'} · 전년 동기 대비`;
 
   renderExecutiveOverview();
   renderOverviewCharts();
   buildPivotFromRealData();
+  renderFinding();
   renderPivot();
   focusCountry(STATE.focusedCountry);
   syncEmailTableFromRealData();
+}
+
+// 제목 아래 한 줄: 중국산 증가가 한국산을 가장 크게 앞지른 권역
+function renderFinding() {
+  const el = document.getElementById('overviewFinding');
+  const cand = CURRENT_PIVOT_DATA.filter(r => r.cnCurr > 1000 && r.cnPrev > 0 && r.krPrev > 0);
+  if (!cand.length) return;
+  const top = cand.slice().sort((a, b) => (b.cnYoY - b.krYoY) - (a.cnYoY - a.krYoY))[0];
+  el.innerHTML = `압력이 가장 큰 권역은 <b class="text-[color:var(--text)] font-semibold">${top.region}</b>: 중국산 <span class="${tone(top.cnYoY, false)}">${fmtPct(top.cnYoY)}</span>, 한국산 <span class="${tone(top.krYoY, true)}">${fmtPct(top.krYoY)}</span> (전년 동기 대비)`;
 }
 
 // 섹션 1: Executive Overview (실데이터 계산)
@@ -603,12 +665,12 @@ function renderExecutiveOverview() {
   const prevP = gradePrices.length > 1 ? gradePrices[gradePrices.length - 2] : null;
   const pMom = latestP && prevP && prevP.p ? ((latestP.p - prevP.p) / prevP.p * 100) : 0;
 
-  document.getElementById('kpiCnSupplyTitle').textContent =
-    latestP ? `광동 ${STATE.paperGrade} ${fmt(latestP.p)}위안/톤` : '수급 데이터 집계';
+  document.getElementById('kpiCnSupplyTitle').innerHTML =
+    latestP ? `${fmt(latestP.p)}<span class="unit">위안/톤</span>` : '<span class="text-[color:var(--muted)]">-</span>';
   document.getElementById('kpiCnSupplySub').innerHTML = `
-    <div>• 중국 코트지 생산: <b>${fmt(proSum)} MT</b></div>
-    <div>• 중국 내수소비량: <b>${fmt(domSum)} MT</b></div>
-    <div>• 재고일수: <b>${lastInv ? lastInv.toFixed(1) + '일' : '-'}</b> · 내수가 MoM <span class="${pMom >= 0 ? 'up-red' : 'dn-blue'}">${fmtPct(pMom)}</span></div>
+    <div>전월 대비 <span class="flat">${fmtPct(pMom)}</span>${latestP ? ` · ${latestP.y}년 ${latestP.m}월` : ''}</div>
+    <div class="num">${nw('생산 ' + fmt(proSum))} · ${nw('내수 ' + fmt(domSum) + ' MT')}</div>
+    <div>재고 ${lastInv ? lastInv.toFixed(1) + '일' : '-'}</div>
   `;
 
   // 2) 중국산 수출 (DATA_EXPORT)
@@ -618,8 +680,8 @@ function renderExecutiveOverview() {
   const cnPrevVol = cnPrev.reduce((s, x) => s + x.v, 0);
   const cnYoY = cnPrevVol > 0 ? ((cnVol - cnPrevVol) / cnPrevVol * 100) : 0;
 
-  document.getElementById('kpiCnExpVol').innerHTML = `${fmt(cnVol)} <span class="text-xs font-normal text-gray-500">MT</span>`;
-  document.getElementById('kpiCnExpYoY').innerHTML = `<span class="${cnYoY >= 0 ? 'up-red' : 'dn-blue'}">${fmtPct(cnYoY)} (${fmtDiff(cnVol - cnPrevVol)} MT vs 전년동기)</span>`;
+  document.getElementById('kpiCnExpVol').innerHTML = `${fmt(cnVol)}<span class="unit">MT</span>`;
+  document.getElementById('kpiCnExpYoY').innerHTML = `<span class="${tone(cnYoY, false)}">${fmtPct(cnYoY)}</span> <span class="num">${fmtDiff(cnVol - cnPrevVol)} MT</span>, 전년 동기 대비`;
 
   // 3) 한국산 수출 (DATA_KR_EXPORT)
   const krCurr = DATA_KR_EXPORT.filter(d => d.y === yr && d.m >= m1 && d.m <= m2);
@@ -641,10 +703,10 @@ function renderExecutiveOverview() {
   const mrV = byComp['무림'] ? byComp['무림'].v : 0;
   const hkV = (byComp['한국'] ? byComp['한국'].v : 0) + (byComp['무림+한국'] ? byComp['무림+한국'].v : 0);
 
-  document.getElementById('kpiKrExpVol').innerHTML = `${fmt(krVol)} <span class="text-xs font-normal text-gray-500">MT</span>`;
-  document.getElementById('kpiKrExpYoY').innerHTML = `<span class="${krYoY >= 0 ? 'up-red' : 'dn-blue'}">${fmtPct(krYoY)} (${fmtDiff(krVol - krPrevVol)} MT vs 전년동기)</span>`;
+  document.getElementById('kpiKrExpVol').innerHTML = `${fmt(krVol)}<span class="unit">MT</span>`;
+  document.getElementById('kpiKrExpYoY').innerHTML = `<span class="${tone(krYoY, true)}">${fmtPct(krYoY)}</span> <span class="num">${fmtDiff(krVol - krPrevVol)} MT</span>, 전년 동기 대비`;
   document.getElementById('kpiKrCompSplit').innerHTML =
-    `<span class="text-blue-700 font-semibold">한솔 ${fmt(hsV)}</span> · <span class="text-emerald-700 font-semibold">무림 ${fmt(mrV)}</span> · <span class="text-amber-700 font-semibold">무림+한국 ${fmt(hkV)}</span>`;
+    [nw(`한솔 ${fmt(hsV)}`), nw(`무림 ${fmt(mrV)}`), nw(`한국·무림+한국 ${fmt(hkV)}`)].join(' · ');
 
   // 4) 한국산 FOB 단가
   const avgFob = krVol > 0 ? (krAmt / krVol) : 0;
@@ -655,25 +717,26 @@ function renderExecutiveOverview() {
   const mhkFob = byComp['무림+한국'] && byComp['무림+한국'].v > 0 ? (byComp['무림+한국'].amt / byComp['무림+한국'].v) :
                  (byComp['한국'] && byComp['한국'].v > 0 ? (byComp['한국'].amt / byComp['한국'].v) : 0);
 
-  document.getElementById('kpiKrFobAvg').innerHTML = `$${avgFob.toFixed(1)} <span class="text-xs font-normal text-gray-500">USD/MT</span>`;
-  document.getElementById('kpiKrFobYoY').innerHTML = `<span class="${fobYoY >= 0 ? 'up-red' : 'dn-blue'}">${fmtPct(fobYoY)} vs 전년동기 ($${prevFob.toFixed(1)})</span>`;
+  const usd0 = v => v > 0 ? '$' + v.toFixed(0) : '-';
+  document.getElementById('kpiKrFobAvg').innerHTML = avgFob > 0 ? `$${avgFob.toFixed(1)}<span class="unit">/MT</span>` : '-';
+  document.getElementById('kpiKrFobYoY').innerHTML = `<span class="${tone(fobYoY, true)}">${fmtPct(fobYoY)}</span>, 전년 동기 $${prevFob.toFixed(1)} 대비`;
   document.getElementById('kpiKrFobComp').innerHTML =
-    `한솔 <b>$${hsFob.toFixed(0)}</b> · 무림 <b>$${mrFob.toFixed(0)}</b> · 무림+한국 <b>$${mhkFob.toFixed(0)}</b>`;
+    [nw(`한솔 ${usd0(hsFob)}`), nw(`무림 ${usd0(mrFob)}`), nw(`한국·무림+한국 ${usd0(mhkFob)}`)].join(' · ');
 
   // 드로어 내부 중국 수급표 & 월보 요약 채우기
   const recentInds = DATA_INDICATORS.slice(-6);
-  let indHtml = `<table class="w-full text-xs border-collapse"><thead><tr class="border-b text-gray-500"><th class="py-1 text-left">구분</th>`;
-  recentInds.forEach(r => indHtml += `<th class="py-1 text-right">${r.p}</th>`);
-  indHtml += `</tr></thead><tbody class="divide-y">`;
-  indHtml += `<tr><td class="py-1 font-medium">생산량(MT)</td>${recentInds.map(r => `<td class="py-1 text-right">${fmt(r.pro)}</td>`).join('')}</tr>`;
-  indHtml += `<tr><td class="py-1 font-medium">수출량(MT)</td>${recentInds.map(r => `<td class="py-1 text-right text-red-600 font-semibold">${fmt(r.exp)}</td>`).join('')}</tr>`;
-  indHtml += `<tr><td class="py-1 font-medium">내수소비(MT)</td>${recentInds.map(r => `<td class="py-1 text-right">${fmt(r.dom)}</td>`).join('')}</tr>`;
-  indHtml += `<tr><td class="py-1 font-medium">재고일수(일)</td>${recentInds.map(r => `<td class="py-1 text-right">${r.inv ? r.inv.toFixed(1) : '-'}</td>`).join('')}</tr>`;
+  let indHtml = `<table class="tbl w-full border-collapse"><thead><tr><th class="text-left !pl-0">구분</th>`;
+  recentInds.forEach(r => indHtml += `<th class="text-right">${r.p}</th>`);
+  indHtml += `</tr></thead><tbody>`;
+  indHtml += `<tr><td class="!pl-0">생산</td>${recentInds.map(r => `<td class="text-right">${fmt(r.pro)}</td>`).join('')}</tr>`;
+  indHtml += `<tr><td class="!pl-0 font-semibold">수출</td>${recentInds.map(r => `<td class="text-right font-semibold">${fmt(r.exp)}</td>`).join('')}</tr>`;
+  indHtml += `<tr><td class="!pl-0">내수 소비</td>${recentInds.map(r => `<td class="text-right">${fmt(r.dom)}</td>`).join('')}</tr>`;
+  indHtml += `<tr><td class="!pl-0">재고(일)</td>${recentInds.map(r => `<td class="text-right">${r.inv ? r.inv.toFixed(1) : '-'}</td>`).join('')}</tr>`;
   indHtml += `</tbody></table>`;
   document.getElementById('cnIndicatorsTableWrap').innerHTML = indHtml;
 
   const latestNews = (typeof DATA_NEWS !== 'undefined' && DATA_NEWS.items && DATA_NEWS.items.length) ? DATA_NEWS.items[0] : null;
-  document.getElementById('cnNewsSummaryBox').textContent = latestNews ? `[${latestNews.title}]\n${latestNews.summary}` : '월보 요약 데이터 없음';
+  document.getElementById('cnNewsSummaryBox').innerHTML = latestNews ? `<b>${mdBold(latestNews.title)}</b>\n${mdBold(latestNews.summary)}` : '월보 요약이 아직 없습니다.';
 }
 
 // 다차원 추이 차트 (월별 / 분기별 / 반기별 / 연도별 자동 집계)
@@ -687,8 +750,8 @@ function getBucketKey(y, m, mode) {
 function renderOverviewCharts() {
   const mode = STATE.granularity;
   const labelName = mode === 'monthly' ? '월별' : mode === 'quarterly' ? '분기별' : mode === 'half' ? '반기별' : '연도별';
-  document.getElementById('chart1Title').textContent = `📊 [${labelName}] 중국산 vs 한국산(한솔·무림·한국제지) 수출 물량 비교 (실데이터)`;
-  document.getElementById('chart2Title').textContent = `💵 [${labelName}] 한국산 경쟁사별(한솔·무림·한국제지·무림+한국) FOB 단가 추이`;
+  document.getElementById('chart1Title').textContent = `수출 물량 · ${labelName}`;
+  document.getElementById('chart2Title').textContent = `한국산 FOB 단가 · ${labelName}`;
 
   const startYear = mode === 'yearly' ? 2020 : 2024;
   const buckets = {};
@@ -715,18 +778,19 @@ function renderOverviewCharts() {
     data: {
       labels: keys,
       datasets: [
-        { label: '중국산 수출(MT)', data: keys.map(k => Math.round(buckets[k].cn)), backgroundColor: 'rgba(239,68,68,0.65)', borderRadius: 3 },
-        { label: '한솔(MT)', data: keys.map(k => Math.round(buckets[k].hs)), backgroundColor: '#0066cc', borderRadius: 3 },
-        { label: '무림(MT)', data: keys.map(k => Math.round(buckets[k].mr)), backgroundColor: '#10b981', borderRadius: 3 },
-        { label: '한국/무림+한국(MT)', data: keys.map(k => Math.round(buckets[k].hk)), backgroundColor: '#f59e0b', borderRadius: 3 }
+        { label: '중국산', data: keys.map(k => Math.round(buckets[k].cn)), backgroundColor: C.cn, stack: 'cn' },
+        { label: '한솔', data: keys.map(k => Math.round(buckets[k].hs)), backgroundColor: C.kr, stack: 'kr' },
+        { label: '무림', data: keys.map(k => Math.round(buckets[k].mr)), backgroundColor: C.kr2, stack: 'kr' },
+        { label: '한국제지·무림+한국', data: keys.map(k => Math.round(buckets[k].hk)), backgroundColor: C.kr3, stack: 'kr' }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'top', labels: { font: { size: 10 }, boxWidth: 10 } } },
+      datasets: { bar: { categoryPercentage: 0.7, barPercentage: 0.92 } },
+      plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label} ${c.parsed.y.toLocaleString()} MT` } } },
       scales: {
-        y: { ticks: { callback: v => (v/1000).toFixed(0) + 'K', font: { size: 9 } } },
-        x: { ticks: { font: { size: 9 } } }
+        y: { stacked: true, beginAtZero: true, ticks: { maxTicksLimit: 5, callback: v => (v/1000).toFixed(0) + 'K' } },
+        x: { ...X_NOGRID, stacked: true }
       }
     }
   });
@@ -737,17 +801,18 @@ function renderOverviewCharts() {
     data: {
       labels: keys,
       datasets: [
-        { label: '한솔 FOB($)', data: keys.map(k => buckets[k].hs > 0 ? Math.round(buckets[k].hsAmt / buckets[k].hs) : null), borderColor: '#0066cc', borderWidth: 2.5, pointRadius: 3, tension: 0.25 },
-        { label: '무림 FOB($)', data: keys.map(k => buckets[k].mr > 0 ? Math.round(buckets[k].mrAmt / buckets[k].mr) : null), borderColor: '#10b981', borderWidth: 2.5, pointRadius: 3, tension: 0.25 },
-        { label: '한국/무림+한국 FOB($)', data: keys.map(k => buckets[k].hk > 0 ? Math.round(buckets[k].hkAmt / buckets[k].hk) : null), borderColor: '#f59e0b', borderWidth: 2.5, pointRadius: 3, tension: 0.25 }
+        { label: '한솔', data: keys.map(k => buckets[k].hs > 0 ? Math.round(buckets[k].hsAmt / buckets[k].hs) : null), borderColor: C.kr, backgroundColor: C.kr, borderWidth: 2 },
+        { label: '무림', data: keys.map(k => buckets[k].mr > 0 ? Math.round(buckets[k].mrAmt / buckets[k].mr) : null), borderColor: C.kr2, backgroundColor: C.kr2, borderWidth: 2 },
+        { label: '한국제지·무림+한국', data: keys.map(k => buckets[k].hk > 0 ? Math.round(buckets[k].hkAmt / buckets[k].hk) : null), borderColor: C.kr3, backgroundColor: C.kr3, borderWidth: 2 }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'top', labels: { font: { size: 10 }, boxWidth: 10 } } },
+      interaction: { mode: 'index', intersect: false },
+      plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label} $${c.parsed.y}` } } },
       scales: {
-        y: { ticks: { callback: v => '$' + v, font: { size: 9 } } },
-        x: { ticks: { font: { size: 9 } } }
+        y: { ticks: { maxTicksLimit: 5, callback: v => '$' + v } },
+        x: X_NOGRID
       }
     }
   });
@@ -840,28 +905,27 @@ function renderPivot() {
     if (keyword && matchedCountries.length === 0) return;
 
     const isExp = keyword ? true : !!STATE.expandedRegions[reg.region];
-    let diagBadge = `<span class="text-xs text-gray-400">안정</span>`;
-    if (reg.cnYoY > 10 && reg.krYoY < 0) diagBadge = `<span class="badge-warn">🚨 중국산 급증/한국 위축</span>`;
-    else if (reg.krYoY > 0) diagBadge = `<span class="badge-opp">✅ 한국산 수출 증가</span>`;
-    else if (reg.fob >= 950) diagBadge = `<span class="badge-opp">🛡️ 고단가 방어 권역</span>`;
+    let diagBadge = `<span class="text-xs text-[color:var(--muted)] font-normal">안정</span>`;
+    if (reg.cnYoY > 10 && reg.krYoY < 0) diagBadge = `<span class="badge-warn">중국산 급증, 한국 위축</span>`;
+    else if (reg.krYoY > 0) diagBadge = `<span class="badge-opp">한국산 증가</span>`;
+    else if (reg.fob >= 950) diagBadge = `<span class="badge-neutral">고단가 방어</span>`;
 
     html += `
       <tr class="reg-row border-b" onclick="toggleRegion('${reg.region}')">
-        <td class="pl-4 sticky left-0 bg-white z-10 border-r">
-          <span class="inline-block w-4 text-blue-600 font-bold">${isExp ? '▼' : '▶'}</span>
-          <span>🌏 ${reg.region}</span>
-          <span class="text-[11px] text-gray-400 font-normal ml-1">(${reg.countries.length}개국)</span>
+        <td class="pl-4 sticky left-0 bg-inherit z-10" aria-expanded="${isExp}">
+          <span class="inline-block w-4 text-[color:var(--muted)] font-normal" aria-hidden="true">${isExp ? '▾' : '▸'}</span>${reg.region}
+          <span class="text-xs text-[color:var(--muted)] font-normal ml-1">${reg.countries.length}개국</span>
         </td>
-        <td class="text-right cn-col font-semibold">${fmt(reg.cnCurr)}</td>
-        <td class="text-right cn-col text-gray-500">${fmt(reg.cnPrev)}</td>
-        <td class="text-right cn-col border-r ${reg.cnYoY >= 0 ? 'up-red' : 'dn-blue'}">${fmtPct(reg.cnYoY)}</td>
-        <td class="text-right kr-col font-bold">${fmt(reg.krCurr)}</td>
-        <td class="text-right kr-col ${reg.krYoY >= 0 ? 'up-red' : 'dn-blue'}">${fmtPct(reg.krYoY)}</td>
-        <td class="text-right kr-col text-blue-700">${fmt(reg.hsCurr)}</td>
-        <td class="text-right kr-col text-emerald-700">${fmt(reg.mrCurr)}</td>
-        <td class="text-right kr-col text-amber-700">${fmt(reg.hkCurr)}</td>
-        <td class="text-right kr-col border-r font-semibold">${reg.fob > 0 ? '$' + fmt(reg.fob) : '-'}</td>
-        <td class="text-center">${diagBadge}</td>
+        <td class="text-right grp-l">${fmt(reg.cnCurr)}</td>
+        <td class="text-right text-[color:var(--muted)] font-normal">${fmt(reg.cnPrev)}</td>
+        <td class="text-right ${tone(reg.cnYoY, false)}">${fmtPct(reg.cnYoY)}</td>
+        <td class="text-right grp-l">${fmt(reg.krCurr)}</td>
+        <td class="text-right ${tone(reg.krYoY, true)}">${fmtPct(reg.krYoY)}</td>
+        <td class="text-right font-normal">${fmt(reg.hsCurr)}</td>
+        <td class="text-right font-normal">${fmt(reg.mrCurr)}</td>
+        <td class="text-right font-normal">${fmt(reg.hkCurr)}</td>
+        <td class="text-right">${reg.fob > 0 ? '$' + fmt(reg.fob) : '-'}</td>
+        <td class="grp-l">${diagBadge}</td>
       </tr>
     `;
 
@@ -872,23 +936,20 @@ function renderPivot() {
         else if (cty.krYoY > 5 && cty.krCurr > 300) cBadge = `<span class="badge-opp">한국산 호조</span>`;
 
         html += `
-          <tr class="cty-row border-b cursor-pointer" onclick="focusCountry('${cty.name}')">
-            <td class="pl-9 sticky left-0 bg-[#fafbfc] z-10 border-r flex items-center justify-between">
-              <span>↳ 🏳️ <b>${cty.name}</b></span>
-              <span class="text-[10px] text-blue-500 hover:underline ml-2">📈추이</span>
-            </td>
-            <td class="text-right">${fmt(cty.cnCurr)}</td>
-            <td class="text-right text-gray-400">${fmt(cty.cnPrev)}</td>
-            <td class="text-right border-r ${cty.cnYoY >= 0 ? 'up-red' : 'dn-blue'}">${fmtPct(cty.cnYoY)}</td>
-            <td class="text-right font-semibold">${fmt(cty.krCurr)}</td>
-            <td class="text-right ${cty.krYoY >= 0 ? 'up-red' : 'dn-blue'}">${fmtPct(cty.krYoY)}</td>
-            <td class="text-right text-blue-600">${fmt(cty.hsCurr)}</td>
-            <td class="text-right text-emerald-600">${fmt(cty.mrCurr)}</td>
-            <td class="text-right text-amber-600">${fmt(cty.hkCurr)}</td>
-            <td class="text-right border-r">${cty.fob > 0 ? '$' + fmt(cty.fob) : '-'}</td>
-            <td class="text-center flex items-center justify-center gap-1.5">
-              ${cBadge}
-              <button onclick="event.stopPropagation(); addCountryToEmail('${cty.name}')" class="px-2 py-0.5 text-[11px] rounded bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white transition">📌 메일추가</button>
+          <tr class="cty-row ${cty.name === STATE.focusedCountry ? '!bg-[color:var(--active)]' : ''}" onclick="focusCountry('${cty.name}')">
+            <td class="pl-9 sticky left-0 bg-inherit z-10">${cty.name}</td>
+            <td class="text-right grp-l">${fmt(cty.cnCurr)}</td>
+            <td class="text-right text-[color:var(--muted)]">${fmt(cty.cnPrev)}</td>
+            <td class="text-right ${tone(cty.cnYoY, false)}">${fmtPct(cty.cnYoY)}</td>
+            <td class="text-right grp-l font-medium">${fmt(cty.krCurr)}</td>
+            <td class="text-right ${tone(cty.krYoY, true)}">${fmtPct(cty.krYoY)}</td>
+            <td class="text-right">${fmt(cty.hsCurr)}</td>
+            <td class="text-right">${fmt(cty.mrCurr)}</td>
+            <td class="text-right">${fmt(cty.hkCurr)}</td>
+            <td class="text-right">${cty.fob > 0 ? '$' + fmt(cty.fob) : '-'}</td>
+            <td class="grp-l">
+              <div class="flex items-center gap-2">${cBadge}
+              <button onclick="event.stopPropagation(); addCountryToEmail('${cty.name}')" class="row-action">메일 추가</button></div>
             </td>
           </tr>
         `;
@@ -910,7 +971,9 @@ function expandAllRegions(flag) {
 
 // 국가 클릭 시 실제 DATA_EXPORT & DATA_KR_COUNTRY 추이 차트 렌더링
 function focusCountry(ctyName) {
+  const changed = STATE.focusedCountry !== ctyName;
   STATE.focusedCountry = ctyName;
+  if (changed && document.getElementById('pivotBody').children.length) renderPivot();
   let found = null;
   CURRENT_PIVOT_DATA.forEach(r => r.countries.forEach(c => { if (c.name === ctyName) found = c; }));
 
@@ -937,15 +1000,29 @@ function focusCountry(ctyName) {
   const keys = Object.keys(buckets).sort().slice(-10);
 
   document.getElementById('detailTitle').textContent =
-    `🏳️ ${ctyName} (${found ? found.region : ''}) — 중국산 vs 한솔·무림·한국제지 수출량 및 FOB 단가 실데이터 추이`;
+    `${ctyName}${found ? ' · ' + found.region : ''}`;
 
   if (found) {
     document.getElementById('detailNarrative').innerHTML = `
-      <div class="font-bold text-gray-900 border-b pb-1.5">🤖 ${ctyName} 실데이터 자동 분석 (${STATE.year}년 ${STATE.mFrom}~${STATE.mTo}월)</div>
-      <p>• <b>[중국산 수출]</b> 당기 <b>${fmt(found.cnCurr)} MT</b> (전년동기 ${fmt(found.cnPrev)} MT 대비 <b class="${found.cnYoY>=0?'up-red':'dn-blue'}">${fmtPct(found.cnYoY)}</b>)</p>
-      <p>• <b>[한국산 경쟁사]</b> 한국 합계 <b>${fmt(found.krCurr)} MT (${fmtPct(found.krYoY)})</b> — 한솔 <b>${fmt(found.hsCurr)} MT</b> / 무림 <b>${fmt(found.mrCurr)} MT</b> / 한국·무림+한국 <b>${fmt(found.hkCurr)} MT</b></p>
-      <p>• <b>[단가 동향]</b> 해당 국가 한국산 평균 통관 FOB는 <b>${found.fob > 0 ? '$' + fmt(found.fob) + '/MT' : '실적 없음'}</b> 입니다.</p>
+      <h3 class="panel-title">${ctyName}, ${STATE.year}년 ${STATE.mFrom}–${STATE.mTo}월</h3>
+      <div>
+        <div class="text-xs text-[color:var(--muted)]">중국산</div>
+        <div class="num text-lg font-semibold">${fmt(found.cnCurr)}<span class="unit">MT</span></div>
+        <div class="text-xs text-[color:var(--muted)]"><span class="${tone(found.cnYoY, false)}">${fmtPct(found.cnYoY)}</span>, 전년 동기 ${fmt(found.cnPrev)} MT 대비</div>
+      </div>
+      <div>
+        <div class="text-xs text-[color:var(--muted)]">한국산</div>
+        <div class="num text-lg font-semibold">${fmt(found.krCurr)}<span class="unit">MT</span></div>
+        <div class="text-xs text-[color:var(--muted)]"><span class="${tone(found.krYoY, true)}">${fmtPct(found.krYoY)}</span>, 전년 동기 대비</div>
+        <div class="num text-xs text-[color:var(--muted)] mt-1">한솔 ${fmt(found.hsCurr)} · 무림 ${fmt(found.mrCurr)} · 한국·무림+한국 ${fmt(found.hkCurr)}</div>
+      </div>
+      <div>
+        <div class="text-xs text-[color:var(--muted)]">한국산 평균 FOB</div>
+        <div class="num text-lg font-semibold">${found.fob > 0 ? '$' + fmt(found.fob) + '<span class="unit">/MT</span>' : '<span class="text-[color:var(--muted)]">-</span>'}</div>
+      </div>
     `;
+  } else {
+    document.getElementById('detailNarrative').innerHTML = `<h3 class="panel-title">${ctyName}</h3><p class="text-[color:var(--muted)]">선택한 기간에 이 국가의 수출 실적이 없습니다.</p>`;
   }
 
   if (focusChartInstance) focusChartInstance.destroy();
@@ -954,19 +1031,21 @@ function focusCountry(ctyName) {
     data: {
       labels: keys,
       datasets: [
-        { label: '중국산(MT)', data: keys.map(k => Math.round(buckets[k].cn)), backgroundColor: 'rgba(239,68,68,0.65)', borderRadius: 3, yAxisID: 'y' },
-        { label: '한솔(MT)', data: keys.map(k => Math.round(buckets[k].hs)), backgroundColor: '#0066cc', borderRadius: 3, yAxisID: 'y' },
-        { label: '무림(MT)', data: keys.map(k => Math.round(buckets[k].mr)), backgroundColor: '#10b981', borderRadius: 3, yAxisID: 'y' },
-        { label: '한국/무림+한국(MT)', data: keys.map(k => Math.round(buckets[k].hk)), backgroundColor: '#f59e0b', borderRadius: 3, yAxisID: 'y' },
-        { label: '한국 평균 FOB($)', data: keys.map(k => buckets[k].krVol > 0 ? Math.round(buckets[k].krAmt / buckets[k].krVol) : null), type: 'line', borderColor: '#7c3aed', borderWidth: 2.5, pointRadius: 3, yAxisID: 'y1' }
+        { label: '중국산', data: keys.map(k => Math.round(buckets[k].cn)), backgroundColor: C.cn, stack: 'cn', yAxisID: 'y', order: 2 },
+        { label: '한솔', data: keys.map(k => Math.round(buckets[k].hs)), backgroundColor: C.kr, stack: 'kr', yAxisID: 'y', order: 2 },
+        { label: '무림', data: keys.map(k => Math.round(buckets[k].mr)), backgroundColor: C.kr2, stack: 'kr', yAxisID: 'y', order: 2 },
+        { label: '한국제지·무림+한국', data: keys.map(k => Math.round(buckets[k].hk)), backgroundColor: C.kr3, stack: 'kr', yAxisID: 'y', order: 2 },
+        { label: '한국 평균 FOB', data: keys.map(k => buckets[k].krVol > 0 ? Math.round(buckets[k].krAmt / buckets[k].krVol) : null), type: 'line', borderColor: C.other, backgroundColor: C.other, borderWidth: 2, yAxisID: 'y1', order: 1 }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'top', labels: { font: { size: 10 }, boxWidth: 10 } } },
+      datasets: { bar: { categoryPercentage: 0.7, barPercentage: 0.92 } },
+      plugins: { tooltip: { callbacks: { label: c => c.dataset.yAxisID === 'y1' ? `${c.dataset.label} $${c.parsed.y}` : `${c.dataset.label} ${c.parsed.y.toLocaleString()} MT` } } },
       scales: {
-        y: { position: 'left', beginAtZero: true, ticks: { font: { size: 9 } } },
-        y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: v => '$' + v, font: { size: 9 } } }
+        x: { ...X_NOGRID, stacked: true },
+        y: { position: 'left', stacked: true, beginAtZero: true, ticks: { maxTicksLimit: 5, callback: v => v >= 1000 ? (v/1000).toFixed(0) + 'K' : v } },
+        y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { maxTicksLimit: 5, callback: v => '$' + v } }
       }
     }
   });
@@ -1024,22 +1103,23 @@ function renderMapAndCapaChart() {
   const mills = Object.values(millGroups);
   mills.forEach(m => {
     if (!m.lat || !m.lng) return;
-    const color = m.region === 'South Korea' ? '#0066cc' : m.region === 'China' ? '#ef4444' : '#10b981';
+    const color = m.region === 'South Korea' ? C.kr : m.region === 'China' ? C.cn : C.other;
     const radius = Math.max(6, Math.min(16, Math.sqrt(m.capa / 10000) * 1.4));
     const circle = L.circleMarker([m.lat, m.lng], {
-      radius, fillColor: color, color: '#fff', weight: 1.5, fillOpacity: 0.85
+      radius, fillColor: color, color: '#fff', weight: 1.5, fillOpacity: 0.8
     }).addTo(markerLayer);
 
-    circle.bindTooltip(`<b>${m.company}</b> - ${m.mill} (${fmt(m.capa)} MT/Y)`, { direction: 'top' });
+    circle.bindTooltip(`<b>${m.company}</b> · ${m.mill} · ${fmt(m.capa)} MT/년`, { direction: 'top' });
     circle.on('click', () => showMillDetail(m));
   });
 
   if (mills.length > 0) showMillDetail(mills[0]);
 
   // 회사별 CAPA 순위 차트
-  const byCo = {};
+  const byCo = {}, coRegion = {};
   filtered.forEach(d => {
     byCo[d.company] = (byCo[d.company] || 0) + (d.capa_mty || 0);
+    coRegion[d.company] = d.region;
   });
   const sortedCo = Object.entries(byCo).sort((a,b) => b[1] - a[1]).slice(0, 10);
 
@@ -1050,16 +1130,16 @@ function renderMapAndCapaChart() {
       labels: sortedCo.map(x => x[0]),
       datasets: [{
         data: sortedCo.map(x => Math.round(x[1] / 1000)),
-        backgroundColor: '#0066cc',
-        borderRadius: 4
+        backgroundColor: sortedCo.map(x => coRegion[x[0]] === 'South Korea' ? C.kr : coRegion[x[0]] === 'China' ? C.cn : C.other),
+        barPercentage: 0.75
       }]
     },
     options: {
       indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      plugins: { tooltip: { callbacks: { label: c => `${c.parsed.x.toLocaleString()}천 톤/년` } } },
       scales: {
-        x: { ticks: { callback: v => v + 'K', font: { size: 9 } } },
-        y: { ticks: { font: { size: 9.5 } } }
+        x: { beginAtZero: true, ticks: { maxTicksLimit: 5, callback: v => v.toLocaleString() } },
+        y: { grid: { display: false }, ticks: { autoSkip: false, font: { size: 11 } } }
       }
     }
   });
@@ -1067,26 +1147,19 @@ function renderMapAndCapaChart() {
 
 function showMillDetail(m) {
   document.getElementById('millDetailCard').innerHTML = `
-    <div class="flex items-center justify-between border-b pb-2 mb-2.5">
+    <h3 class="panel-title">${m.mill}</h3>
+    <p class="text-xs text-[color:var(--muted)] mt-0.5">${m.company} · ${m.region}${m.desc ? ' · ' + m.desc : ''}</p>
+    <div class="grid grid-cols-2 gap-4 mt-4">
       <div>
-        <span class="text-[10px] font-bold text-blue-600 uppercase">${m.region} · ${m.desc || ''}</span>
-        <h3 class="text-sm font-bold text-gray-900">${m.mill}</h3>
+        <div class="text-xs text-[color:var(--muted)]">선택 지종 CAPA</div>
+        <div class="num text-lg font-semibold">${fmt(m.capa)}<span class="unit">MT/년</span></div>
       </div>
-      <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-full">${m.company}</span>
-    </div>
-    <div class="grid grid-cols-2 gap-2 mb-2.5 text-xs">
-      <div class="bg-white p-2 rounded-lg border">
-        <div class="text-gray-400 text-[10px]">선택 지종 CAPA</div>
-        <div class="text-sm font-extrabold text-blue-600">${fmt(m.capa)} MT/Y</div>
-      </div>
-      <div class="bg-white p-2 rounded-lg border">
-        <div class="text-gray-400 text-[10px]">자체 펄프 설비</div>
-        <div class="text-sm font-extrabold text-emerald-700">${m.pulp > 0 ? fmt(m.pulp) + ' MT/Y' : '외부 조달'}</div>
+      <div>
+        <div class="text-xs text-[color:var(--muted)]">자체 펄프</div>
+        <div class="num text-lg font-semibold">${m.pulp > 0 ? fmt(m.pulp) + '<span class="unit">MT/년</span>' : '<span class="text-[color:var(--muted)] font-normal text-sm">외부 조달</span>'}</div>
       </div>
     </div>
-    <div class="text-xs text-gray-600">
-      <b>생산 지종:</b> ${m.products.map(p => `<span class="inline-block bg-gray-200 text-gray-800 px-2 py-0.5 rounded text-[11px] mr-1 mt-1">${p}</span>`).join('')}
-    </div>
+    <div class="flex flex-wrap gap-1.5 mt-4">${m.products.map(p => `<span class="badge-neutral">${p}</span>`).join('')}</div>
   `;
 }
 
@@ -1264,15 +1337,11 @@ function renderCompCards() {
 
   const grid = document.getElementById('compCardGrid');
   grid.innerHTML = list.map(c => `
-    <div class="co-card ${c.id === STATE.selectedCompId ? 'selected' : ''}" onclick="selectCompetitor('${c.id}')">
-      <div class="flex items-center justify-between">
-        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">${c.country}</span>
-        <span class="text-[10px] text-gray-400">${c.listed ? '상장' : '비상장'}</span>
-      </div>
-      <div class="text-xs font-bold text-gray-900 mt-1.5 truncate" title="${c.name}">${c.name.split('(')[0].trim()}</div>
-      <div class="text-[11px] font-extrabold text-blue-600 mt-1">${c.capa_kt.toLocaleString()}K MT/Y</div>
-      <div class="text-[10px] text-gray-400 mt-0.5 truncate">${c.products.join(', ')}</div>
-    </div>
+    <button type="button" class="co-card ${c.id === STATE.selectedCompId ? 'selected' : ''}" aria-pressed="${c.id === STATE.selectedCompId}" onclick="selectCompetitor('${c.id}')">
+      <div class="text-[13px] font-semibold truncate" title="${c.name}">${c.name.split('(')[0].trim()}</div>
+      <div class="text-xs text-[color:var(--muted)] mt-0.5 truncate">${c.country} · ${c.listed ? '상장' : '비상장'}</div>
+      <div class="num text-[15px] font-semibold mt-2">${c.capa_kt.toLocaleString()}<span class="unit">천 톤</span></div>
+    </button>
   `).join('');
 }
 
@@ -1307,11 +1376,11 @@ function renderSelectedCompetitorView() {
   const c = DATA_COMPANIES.find(x => x.id === STATE.selectedCompId) || DATA_COMPANIES[0];
   const enriched = getCompEnriched(c);
 
-  document.getElementById('coPulpBadge').textContent = c.pulp_self ? '🌲 자체 펄프 보유' : '📦 외부 펄프 구매';
+  document.getElementById('coPulpBadge').textContent = c.pulp_self ? '자체 펄프' : '외부 펄프';
   const lk = c.links || {};
   let linkHtml = '';
-  if (lk.homepage) linkHtml += `<a href="${lk.homepage}" target="_blank" class="pill-btn text-[11px]">🌐 홈페이지</a>`;
-  if (lk.ir) linkHtml += `<a href="${lk.ir}" target="_blank" class="pill-btn text-[11px] !text-blue-600">📊 IR/공시 바로가기</a>`;
+  if (lk.homepage) linkHtml += `<a href="${lk.homepage}" target="_blank" rel="noopener" class="btn-text">홈페이지 ↗</a>`;
+  if (lk.ir) linkHtml += `<a href="${lk.ir}" target="_blank" rel="noopener" class="btn-text">IR·공시 ↗</a>`;
   document.getElementById('selectedCompLinks').innerHTML = linkHtml;
 
   const thead = document.getElementById('coFinThead');
@@ -1320,17 +1389,18 @@ function renderSelectedCompetitorView() {
 
   if (STATE.compSegMode === 'mix') {
     // 사업부문(지종/산업) 비중 뷰
-    document.getElementById('coFinTitle').textContent = `🏢 ${c.name} — 사업부문(인쇄용지 vs 산업·특수지·펄프) 포트폴리오 구조`;
-    document.getElementById('coFinSub').textContent = `보유 공장: ${c.mills.join(', ')} | 생산 지종: ${c.products.join(', ')}`;
+    document.getElementById('coFinTitle').textContent = `${c.name} · 사업부문 비중`;
+    document.getElementById('coFinSub').textContent = `공장 ${c.mills.join(', ')} · 지종 ${c.products.join(', ')}`;
+    document.getElementById('coFinLegend').innerHTML = '';
 
-    thead.innerHTML = `<tr><th class="p-2 text-left">사업부문 / 지종 구분</th><th class="p-2 text-right">매출 비중</th><th class="p-2 text-right">연간 매출(${c.currency})</th><th class="p-2 text-right">영업이익(${c.currency})</th><th class="p-2 text-left">주요 제품 및 경쟁력</th></tr>`;
+    thead.innerHTML = `<tr><th class="text-left !pl-0">사업부문</th><th class="text-right">비중</th><th class="text-right">매출 ${c.currency}</th><th class="text-right">영업이익 ${c.currency}</th><th class="text-left">특징</th></tr>`;
     tbody.innerHTML = enriched.segMix.map(s => `
       <tr>
-        <td class="p-2 font-bold text-gray-900">${s.seg}</td>
-        <td class="p-2 text-right font-semibold text-blue-600">${s.share}%</td>
-        <td class="p-2 text-right">${fmt(s.rev)}</td>
-        <td class="p-2 text-right text-emerald-700 font-semibold">${fmt(s.op)}</td>
-        <td class="p-2 text-gray-600">${s.desc}</td>
+        <td class="!pl-0 font-medium">${s.seg}</td>
+        <td class="text-right font-semibold">${s.share}%</td>
+        <td class="text-right">${fmt(s.rev)}</td>
+        <td class="text-right">${fmt(s.op)}</td>
+        <td class="text-[color:var(--muted)] !whitespace-normal min-w-[180px]">${s.desc}</td>
       </tr>
     `).join('');
 
@@ -1339,13 +1409,12 @@ function renderSelectedCompetitorView() {
       data: {
         labels: enriched.segMix.map(s => s.seg),
         datasets: [
-          { label: '매출 비중(%)', data: enriched.segMix.map(s => s.share), backgroundColor: ['#0066cc', '#10b981', '#f59e0b'], borderRadius: 5 }
+          { label: '매출 비중', data: enriched.segMix.map(s => s.share), backgroundColor: C.cn, barPercentage: 0.6 }
         ]
       },
       options: {
         indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { x: { max: 100, ticks: { callback: v => v + '%' } } }
+        scales: { x: { min: 0, max: 100, ticks: { stepSize: 25, callback: v => v + '%' } }, y: { grid: { display: false } } }
       }
     });
   } else {
@@ -1353,23 +1422,24 @@ function renderSelectedCompetitorView() {
     const rows = STATE.compPeriodMode === 'quarterly' ? enriched.quarterly : enriched.yearly;
     const isPrintOnly = STATE.compSegMode === 'printing';
     const periodLabel = STATE.compPeriodMode === 'quarterly' ? '분기별' : '연도별';
-    const scopeLabel = isPrintOnly ? '인쇄용지(Graphic/Cultural) 부문 단독' : '전사 연결 기준';
+    const scopeLabel = isPrintOnly ? '인쇄용지 부문' : '전사 연결';
 
-    document.getElementById('coFinTitle').textContent = `🏢 ${c.name} (${c.ticker}) — [${periodLabel}] ${scopeLabel} 실적 추이`;
-    document.getElementById('coFinSub').textContent = `통화 단위: ${c.currency} (백만/십억) | 인쇄용지 CAPA: ${c.capa_kt.toLocaleString()}K MT/Y (${c.mills.join(', ')})`;
+    document.getElementById('coFinTitle').textContent = `${c.name} · ${periodLabel} ${scopeLabel}`;
+    document.getElementById('coFinSub').textContent = `${c.ticker} · ${c.currency} · 인쇄용지 CAPA ${c.capa_kt.toLocaleString()}천 톤 (${c.mills.join(', ')})`;
+    document.getElementById('coFinLegend').innerHTML = `<span><i style="background:${C.soft}"></i>매출액</span><span><i style="background:${C.cn}"></i>영업이익</span>`;
 
-    thead.innerHTML = `<tr><th class="p-2 text-left">기간</th><th class="p-2 text-right">매출액(${c.currency})</th><th class="p-2 text-right">영업이익(${c.currency})</th><th class="p-2 text-right">영업이익률</th><th class="p-2 text-left">핵심 공시 및 시황 코멘트</th></tr>`;
+    thead.innerHTML = `<tr><th class="text-left !pl-0">기간</th><th class="text-right">매출 ${c.currency}</th><th class="text-right">영업이익 ${c.currency}</th><th class="text-right">이익률</th><th class="text-left">코멘트</th></tr>`;
     tbody.innerHTML = rows.map(r => {
       const rev = isPrintOnly ? r.printRev : r.totalRev;
       const op = isPrintOnly ? r.printOp : r.totalOp;
       const opm = rev > 0 ? ((op / rev) * 100).toFixed(1) + '%' : '-';
       return `
         <tr>
-          <td class="p-2 font-semibold">${r.p}</td>
-          <td class="p-2 text-right">${fmt(rev)}</td>
-          <td class="p-2 text-right ${op >= 0 ? 'text-blue-700 font-semibold' : 'text-red-600 font-semibold'}">${fmt(op)}</td>
-          <td class="p-2 text-right">${opm}</td>
-          <td class="p-2 text-gray-600">${r.note}</td>
+          <td class="!pl-0 font-medium">${r.p}</td>
+          <td class="text-right">${fmt(rev)}</td>
+          <td class="text-right font-semibold ${op < 0 ? 'up-red' : ''}">${fmt(op)}</td>
+          <td class="text-right">${opm}</td>
+          <td class="text-[color:var(--muted)] !whitespace-normal min-w-[180px]">${r.note}</td>
         </tr>
       `;
     }).join('');
@@ -1379,14 +1449,14 @@ function renderSelectedCompetitorView() {
       data: {
         labels: rows.map(r => r.p),
         datasets: [
-          { label: `${scopeLabel} 매출액`, data: rows.map(r => isPrintOnly ? r.printRev : r.totalRev), backgroundColor: '#0066cc', borderRadius: 4 },
-          { label: `${scopeLabel} 영업이익`, data: rows.map(r => isPrintOnly ? r.printOp : r.totalOp), backgroundColor: '#10b981', borderRadius: 4 }
+          { label: '매출액', data: rows.map(r => isPrintOnly ? r.printRev : r.totalRev), backgroundColor: C.soft },
+          { label: '영업이익', data: rows.map(r => isPrintOnly ? r.printOp : r.totalOp), backgroundColor: C.cn }
         ]
       },
       options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { position: 'top', labels: { font: { size: 10 }, boxWidth: 10 } } },
-        scales: { y: { ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 10 } } } }
+        datasets: { bar: { categoryPercentage: 0.6, barPercentage: 0.9 } },
+        scales: { y: { beginAtZero: true, ticks: { maxTicksLimit: 5, callback: v => v.toLocaleString() } }, x: X_NOGRID }
       }
     });
   }
@@ -1396,15 +1466,15 @@ function renderNewsFeed(cat) {
   const list = document.getElementById('newsFeedList');
   const items = cat === 'all' ? COMP_NEWS : COMP_NEWS.filter(n => n.cat === cat);
   list.innerHTML = items.map((n, idx) => `
-    <div class="bg-white p-3 rounded-lg border hover:border-blue-300 transition">
-      <div class="flex items-center justify-between text-[11px] text-gray-400 mb-1">
-        <span>📅 ${n.date} · <b class="text-blue-600">${n.comp}</b> (${n.cat})</span>
-        <button onclick="addNewsToEmail(${idx})" class="px-2 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white font-semibold">📌 메일추가</button>
+    <article class="py-3 border-b border-[color:var(--rule)] last:border-0 first:pt-0">
+      <div class="flex items-center justify-between gap-3 text-xs text-[color:var(--muted)] mb-1">
+        <span class="num">${n.date} · ${n.comp}</span>
+        <button onclick="addNewsToEmail(${COMP_NEWS.indexOf(n)})" class="row-action">메일 추가</button>
       </div>
-      <div class="text-xs font-bold text-gray-900 mb-1">${n.title}</div>
-      <div class="text-xs text-gray-600 leading-relaxed">${n.summary}</div>
-    </div>
-  `).join('');
+      <h4 class="text-[13px] font-semibold leading-snug mb-1">${n.title}</h4>
+      <p class="text-[13px] text-[color:var(--muted)] leading-relaxed">${n.summary}</p>
+    </article>
+  `).join('') || '<p class="text-[13px] text-[color:var(--muted)]">이 분류의 동향이 없습니다.</p>';
 }
 
 function filterNews(cat, btn) {
@@ -1423,32 +1493,36 @@ function syncEmailTableFromRealData() {
 
   const latestNews = (typeof DATA_NEWS !== 'undefined' && DATA_NEWS.items && DATA_NEWS.items.length) ? DATA_NEWS.items[0] : null;
   document.getElementById('emailSupplySummary').innerHTML = `
-    <p class="whitespace-pre-line">${latestNews ? latestNews.summary : '중국 내수 수급 및 가격 변동성이 지속되고 있습니다.'}</p>
+    <p class="whitespace-pre-line">${latestNews ? mdBold(latestNews.summary) : '중국 내수 수급 및 가격 변동성이 지속되고 있습니다.'}</p>
   `;
 
-  let tbl = `<table class="w-full text-xs border-collapse border border-gray-300"><thead class="bg-gray-100"><tr>
-    <th class="border p-1.5 text-left">권역</th>
-    <th class="border p-1.5 text-right">중국산 당기(MT)</th>
-    <th class="border p-1.5 text-right">중국산 YoY</th>
-    <th class="border p-1.5 text-right">한국산 합계(MT)</th>
-    <th class="border p-1.5 text-right">한국산 YoY</th>
-    <th class="border p-1.5 text-right">한솔(MT)</th>
-    <th class="border p-1.5 text-right">무림(MT)</th>
-    <th class="border p-1.5 text-right">한국/무림+한국</th>
-    <th class="border p-1.5 text-right">평균 FOB($)</th>
+  // Outlook으로 복사되므로 클래스 대신 인라인 스타일
+  const TH = 'style="border:1px solid #d4d4d2;padding:6px 8px;background:#f4f4f2;font-weight:600;text-align:right;white-space:nowrap"';
+  const TD = 'style="border:1px solid #d4d4d2;padding:6px 8px;text-align:right;white-space:nowrap"';
+  const tc = (n, up) => { const t = tone(n, up); return t === 'up-red' ? '#c4242a' : t === 'dn-blue' ? '#247b50' : '#626262'; };
+  let tbl = `<table style="border-collapse:collapse;font-size:12px;width:100%"><thead><tr>
+    <th ${TH.replace('text-align:right','text-align:left')}>권역</th>
+    <th ${TH}>중국산 당기(MT)</th>
+    <th ${TH}>중국산 YoY</th>
+    <th ${TH}>한국산 합계(MT)</th>
+    <th ${TH}>한국산 YoY</th>
+    <th ${TH}>한솔(MT)</th>
+    <th ${TH}>무림(MT)</th>
+    <th ${TH}>한국·무림+한국</th>
+    <th ${TH}>평균 FOB($)</th>
   </tr></thead><tbody>`;
 
   CURRENT_PIVOT_DATA.slice(0, 6).forEach(r => {
     tbl += `<tr>
-      <td class="border p-1.5 font-semibold">${r.region}</td>
-      <td class="border p-1.5 text-right">${fmt(r.cnCurr)}</td>
-      <td class="border p-1.5 text-right ${r.cnYoY>=0?'text-red-600':'text-blue-600'} font-semibold">${fmtPct(r.cnYoY)}</td>
-      <td class="border p-1.5 text-right font-semibold">${fmt(r.krCurr)}</td>
-      <td class="border p-1.5 text-right ${r.krYoY>=0?'text-red-600':'text-blue-600'}">${fmtPct(r.krYoY)}</td>
-      <td class="border p-1.5 text-right">${fmt(r.hsCurr)}</td>
-      <td class="border p-1.5 text-right">${fmt(r.mrCurr)}</td>
-      <td class="border p-1.5 text-right">${fmt(r.hkCurr)}</td>
-      <td class="border p-1.5 text-right">${r.fob > 0 ? '$' + fmt(r.fob) : '-'}</td>
+      <td ${TD.replace('text-align:right','text-align:left;font-weight:600')}>${r.region}</td>
+      <td ${TD}>${fmt(r.cnCurr)}</td>
+      <td ${TD.replace('"', '"color:' + tc(r.cnYoY, false) + ';')}>${fmtPct(r.cnYoY)}</td>
+      <td ${TD.replace('"', '"font-weight:600;')}>${fmt(r.krCurr)}</td>
+      <td ${TD.replace('"', '"color:' + tc(r.krYoY, true) + ';')}>${fmtPct(r.krYoY)}</td>
+      <td ${TD}>${fmt(r.hsCurr)}</td>
+      <td ${TD}>${fmt(r.mrCurr)}</td>
+      <td ${TD}>${fmt(r.hkCurr)}</td>
+      <td ${TD}>${r.fob > 0 ? '$' + fmt(r.fob) : '-'}</td>
     </tr>`;
   });
   tbl += `</tbody></table>`;
@@ -1463,7 +1537,7 @@ function initEmailPinnedDefaults() {
     addCountryToEmail(topC.name, true);
   }
   const li = document.createElement('li');
-  li.innerHTML = `<b>[경쟁사 동향 - 한국제지/Sappi/Burgo/Sun Paper]</b> 중국 대형 밀(Sun Paper, APP)의 동남아·인도향 수출 오퍼 확대 속, 유럽(Sappi·Burgo) 및 한국(한솔·무림·한국제지) 제지사는 고단가 권역 중심으로 수익성 방어 전략을 지속 중입니다.`;
+  li.innerHTML = `<b>[경쟁사 동향: 한국제지·Sappi·Burgo·Sun Paper]</b> 중국 대형 밀(Sun Paper, APP)의 동남아·인도향 수출 오퍼 확대 속, 유럽(Sappi·Burgo) 및 한국(한솔·무림·한국제지) 제지사는 고단가 권역 중심으로 수익성 방어 전략을 지속 중입니다.`;
   ul.appendChild(li);
   updatePinBadge();
 }
@@ -1479,10 +1553,10 @@ function addCountryToEmail(ctyName, silent = false) {
   if (!found) return;
   const ul = document.getElementById('emailPinnedList');
   const li = document.createElement('li');
-  li.innerHTML = `<b>[${found.name} (${found.region})]</b> 중국산 수출 ${fmt(found.cnCurr)} MT(YoY ${fmtPct(found.cnYoY)}) 대비 한국산 합계 ${fmt(found.krCurr)} MT(YoY ${fmtPct(found.krYoY)}) 기록 — 한솔 ${fmt(found.hsCurr)} MT / 무림 ${fmt(found.mrCurr)} MT / 한국·무림+한국 ${fmt(found.hkCurr)} MT, 평균 FOB ${found.fob > 0 ? '$' + fmt(found.fob) + '/MT' : '-'}`;
+  li.innerHTML = `<b>[${found.name} (${found.region})]</b> 중국산 수출 ${fmt(found.cnCurr)} MT(YoY ${fmtPct(found.cnYoY)}) 대비 한국산 합계 ${fmt(found.krCurr)} MT(YoY ${fmtPct(found.krYoY)}) 기록. 한솔 ${fmt(found.hsCurr)} MT / 무림 ${fmt(found.mrCurr)} MT / 한국·무림+한국 ${fmt(found.hkCurr)} MT, 평균 FOB ${found.fob > 0 ? '$' + fmt(found.fob) + '/MT' : '-'}`;
   ul.appendChild(li);
   updatePinBadge();
-  if (!silent) showToast(`📌 [${found.name}] 실데이터 분석 문구가 메일 초안에 추가되었습니다!`);
+  if (!silent) showToast(`${found.name} 문구를 메일 초안에 추가했습니다.`);
 }
 
 function addNewsToEmail(idx) {
@@ -1490,10 +1564,10 @@ function addNewsToEmail(idx) {
   if (!n) return;
   const ul = document.getElementById('emailPinnedList');
   const li = document.createElement('li');
-  li.innerHTML = `<b>[경쟁사 동향 - ${n.comp}]</b> ${n.title} — ${n.summary}`;
+  li.innerHTML = `<b>[경쟁사 동향: ${n.comp}]</b> ${n.title}. ${n.summary}`;
   ul.appendChild(li);
   updatePinBadge();
-  showToast(`📌 [${n.comp}] 동향이 Page 1 메일 초안에 추가되었습니다!`);
+  showToast(`${n.comp} 동향을 메일 초안에 추가했습니다.`);
 }
 
 // 페이지 전환 (Page 1 <-> Page 2)
@@ -1528,7 +1602,7 @@ function toggleSupplyDrawer() {
   const el = document.getElementById('supply-drawer');
   const arrow = document.getElementById('drawer-arrow');
   el.classList.toggle('hidden');
-  arrow.textContent = el.classList.contains('hidden') ? '▼' : '▲';
+  arrow.textContent = el.classList.contains('hidden') ? '▾' : '▴';
 }
 
 function copyEmailRich() {
@@ -1536,13 +1610,13 @@ function copyEmailRich() {
   const blobHtml = new Blob([area.innerHTML], { type: 'text/html' });
   const blobText = new Blob([area.innerText], { type: 'text/plain' });
   navigator.clipboard.write([new ClipboardItem({ 'text/html': blobHtml, 'text/plain': blobText })]).then(() => {
-    showToast('📋 아웃룩(Outlook) 서식 그대로 클립보드에 복사되었습니다!');
+    showToast('Outlook 서식으로 복사했습니다.');
   });
 }
 
 function copyEmailPlain() {
   navigator.clipboard.writeText(document.getElementById('emailEditorArea').innerText).then(() => {
-    showToast('📄 텍스트 본문이 클립보드에 복사되었습니다!');
+    showToast('텍스트로 복사했습니다.');
   });
 }
 
