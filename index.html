@@ -6,8 +6,10 @@
 <title>인쇄용지 수출·경쟁사 대시보드</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- 지도: Leaflet과 국가 경계를 저장소에 포함 (외부 타일 서버·CDN 없이 동작) -->
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css"/>
+<script src="vendor/leaflet/leaflet.js"></script>
+<script src="vendor/topojson-client.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.css">
 <!-- 실제 data.js 로드 -->
 <script src="data.js"></script>
@@ -105,7 +107,9 @@ body { background: var(--ground); color: var(--text); -webkit-font-smoothing: an
 [contenteditable="true"]:hover { background: var(--raised); }
 [contenteditable="true"]:focus { outline: 2px solid var(--text); outline-offset: 2px; background: var(--surface); }
 
-.leaflet-container { font-family: 'Pretendard', system-ui, sans-serif; background: #e9e9e7; }
+.leaflet-container { font-family: 'Pretendard', system-ui, sans-serif; background: #e6e9eb; }
+.country-label { width: 0 !important; height: 0 !important; }
+.country-label span { display: block; transform: translate(-50%, -50%); font-size: 12px; font-weight: 500; color: #8a8a8a; white-space: nowrap; letter-spacing: 0.02em; }
 .leaflet-tooltip.mill-label { background: rgba(255,255,255,.92); border: 0; box-shadow: none; padding: 1px 5px; font-size: 11px; font-weight: 500; color: var(--text); border-radius: 3px; }
 .leaflet-tooltip.mill-label::before { display: none; }
 
@@ -1094,23 +1098,62 @@ function focusCountry(ctyName) {
 // ============================================================================
 // 4. Page 2: 마켓맵 (실제 DATA_CAPA 45개 설비 연동 + 지종 필터)
 // ============================================================================
+// 지도 바탕: 외부 타일 대신 저장소의 Natural Earth 국가 경계(vendor/world-50m.js)를 직접 그림
+let countryLayer = null, countryLabelLayer = null;
+const COUNTRY_LABEL_AT = {
+  'China': [34.5, 103.5], 'South Korea': [36.3, 128.1], 'Japan': [34.0, 143.2], 'Taiwan': [23.7, 120.95],
+  'Thailand': [15.5, 101.0], 'Indonesia': [-2.2, 113.5], 'India': [22.5, 79.0], 'Germany': [51.0, 10.3],
+  'Austria': [47.6, 14.2], 'Sweden': [62.5, 15.8], 'Finland': [63.5, 26.5], 'Netherlands': [52.3, 5.6], 'Belgium': [50.6, 4.6]
+};
+
 function initMarketMap() {
-  leafletMap = L.map('millMap').setView([28.0, 105.0], 3);
-  // CARTO 베이스맵은 API 키 없이는 'API KEY REQUIRED' 워터마크 타일을 반환 → 키 불필요한 Esri Light Gray로 교체
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 16,
-    attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors'
-  }).addTo(leafletMap);
-  // Light Gray Base는 지명이 없는 바탕 타일 → 국가·도시 이름은 Reference 레이어를 위에 겹쳐 표시
-  leafletMap.createPane('labels');
-  leafletMap.getPane('labels').style.zIndex = 350;  // 바탕(200) 위, 공장 마커(400) 아래
-  leafletMap.getPane('labels').style.pointerEvents = 'none';
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 16, pane: 'labels'
-  }).addTo(leafletMap);
-  setTimeout(() => leafletMap.invalidateSize(), 100);
+  leafletMap = L.map('millMap', { minZoom: 2, maxZoom: 9, worldCopyJump: true, zoomSnap: 0.5 }).setView([28.0, 105.0], 3);
+  leafletMap.attributionControl.setPrefix(false);
+  leafletMap.attributionControl.addAttribution('경계 © Natural Earth');
+  leafletMap.createPane('countries');  leafletMap.getPane('countries').style.zIndex = 200;
+  leafletMap.createPane('countryLabels'); leafletMap.getPane('countryLabels').style.zIndex = 350;
+  leafletMap.getPane('countryLabels').style.pointerEvents = 'none';
   markerLayer = L.layerGroup().addTo(leafletMap);
+  countryLabelLayer = L.layerGroup().addTo(leafletMap);
+  leafletMap.on('zoomend', updateCountryLabels);
+
+  const draw = () => {
+    if (typeof topojson === 'undefined' || !window.WORLD_50M) return;
+    const geo = topojson.feature(window.WORLD_50M, window.WORLD_50M.objects.countries);
+    countryLayer = L.geoJSON(geo, { pane: 'countries', renderer: L.canvas({ pane: 'countries', padding: 0.5 }), interactive: false,
+      style: () => ({ color: '#cfcfcb', weight: 0.7, fillColor: '#fbfbfa', fillOpacity: 1 }) }).addTo(leafletMap);
+    styleCountries();
+  };
+  // 76만 자 경계 데이터는 2페이지를 처음 열 때만 불러옴
+  if (window.WORLD_50M) draw();
+  else { const sc = document.createElement('script'); sc.src = 'vendor/world-50m.js'; sc.onload = draw;
+    sc.onerror = () => showToast('국가 경계 데이터를 불러오지 못했습니다. 공장 위치는 그대로 표시됩니다.'); document.head.appendChild(sc); }
+
+  setTimeout(() => leafletMap.invalidateSize(), 100);
   renderMapAndCapaChart();
+}
+
+// 현재 필터의 국가는 한 단계 진하게, 국가 이름은 공장이 있는 나라만 한글로
+function styleCountries() {
+  const shown = new Set((STATE._shownCountries || []));
+  if (countryLayer) countryLayer.setStyle(f => ({
+    color: '#cfcfcb', weight: 0.7, fillOpacity: 1,
+    fillColor: shown.has(f.properties.name) ? '#efefec' : '#fbfbfa'
+  }));
+  updateCountryLabels();
+}
+function updateCountryLabels() {
+  if (!countryLabelLayer) return;
+  countryLabelLayer.clearLayers();
+  const z = leafletMap.getZoom();
+  (STATE._shownCountries || []).forEach(c => {
+    const at = COUNTRY_LABEL_AT[c];
+    // 공장 이름표가 붙어 있을 때와 확대했을 때는 나라 이름을 숨겨 겹치지 않게, 작은 나라는 4.5 이상에서만
+    const small = ['South Korea', 'Taiwan', 'Netherlands', 'Belgium', 'Austria'].includes(c);
+    if (!at || STATE._millLabels || z > 5.5 || (small && z < 4.5)) return;
+    L.marker(at, { pane: 'countryLabels', interactive: false,
+      icon: L.divIcon({ className: 'country-label', html: `<span>${countryKo(c)}</span>`, iconSize: null }) }).addTo(countryLabelLayer);
+  });
 }
 
 // DATA_CAPA의 회사명 → 14개 경쟁사 id (CAPA 원본은 법인명·자회사명이 달라 그대로는 연결이 안 됨)
@@ -1205,6 +1248,12 @@ function renderMapAndCapaChart() {
   const mills = Object.values(millGroups).sort((a, b) => b.capa - a.capa);
   const located = mills.filter(m => m.lat && m.lng);
   const labelAll = located.length <= 12;   // 적을 때는 공장 이름을 지도에 상시 표기
+  // 걸러낸 공장에 맞춰 지도 범위를 먼저 옮긴 뒤, 그 화면의 픽셀 위치로 이름표 자리를 정함
+  if (located.length) {
+    const b = L.latLngBounds(located.map(m => [m.lat, m.lng]));
+    leafletMap.fitBounds(b, { padding: [48, 48], maxZoom: located.length === 1 ? 8 : 7, animate: false });
+  }
+  STATE._millLabels = labelAll;
   const markers = {}, placed = [];
   located.forEach(m => {
     const radius = Math.max(6, Math.min(16, Math.sqrt(m.capa / 10000) * 1.4));
@@ -1212,23 +1261,24 @@ function renderMapAndCapaChart() {
       radius, fillColor: regionColor(m.region), color: '#fff', weight: 1.5, fillOpacity: 0.8
     }).addTo(markerLayer);
     const short = MILL_KO[m.mill] || m.mill.replace(/ Mill$/, '').replace(/ \(.*\)/, '');
-    // 바로 옆 공장의 이름표가 오른쪽에 있으면 이번 이름표는 왼쪽으로
-    const near = placed.find(o => Math.abs(o.lat - m.lat) < 0.6 && Math.abs(o.lng - m.lng) < 0.6 && o.dir === 'right');
-    const dir = near ? 'left' : 'right';
-    placed.push({ lat: m.lat, lng: m.lng, dir });
-    circle.bindTooltip(labelAll ? short : `<b>${m.company}</b> · ${m.mill} · ${fmt(m.capa)} MT/년`,
-      labelAll ? { permanent: true, direction: dir, offset: [dir === 'right' ? radius : -radius, 0], className: 'mill-label' } : { direction: 'top' });
+    // 이름표 상자(대략 글자 수 × 7px)가 먼저 놓인 이름표와 겹치지 않는 쪽을 고르고, 양쪽 다 막히면 마우스를 올릴 때만 표시
+    const pt = leafletMap.latLngToContainerPoint([m.lat, m.lng]);
+    const w = short.length * 7 + 12, hgt = 18;
+    const box = d => d === 'right' ? { x1: pt.x + radius + 2, x2: pt.x + radius + 2 + w } : { x1: pt.x - radius - 2 - w, x2: pt.x - radius - 2 };
+    const free = d => { const bx = box(d); return !placed.some(o => bx.x1 < o.x2 && o.x1 < bx.x2 && Math.abs(o.y - pt.y) < hgt); };
+    const dir = !labelAll ? null : free('right') ? 'right' : free('left') ? 'left' : null;
+    if (dir) placed.push({ ...box(dir), y: pt.y });
+    const full = `<b>${m.company}</b> · ${m.mill} · ${fmt(m.capa)} MT/년`;
+    circle.bindTooltip(dir ? short : full,
+      dir ? { permanent: true, direction: dir, offset: [dir === 'right' ? radius : -radius, 0], className: 'mill-label' } : { direction: 'top' });
     circle.on('click', () => showMillDetail(m));
     markers[m.mill] = circle;
   });
   STATE._millMarkers = markers;
 
-  // 걸러낸 공장에 맞춰 지도 범위 이동
-  if (located.length) {
-    const b = L.latLngBounds(located.map(m => [m.lat, m.lng]));
-    leafletMap.fitBounds(b, { padding: [40, 40], maxZoom: located.length === 1 ? 8 : 7 });
-  }
 
+  STATE._shownCountries = [...new Set(mills.map(m => m.region))];
+  styleCountries();
   const capaSum = mills.reduce((t, m) => t + m.capa, 0);
   document.getElementById('mapSummary').innerHTML = mills.length
     ? `공장 ${mills.length}곳 · CAPA 합계 <span class="num">${fmt(capaSum / 1000)}</span>천 톤/년${mills.length > located.length ? ` · 좌표 없음 ${mills.length - located.length}곳` : ''} · 원의 크기는 CAPA`
