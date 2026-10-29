@@ -11,6 +11,8 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.css">
 <!-- 실제 data.js 로드 -->
 <script src="data.js"></script>
+<!-- 경쟁사 공시·뉴스 (주차별 헤드라인) -->
+<script src="news.js"></script>
 <style>
 /* Achromatic ledger: 크롬은 무채색, 데이터에만 색. 한국산 = --kr(파랑 3단계), 중국산 = 잉크, 기타 = 회색 */
 :root {
@@ -468,14 +470,20 @@ body { background: var(--ground); color: var(--text); -webkit-font-smoothing: an
         </div>
 
         <div class="panel">
-          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
             <h3 class="panel-title">경쟁사 동향</h3>
-            <div class="seg" role="group" aria-label="뉴스 분류">
-              <button class="pill-btn active" onclick="filterNews('all', this)">전체</button>
-              <button class="pill-btn" onclick="filterNews('한국', this)">한국</button>
-              <button class="pill-btn" onclick="filterNews('유럽', this)">유럽</button>
-              <button class="pill-btn" onclick="filterNews('중국', this)">중국</button>
+            <div class="flex items-center gap-2">
+              <label for="newsWeek" class="sr-only">주차</label>
+              <select id="newsWeek" onchange="STATE.newsWeek = this.value; renderNewsFeed()" class="field"></select>
+              <button onclick="addWeekHeadlinesToEmail()" class="pill-btn">주간 헤드라인 메일에 추가</button>
             </div>
+          </div>
+          <div class="seg scroll-row max-w-full mb-3" role="group" aria-label="뉴스 분류">
+            <button class="pill-btn active" onclick="filterNews('all', this)">전체</button>
+            <button class="pill-btn" onclick="filterNews('한국', this)">한국</button>
+            <button class="pill-btn" onclick="filterNews('중국', this)">중국</button>
+            <button class="pill-btn" onclick="filterNews('유럽', this)">유럽</button>
+            <button class="pill-btn" onclick="filterNews('일본', this)">일본</button>
           </div>
           <div id="newsFeedList" class="max-h-[520px] overflow-y-auto"></div>
         </div>
@@ -530,7 +538,9 @@ const STATE = {
   compCountryFilter: 'all',
   selectedCompId: 'hankuk',
   compPeriodMode: 'quarterly', // quarterly | yearly
-  compSegMode: 'total' // total | printing | mix
+  compSegMode: 'total', // total | printing | mix
+  newsWeek: 'all',
+  newsCat: 'all'
 };
 
 let overviewTrendChart = null;
@@ -1288,13 +1298,28 @@ const COMP_ENRICHED_DB = {
   }
 };
 
-const COMP_NEWS = [
+const LEGACY_NEWS = [
   { date: "2026-06-18", cat: "중국", comp: "Sun Paper (태양지업)", title: "중국 태양지업, 광시 베이하이 기지 인쇄용지 동남아 직수출 오퍼 확대", summary: "중국 내수 비수기에 대응해 베이하이 공장의 베트남·태국향 코트지/백상지 수출 물량을 전월 대비 15% 확대하며 FOB 단가 하방 압력 가중." },
   { date: "2026-06-15", cat: "한국", comp: "한국제지 (Hankuk Paper)", title: "[DART/수출동향] 한국제지·무림 울산항 합산 수출 물량, 미주·호주 중심 단가 방어", summary: "관세청 통계상 울산항 합산(무림+한국) 물량이 동남아 저가 오퍼 대신 북미·오세아니아 및 고평량 지종 위주로 수익성 방어에 집중." },
   { date: "2026-06-11", cat: "유럽", comp: "Sappi / Burgo", title: "유럽 Sappi 및 Burgo Group, 그래픽용지 설비 가동률 조절로 역내 판가 방어", summary: "유럽 내 인쇄용지 수요 둔화 속에서도 Gratkorn(Sappi) 및 Virton(Burgo) 등 주력 코트지 밀의 공급 조절을 통해 EUR 기준 판가 하락을 억제." },
   { date: "2026-06-05", cat: "한국", comp: "한솔제지 (Hansol)", title: "한솔제지, 인쇄·산업·특수지 3대 사업부문 균형 포트폴리오로 수출 변동성 극복", summary: "중국산 밀어내기가 심한 동남아 일반 아트지 비중을 조절하고 미국·호주 프로그램 물량 및 감열지/산업용지 수익성으로 전사 영업이익 방어." },
   { date: "2026-05-28", cat: "중국", comp: "APP / Chenming", title: "APP 진장(Gold East) 수출 밀어내기 지속 vs 천밍(Chenming) 유동성 이슈로 가동 축소", summary: "중국 내 제지사 간 양극화가 심화되며 대형 일관화 밀(APP, Sun)의 인도·중동향 수출 집중 현상이 두드러짐." }
 ];
+// news.js(출처 링크 포함) + 기존 정리 항목, 최신순
+const COMP_NEWS = [...(typeof DATA_COMP_NEWS !== 'undefined' ? DATA_COMP_NEWS : []), ...LEGACY_NEWS]
+  .sort((a, b) => b.date.localeCompare(a.date));
+
+// 월요일 시작 주차: { key: '2026-W44', label: '2026년 44주차 (10.26–11.01)' }
+function weekOf(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00Z');
+  const mon = new Date(d); mon.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  const sun = new Date(mon); sun.setUTCDate(mon.getUTCDate() + 6);
+  const thu = new Date(mon); thu.setUTCDate(mon.getUTCDate() + 3);
+  const y = thu.getUTCFullYear();
+  const wk = Math.floor((thu - Date.UTC(y, 0, 1)) / 86400000 / 7) + 1;
+  const md = x => `${String(x.getUTCMonth() + 1).padStart(2, '0')}.${String(x.getUTCDate()).padStart(2, '0')}`;
+  return { key: `${y}-W${String(wk).padStart(2, '0')}`, label: `${y}년 ${wk}주차 (${md(mon)}–${md(sun)})` };
+}
 
 function getCompEnriched(compObj) {
   if (COMP_ENRICHED_DB[compObj.id]) return COMP_ENRICHED_DB[compObj.id];
@@ -1324,7 +1349,7 @@ function getCompEnriched(compObj) {
 function initCompetitors() {
   renderCompCards();
   selectCompetitor(STATE.selectedCompId);
-  renderNewsFeed('all');
+  renderNewsFeed();
 }
 
 function filterCompCountry(filterVal, btn) {
@@ -1469,10 +1494,24 @@ function renderSelectedCompetitorView() {
   }
 }
 
-function renderNewsFeed(cat) {
+function newsInView() {
+  return COMP_NEWS.filter(n => (STATE.newsWeek === 'all' || weekOf(n.date).key === STATE.newsWeek)
+    && (STATE.newsCat === 'all' || n.cat === STATE.newsCat));
+}
+
+function renderNewsFeed() {
+  const sel = document.getElementById('newsWeek');
+  if (!sel.options.length) {
+    const weeks = [];
+    COMP_NEWS.forEach(n => { const w = weekOf(n.date); if (!weeks.find(x => x.key === w.key)) weeks.push(w); });
+    sel.innerHTML = weeks.map(w => `<option value="${w.key}">${w.label} · ${COMP_NEWS.filter(n => weekOf(n.date).key === w.key).length}건</option>`).join('')
+      + `<option value="all">전체 기간</option>`;
+    STATE.newsWeek = weeks.length ? weeks[0].key : 'all';
+    sel.value = STATE.newsWeek;
+  }
   const list = document.getElementById('newsFeedList');
-  const items = cat === 'all' ? COMP_NEWS : COMP_NEWS.filter(n => n.cat === cat);
-  list.innerHTML = items.map((n, idx) => `
+  const items = newsInView();
+  list.innerHTML = items.map(n => `
     <article class="py-3 border-b border-[color:var(--rule)] last:border-0 first:pt-0">
       <div class="flex items-center justify-between gap-3 text-xs text-[color:var(--muted)] mb-1">
         <span class="num">${n.date} · ${n.comp}</span>
@@ -1480,14 +1519,29 @@ function renderNewsFeed(cat) {
       </div>
       <h4 class="text-[13px] font-semibold leading-snug mb-1">${n.title}</h4>
       <p class="text-[13px] text-[color:var(--muted)] leading-relaxed">${n.summary}</p>
+      ${n.url ? `<a href="${n.url}" target="_blank" rel="noopener" class="inline-block text-xs text-[color:var(--muted)] mt-1 hover:underline">출처 · ${n.source || '원문'} ↗</a>` : ''}
     </article>
-  `).join('') || '<p class="text-[13px] text-[color:var(--muted)]">이 분류의 동향이 없습니다.</p>';
+  `).join('') || '<p class="text-[13px] text-[color:var(--muted)]">이 주차·분류의 동향이 없습니다.</p>';
 }
 
 function filterNews(cat, btn) {
   btn.parentElement.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  renderNewsFeed(cat);
+  STATE.newsCat = cat;
+  renderNewsFeed();
+}
+
+// 선택한 주차(와 분류)의 헤드라인을 메일 초안 3번 항목에 한 줄씩 추가
+function addWeekHeadlinesToEmail() {
+  const items = newsInView();
+  if (!items.length) return showToast('추가할 헤드라인이 없습니다.');
+  const ul = document.getElementById('emailPinnedList');
+  const label = STATE.newsWeek === 'all' ? '전체 기간' : weekOf(items[0].date).label;
+  const li = document.createElement('li');
+  li.innerHTML = `<b>[${label} 경쟁사 헤드라인]</b><ul class="list-[circle] pl-5 mt-1 space-y-1">${items.map(n => `<li>${n.date.slice(5).replace('-', '/')} ${n.comp}: ${n.title}</li>`).join('')}</ul>`;
+  ul.appendChild(li);
+  updatePinBadge();
+  showToast(`${label} 헤드라인 ${items.length}건을 메일 초안에 추가했습니다.`);
 }
 
 // ============================================================================
