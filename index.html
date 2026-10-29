@@ -17,6 +17,8 @@
 <script src="news.js"></script>
 <!-- 공장별 CAPA (공시·회사 자료 기준, 출처 포함) -->
 <script src="capa_disclosed.js"></script>
+<!-- 경쟁사 분기 실적 (공시 기준, 출처 포함) -->
+<script src="comp_financials.js"></script>
 <style>
 /* Achromatic ledger: 크롬은 무채색, 데이터에만 색. 한국산 = --kr(파랑 3단계), 중국산 = 잉크, 기타 = 회색 */
 :root {
@@ -478,7 +480,7 @@ body { background: var(--ground); color: var(--text); -webkit-font-smoothing: an
       <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div class="flex flex-wrap items-center gap-3">
           <div class="seg" role="group" aria-label="기간">
-            <button class="pill-btn active" id="btnCompQ" onclick="setCompPeriodMode('quarterly')">분기 25.2Q–26.1Q</button>
+            <button class="pill-btn active" id="btnCompQ" onclick="setCompPeriodMode('quarterly')">분기 25.4Q–26.3Q</button>
             <button class="pill-btn" id="btnCompY" onclick="setCompPeriodMode('yearly')">연도 2022–2025</button>
           </div>
           <div class="seg scroll-row max-w-full" role="group" aria-label="범위">
@@ -1586,28 +1588,17 @@ function weekOf(dateStr) {
   return { key: `${y}-W${String(wk).padStart(2, '0')}`, label: `${y}년 ${wk}주차 (${md(mon)}–${md(sun)})` };
 }
 
+// 분기·연도 실적은 comp_financials.js(공시 기준)를 쓰고, 사업부문 비중은 기존 입력값(COMP_ENRICHED_DB)을 씀.
+// 공시가 없는 회사는 값을 만들어 넣지 않고 비워 둠
 function getCompEnriched(compObj) {
-  if (COMP_ENRICHED_DB[compObj.id]) return COMP_ENRICHED_DB[compObj.id];
-  const baseRev = Math.round((compObj.capa_kt || 500) * 1.4);
-  const baseOp = Math.round(baseRev * 0.065);
+  const fin = (typeof DATA_COMP_FIN !== 'undefined' && DATA_COMP_FIN[compObj.id]) || null;
+  const base = COMP_ENRICHED_DB[compObj.id] || null;
   return {
-    segMix: [
-      { seg: '인쇄용지 (WFC 코트지·백상지)', share: 58, rev: Math.round(baseRev*0.58), op: Math.round(baseOp*0.55), desc: `${compObj.mills.join(', ')} 주력 생산` },
-      { seg: '산업용지·패키징·보드', share: 27, rev: Math.round(baseRev*0.27), op: Math.round(baseOp*0.28), desc: '포장용지 및 산업용 지종 다각화' },
-      { seg: '특수지·펄프 기타', share: 15, rev: Math.round(baseRev*0.15), op: Math.round(baseOp*0.17), desc: compObj.pulp_self ? '자체 펄프 일관화 설비 운영' : '특수 지종 병행 생산' }
-    ],
-    quarterly: [
-      { p: '25.2Q', totalRev: Math.round(baseRev*0.25), totalOp: Math.round(baseOp*0.24), printRev: Math.round(baseRev*0.145), printOp: Math.round(baseOp*0.13), note: `${compObj.products.join('/')} 가동 유지` },
-      { p: '25.3Q', totalRev: Math.round(baseRev*0.24), totalOp: Math.round(baseOp*0.22), printRev: Math.round(baseRev*0.138), printOp: Math.round(baseOp*0.12), note: '글로벌 인쇄용지 비수기 영향' },
-      { p: '25.4Q', totalRev: Math.round(baseRev*0.26), totalOp: Math.round(baseOp*0.28), printRev: Math.round(baseRev*0.152), printOp: Math.round(baseOp*0.16), note: '연말 성수기 수요 반영' },
-      { p: '26.1Q', totalRev: Math.round(baseRev*0.25), totalOp: Math.round(baseOp*0.26), printRev: Math.round(baseRev*0.145), printOp: Math.round(baseOp*0.14), note: '수출 및 내수 판가 방어 주력' }
-    ],
-    yearly: [
-      { p: '2022년', totalRev: Math.round(baseRev*1.08), totalOp: Math.round(baseOp*1.25), printRev: Math.round(baseRev*0.64), printOp: Math.round(baseOp*0.72), note: '판가 인상에 따른 실적 호조' },
-      { p: '2023년', totalRev: Math.round(baseRev*0.96), totalOp: Math.round(baseOp*0.82), printRev: Math.round(baseRev*0.56), printOp: Math.round(baseOp*0.45), note: '글로벌 재고 조정기' },
-      { p: '2024년', totalRev: Math.round(baseRev*0.99), totalOp: Math.round(baseOp*0.95), printRev: Math.round(baseRev*0.57), printOp: Math.round(baseOp*0.52), note: '원가 안정화 및 가동률 회복' },
-      { p: '2025년', totalRev: baseRev, totalOp: baseOp, printRev: Math.round(baseRev*0.58), printOp: Math.round(baseOp*0.55), note: `연간 CAPA ${compObj.capa_kt.toLocaleString()}K MT 운영` }
-    ]
+    fin,
+    unit: fin ? fin.unit : '',
+    segMix: base ? base.segMix : [],
+    quarterly: fin ? fin.quarterly : [],
+    yearly: fin && fin.yearly && fin.yearly.length ? fin.yearly : (base ? base.yearly.map(y => ({ ...y, note: y.note + ' (기존 입력값)' })) : [])
   };
 }
 
@@ -1697,7 +1688,8 @@ function renderSelectedCompetitorView() {
     document.getElementById('coFinLegend').innerHTML = '';
 
     thead.innerHTML = `<tr><th class="text-left !pl-0">사업부문</th><th class="text-right">비중</th><th class="text-right">매출 ${c.currency}</th><th class="text-right">영업이익 ${c.currency}</th><th class="text-left">특징</th></tr>`;
-    tbody.innerHTML = enriched.segMix.map(s => `
+    if (!enriched.segMix.length) tbody.innerHTML = `<tr><td colspan="5" class="!pl-0 text-[color:var(--muted)]">사업부문 비중 자료가 없습니다.</td></tr>`;
+    else tbody.innerHTML = enriched.segMix.map(s => `
       <tr>
         <td class="!pl-0 font-medium">${s.seg}</td>
         <td class="text-right font-semibold">${s.share}%</td>
@@ -1728,24 +1720,36 @@ function renderSelectedCompetitorView() {
     const scopeLabel = isPrintOnly ? '인쇄용지 부문' : '전사 연결';
 
     document.getElementById('coFinTitle').textContent = `${c.name} · ${periodLabel} ${scopeLabel}`;
-    document.getElementById('coFinSub').textContent = `${c.ticker} · ${c.currency} · 인쇄용지 CAPA ${c.capa_kt.toLocaleString()}천 톤 (${c.mills.join(', ')})`;
+    const fin = enriched.fin;
+    document.getElementById('coFinSub').textContent = fin
+      ? `${c.ticker} · ${fin.unit}${fin.basis ? ' · ' + fin.basis : ''}${fin.fy_note ? ' · ' + fin.fy_note : ''} · 공시 확인 ${fin.checked}`
+      : `${c.ticker} · 공시 실적 자료 없음`;
     document.getElementById('coFinLegend').innerHTML = `<span><i style="background:${C.soft}"></i>매출액</span><span><i style="background:${C.cn}"></i>영업이익</span>`;
 
-    thead.innerHTML = `<tr><th class="text-left !pl-0">기간</th><th class="text-right">매출 ${c.currency}</th><th class="text-right">영업이익 ${c.currency}</th><th class="text-right">이익률</th><th class="text-left">코멘트</th></tr>`;
+    const u = enriched.unit ? ` (${enriched.unit})` : '';
+    const opLabel = (fin && fin.op_label) || '영업이익';
+    thead.innerHTML = `<tr><th class="text-left !pl-0">기간</th><th class="text-right">매출${u}</th><th class="text-right">${opLabel}${u}</th><th class="text-right">이익률</th><th class="text-left">코멘트·출처</th></tr>`;
+    const num1 = v => v == null || isNaN(v) ? '-' : (Math.abs(v) < 100 && v % 1 ? v.toFixed(1) : Math.round(v).toLocaleString());
     tbody.innerHTML = rows.map(r => {
       const rev = isPrintOnly ? r.printRev : r.totalRev;
       const op = isPrintOnly ? r.printOp : r.totalOp;
-      const opm = rev > 0 ? ((op / rev) * 100).toFixed(1) + '%' : '-';
+      const opm = rev > 0 && op != null ? ((op / rev) * 100).toFixed(1) + '%' : '-';
+      const pending = r.status === '미발표';
       return `
         <tr>
-          <td class="!pl-0 font-medium">${r.p}</td>
-          <td class="text-right">${fmt(rev)}</td>
-          <td class="text-right font-semibold ${op < 0 ? 'up-red' : ''}">${fmt(op)}</td>
+          <td class="!pl-0 font-medium">${r.p}${r.fiscal_label ? `<div class="text-xs font-normal text-[color:var(--muted)]">${r.fiscal_label}</div>` : ''}</td>
+          <td class="text-right">${num1(rev)}</td>
+          <td class="text-right font-semibold ${op < 0 ? 'up-red' : ''}">${num1(op)}</td>
           <td class="text-right">${opm}</td>
-          <td class="text-[color:var(--muted)] !whitespace-normal min-w-[180px]">${r.note}</td>
+          <td class="text-[color:var(--muted)] !whitespace-normal min-w-[200px]">
+            ${pending ? `<span class="badge-neutral mr-1">미발표${r.date ? ' · ' + r.date + ' 예정' : ''}</span>` : ''}${r.note || ''}
+            ${r.url ? ` <a href="${r.url}" target="_blank" rel="noopener" class="text-xs text-[color:var(--text)] hover:underline whitespace-nowrap">${r.source || '출처'} ↗</a>` : ''}
+          </td>
         </tr>
       `;
-    }).join('');
+    }).join('') || `<tr><td colspan="5" class="!pl-0 text-[color:var(--muted)]">${isPrintOnly ? '인쇄용지 부문 실적을 따로 공시하지 않습니다.' : '공시된 실적이 없습니다 (비상장).'}</td></tr>`;
+    if (isPrintOnly && rows.length && rows.every(r => r.printRev == null))
+      tbody.insertAdjacentHTML('afterbegin', `<tr><td colspan="5" class="!pl-0 text-[color:var(--muted)]">이 회사는 인쇄용지 부문 실적을 따로 공시하지 않습니다.</td></tr>`);
 
     coFinChartInstance = new Chart(document.getElementById('coFinChart'), {
       type: 'bar',
