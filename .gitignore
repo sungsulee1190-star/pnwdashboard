@@ -1,1 +1,4 @@
 .taste-skill/
+
+# 평문 데이터는 올리지 않음: tools/encrypt.html 또는 tools/encrypt-data.mjs로 data.enc.js를 만들어 올림
+data.js

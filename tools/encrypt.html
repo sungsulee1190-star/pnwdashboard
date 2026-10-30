@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>데이터 암호화</title>
+<style>
+  body { font-family: 'Pretendard', system-ui, sans-serif; background: #f4f4f2; color: #0a0a0a; margin: 0; padding: 40px 16px; }
+  main { max-width: 480px; margin: 0 auto; background: #fff; border: 1px solid #e6e6e4; border-radius: 8px; padding: 28px 24px; }
+  h1 { font-size: 20px; margin: 0 0 6px; } p { font-size: 13px; color: #626262; line-height: 1.6; margin: 0 0 18px; }
+  label { display: block; font-size: 13px; font-weight: 500; margin: 14px 0 6px; }
+  input { width: 100%; box-sizing: border-box; height: 38px; border: 1px solid #d4d4d2; border-radius: 6px; padding: 0 10px; font-size: 14px; }
+  button { margin-top: 20px; width: 100%; height: 40px; border: 0; border-radius: 6px; background: #141414; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; }
+  #msg { font-size: 13px; margin-top: 12px; min-height: 20px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>대시보드 데이터 암호화</h1>
+  <p>엑셀에서 만든 data.js를 고르고 비밀번호를 넣으면 data.enc.js가 내려받아집니다. 그 파일을 저장소에 올리면 대시보드에 반영됩니다. 파일은 이 컴퓨터 안에서만 처리되고 어디로도 전송되지 않습니다.</p>
+  <label for="f">data.js</label><input id="f" type="file" accept=".js">
+  <label for="pw">비밀번호 (대시보드 로그인 비밀번호와 같게)</label><input id="pw" type="password" autocomplete="new-password">
+  <label for="pw2">비밀번호 확인</label><input id="pw2" type="password" autocomplete="new-password">
+  <button id="go">암호화해서 data.enc.js 내려받기</button>
+  <div id="msg" role="status"></div>
+</main>
+<script>
+// tools/encrypt-data.mjs와 같은 형식: gzip → PBKDF2-SHA256 600,000회 → AES-256-GCM
+document.getElementById('go').onclick = async () => {
+  const msg = document.getElementById('msg'), file = document.getElementById('f').files[0];
+  const pw = document.getElementById('pw').value;
+  if (!file) return msg.textContent = 'data.js를 골라 주세요.';
+  if (pw.length < 10) return msg.textContent = '비밀번호는 10자 이상으로 해 주세요.';
+  if (pw !== document.getElementById('pw2').value) return msg.textContent = '두 비밀번호가 다릅니다.';
+  msg.textContent = '암호화 중…';
+  const gz = await new Response(file.stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
+  const iter = 600000, salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, gz));
+  const b64 = u => { let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode(...u.subarray(i, i + 0x8000)); return btoa(s); };
+  const out = `// 암호화된 대시보드 데이터 (tools/encrypt.html로 생성, ${new Date().toISOString().slice(0, 10)})\nwindow.DATA_ENC = ${JSON.stringify({ v: 1, iter, salt: b64(salt), iv: b64(iv), ct: b64(ct) })};\n`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([out], { type: 'text/javascript' })); a.download = 'data.enc.js'; a.click();
+  msg.textContent = `완료: ${(file.size / 1024).toFixed(0)}KB → ${(out.length / 1024).toFixed(0)}KB. 내려받은 data.enc.js를 저장소에 올리세요.`;
+};
+</script>
+</body>
+</html>

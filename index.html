@@ -11,8 +11,8 @@
 <script src="vendor/leaflet/leaflet.js"></script>
 <script src="vendor/topojson-client.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.css">
-<!-- 실제 data.js 로드 -->
-<script src="data.js"></script>
+<!-- 수출 실적 데이터: 암호화본. 로그인 화면에서 비밀번호로 풀어 data.js 내용을 실행 -->
+<script src="data.enc.js"></script>
 <!-- 경쟁사 공시·뉴스 (주차별 헤드라인) -->
 <script src="news.js"></script>
 <!-- 공장별 CAPA (공시·회사 자료 기준, 출처 포함) -->
@@ -111,6 +111,9 @@ body { background: var(--ground); color: var(--text); -webkit-font-smoothing: an
 [contenteditable="true"]:hover { background: var(--raised); }
 [contenteditable="true"]:focus { outline: 2px solid var(--text); outline-offset: 2px; background: var(--surface); }
 
+.lock-screen { position: fixed; inset: 0; z-index: 100; background: var(--ground); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.lock-card { width: 100%; max-width: 360px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 28px 24px; }
+body.locked > header, body.locked > #page-1, body.locked > #page-2 { visibility: hidden; }
 .leaflet-container { font-family: 'Pretendard', system-ui, sans-serif; background: #e6e9eb; }
 .country-label { width: 0 !important; height: 0 !important; }
 .country-label span { display: block; transform: translate(-50%, -50%); font-size: 12px; font-weight: 500; color: #8a8a8a; white-space: nowrap; letter-spacing: 0.02em; }
@@ -130,7 +133,22 @@ body { background: var(--ground); color: var(--text); -webkit-font-smoothing: an
 }
 </style>
 </head>
-<body class="pb-16">
+<body class="pb-16 locked">
+
+<!-- 로그인: 비밀번호로 data.enc.js를 복호화해야 대시보드가 열림 -->
+<div id="lockScreen" class="lock-screen">
+  <form class="lock-card" onsubmit="event.preventDefault(); submitLogin();">
+    <div class="flex items-center gap-2 mb-6"><span class="mark" aria-hidden="true">PN</span><span class="text-sm font-semibold">인쇄용지 수출 대시보드</span></div>
+    <h1 class="text-xl font-bold mb-1">로그인</h1>
+    <p class="text-[13px] text-[color:var(--muted)] mb-5">공유받은 비밀번호를 입력하세요.</p>
+    <label for="lockPw" class="block text-[13px] font-medium mb-1.5">비밀번호</label>
+    <input id="lockPw" type="password" autocomplete="current-password" required class="field w-full !h-10 mb-3">
+    <label class="flex items-center gap-2 text-[13px] text-[color:var(--muted)] mb-5"><input id="lockRemember" type="checkbox"> 이 기기에서 로그인 유지</label>
+    <button id="lockBtn" type="submit" class="btn-primary w-full !h-10">열기</button>
+    <p id="lockMsg" class="text-[13px] mt-3 min-h-[20px]" role="alert"></p>
+  </form>
+</div>
+
 
 <!-- 상단 바: 워드마크 · 화면 탭 · 데이터 기준일 · 메일 초안 -->
 <header class="topbar sticky top-0 z-50">
@@ -145,6 +163,7 @@ body { background: var(--ground); color: var(--text); -webkit-font-smoothing: an
     </nav>
     <div class="ml-auto flex items-center gap-4 shrink-0">
       <span id="metaStatusText" class="hidden xl:inline text-xs text-[color:var(--muted)]">데이터 불러오는 중</span>
+      <button onclick="logout()" class="btn-text text-[color:var(--muted)]">잠그기</button>
       <button onclick="switchPage(1); setTimeout(()=>document.getElementById('sec-email').scrollIntoView(), 50);" class="btn-text">
         메일 초안 <span id="pinCountBadge" class="num ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded bg-[color:var(--active)] text-xs font-semibold">2</span>
       </button>
@@ -1200,10 +1219,13 @@ const regionColor = c => c === 'South Korea' ? C.kr : c === 'China' ? C.cn : C.o
 const DISC = typeof CAPA_DISCLOSED !== 'undefined' ? CAPA_DISCLOSED : {};
 const DISC_GROUPS = typeof CAPA_DISCLOSED_GROUPS !== 'undefined' ? CAPA_DISCLOSED_GROUPS : {};
 // 원본 엑셀에 없는 공장(APP 인도네시아 등)을 지도 데이터에 합침
-if (typeof CAPA_EXTRA_MILLS !== 'undefined' && typeof DATA_CAPA !== 'undefined') DATA_CAPA.push(...CAPA_EXTRA_MILLS);
+// (DATA_CAPA는 로그인 후에 생기므로 prepareCapaData()에서 합침)
 const EXTRA_MILLS = new Set((typeof CAPA_EXTRA_MILLS !== 'undefined' ? CAPA_EXTRA_MILLS : []).map(d => d.mill));
 const EXCEL_MILL_TOTAL = {};
-(typeof DATA_CAPA !== 'undefined' ? DATA_CAPA : []).forEach(d => { EXCEL_MILL_TOTAL[d.mill] = (EXCEL_MILL_TOTAL[d.mill] || 0) + (d.capa_mty || 0); });
+function prepareCapaData() {
+  if (typeof CAPA_EXTRA_MILLS !== 'undefined') DATA_CAPA.push(...CAPA_EXTRA_MILLS);
+  DATA_CAPA.forEach(d => { EXCEL_MILL_TOTAL[d.mill] = (EXCEL_MILL_TOTAL[d.mill] || 0) + (d.capa_mty || 0); });
+}
 const discOf = mill => DISC[mill] || { capa: null, basis: '조사 대상 아님' };
 const discGroupOf = mill => { const g = discOf(mill).group; return g ? { id: g, ...DISC_GROUPS[g] } : null; };
 // 화면에 쓰는 CAPA (공시 기준에서 공장 수치가 없으면 null)
@@ -1969,7 +1991,73 @@ function showToast(msg) {
   setTimeout(() => t.classList.add('opacity-0'), 2600);
 }
 
-window.addEventListener('DOMContentLoaded', initApp);
+// ============================================================================
+// 로그인: data.enc.js(AES-256-GCM, PBKDF2-SHA256 키)를 비밀번호로 풀어 실행
+// ============================================================================
+const KEY_STORE = 'pnw-key';
+const b64d = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+
+async function keyFromPassword(pw) {
+  const enc = window.DATA_ENC;
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64d(enc.salt), iterations: enc.iter, hash: 'SHA-256' },
+    base, { name: 'AES-GCM', length: 256 }, true, ['decrypt']);
+}
+
+async function openWithKey(key) {
+  const enc = window.DATA_ENC;
+  const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64d(enc.iv) }, key, b64d(enc.ct));
+  const text = await new Response(new Blob([plain]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+  const sc = document.createElement('script');
+  sc.textContent = text;            // data.js의 DATA_* 전역 상수 정의
+  document.head.appendChild(sc);
+  prepareCapaData();
+  document.getElementById('lockScreen').remove();
+  document.body.classList.remove('locked');
+  initApp();
+}
+
+// 저장한 키는 파일의 salt와 같이 보관해, 데이터를 다시 암호화하면(비밀번호 변경 포함) 자동으로 무효
+function storedKey() {
+  try { const v = JSON.parse(localStorage.getItem(KEY_STORE) || sessionStorage.getItem(KEY_STORE) || 'null');
+    return v && v.salt === window.DATA_ENC.salt ? v : null; } catch (e) { return null; }
+}
+
+async function submitLogin() {
+  const btn = document.getElementById('lockBtn'), msg = document.getElementById('lockMsg');
+  btn.disabled = true; btn.textContent = '확인 중…'; msg.textContent = '';
+  try {
+    const key = await keyFromPassword(document.getElementById('lockPw').value);
+    await openWithKey(key);
+    const raw = btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.exportKey('raw', key))));
+    const store = document.getElementById('lockRemember')?.checked ? localStorage : sessionStorage;
+    try { store.setItem(KEY_STORE, JSON.stringify({ salt: window.DATA_ENC.salt, k: raw })); } catch (e) {}
+  } catch (e) {
+    msg.style.color = 'var(--negative)';
+    msg.textContent = '비밀번호가 맞지 않습니다.';
+    btn.disabled = false; btn.textContent = '열기';
+    document.getElementById('lockPw').select();
+  }
+}
+
+function logout() {
+  try { localStorage.removeItem(KEY_STORE); sessionStorage.removeItem(KEY_STORE); } catch (e) {}
+  location.reload();
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const msg = document.getElementById('lockMsg');
+  if (!window.DATA_ENC) { msg.textContent = '데이터 파일(data.enc.js)을 불러오지 못했습니다.'; return; }
+  if (!window.crypto || !crypto.subtle || typeof DecompressionStream === 'undefined') {
+    msg.textContent = '이 브라우저는 지원하지 않습니다. 최신 Chrome·Edge·Safari로 열어 주세요.'; return;
+  }
+  const saved = storedKey();
+  if (saved) {
+    try { const key = await crypto.subtle.importKey('raw', b64d(saved.k), { name: 'AES-GCM' }, false, ['decrypt']);
+      return await openWithKey(key); } catch (e) { logout(); }
+  }
+  document.getElementById('lockPw').focus();
+});
 </script>
 </body>
 </html>
