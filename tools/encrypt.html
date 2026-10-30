@@ -30,7 +30,7 @@ document.getElementById('go').onclick = async () => {
   const msg = document.getElementById('msg'), file = document.getElementById('f').files[0];
   const pw = document.getElementById('pw').value;
   if (!file) return msg.textContent = 'data.js를 골라 주세요.';
-  if (pw.length < 10) return msg.textContent = '비밀번호는 10자 이상으로 해 주세요.';
+  if (pw.length < 4) return msg.textContent = '비밀번호는 4자 이상으로 해 주세요.';
   if (pw !== document.getElementById('pw2').value) return msg.textContent = '두 비밀번호가 다릅니다.';
   msg.textContent = '암호화 중…';
   const gz = await new Response(file.stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
