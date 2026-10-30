@@ -2,3 +2,6 @@
 
 # 평문 데이터는 올리지 않음: tools/encrypt.html 또는 tools/encrypt-data.mjs로 data.enc.js를 만들어 올림
 data.js
+
+# 원본 엑셀(DRM)은 저장소에 올리지 않음
+master_excels/
