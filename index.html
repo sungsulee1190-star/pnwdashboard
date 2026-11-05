@@ -113,7 +113,19 @@ body { background: var(--ground); color: var(--text); -webkit-font-smoothing: an
 
 .lock-screen { position: fixed; inset: 0; z-index: 100; background: var(--ground); display: flex; align-items: center; justify-content: center; padding: 16px; }
 .lock-card { width: 100%; max-width: 360px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 28px 24px; }
-body.locked > header, body.locked > #page-1, body.locked > #page-2 { visibility: hidden; }
+body.locked > header, body.locked > #page-1, body.locked > #page-2, body.locked > #page-3 { visibility: hidden; }
+
+/* 국내시장(3페이지): 물량 증가=초록, 감소=빨강 (1페이지의 '나쁜 방향' 규칙과 다름) */
+.dm-up { color: var(--positive); font-weight: 500; }
+.dm-dn { color: var(--negative); font-weight: 500; }
+.dm-tbl { width: 100%; border-collapse: collapse; }
+.dm-tbl th, .dm-tbl td { text-align: right; }
+.dm-tbl th:first-child, .dm-tbl td:first-child, .dm-tbl .l { text-align: left; }
+.dm-tbl tr.sub td:first-child { padding-left: 28px; color: var(--muted); }
+.dm-tbl tr.total td { font-weight: 600; border-top: 1px solid var(--border); }
+.nofilter { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 4px; font-size: 12px; color: var(--muted); border: 1px solid var(--border); white-space: nowrap; }
+.dm-rg { font-size: 11px; color: var(--muted); margin-left: 6px; }
+.dm-notes { font-size: 12px; color: var(--muted); line-height: 18px; margin-top: 14px; padding-left: 16px; list-style: disc; }
 .leaflet-container { font-family: 'Pretendard', system-ui, sans-serif; background: #e6e9eb; }
 .country-label { width: 0 !important; height: 0 !important; }
 .country-label span { display: block; transform: translate(-50%, -50%); font-size: 12px; font-weight: 500; color: #8a8a8a; white-space: nowrap; letter-spacing: 0.02em; }
@@ -160,6 +172,7 @@ body.locked > header, body.locked > #page-1, body.locked > #page-2 { visibility:
     <nav class="flex items-stretch h-12 min-w-0 overflow-x-auto [scrollbar-width:none]" aria-label="화면">
       <button id="btn-page1" onclick="switchPage(1)" class="page-tab active">수출·단가</button>
       <button id="btn-page2" onclick="switchPage(2)" class="page-tab inactive">마켓맵·경쟁사</button>
+      <button id="btn-page3" onclick="switchPage(3)" class="page-tab inactive">국내시장</button>
     </nav>
     <div class="ml-auto flex items-center gap-4 shrink-0">
       <span id="metaStatusText" class="hidden xl:inline text-xs text-[color:var(--muted)]">데이터 불러오는 중</span>
@@ -553,6 +566,130 @@ body.locked > header, body.locked > #page-1, body.locked > #page-2 { visibility:
   </main>
 </div>
 
+<!-- ========================================================================= -->
+<!-- [PAGE 3] 국내시장: 내수·수출 전체량, 3사 도공지 수출, 지역별, 수출국 Top 10      -->
+<!-- ========================================================================= -->
+<div id="page-3" class="hidden">
+  <main class="max-w-[1440px] mx-auto px-4 md:px-6 pt-6 md:pt-8 space-y-4">
+    <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+      <div class="min-w-0">
+        <h1 class="text-2xl font-bold tracking-[-0.02em]">국내시장</h1>
+        <p class="text-[15px] text-[color:var(--muted)] mt-1">국내 인쇄용지 내수·수출 규모와 3사 도공지 수출</p>
+      </div>
+      <span id="dmFiles" class="text-xs text-[color:var(--muted)]"></span>
+    </div>
+
+    <!-- 필터: 연도 · 기간 · 제지사(여러 개 선택) -->
+    <div class="md:sticky md:top-12 z-40 bg-[color:var(--ground)] py-2 -mx-4 px-4 md:-mx-6 md:px-6">
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div class="flex items-center gap-1.5">
+          <label for="dmYear" class="sr-only">연도</label>
+          <select id="dmYear" class="field font-semibold"></select>
+          <label for="dmFrom" class="sr-only">시작 월</label>
+          <select id="dmFrom" class="field"></select>
+          <span class="ctl-label">~</span>
+          <label for="dmTo" class="sr-only">종료 월</label>
+          <select id="dmTo" class="field"></select>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="ctl-label">제지사</span>
+          <div class="seg scroll-row" id="dmComp" role="group" aria-label="제지사"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1. 국내 전체량 -->
+    <section class="card">
+      <div class="flex flex-wrap items-baseline justify-between gap-3 mb-4">
+        <div>
+          <h2 class="card-title">국내 전체량</h2>
+          <p class="card-sub">내수와 수출, 아트지(도공)와 백상지(비도공). 출처마다 최신 월이 달라 숫자마다 기준을 붙입니다.</p>
+        </div>
+        <span class="nofilter">제지사 필터 적용 안 됨</span>
+      </div>
+      <div class="kpi-strip bg-[color:var(--surface)] mb-4" id="dmKpi"></div>
+      <div class="overflow-x-auto">
+        <table class="tbl dm-tbl">
+          <thead><tr><th>구분</th><th>기준 월</th><th>당월</th><th>전월比</th><th>전년 동월比</th><th class="grp-l">기간 합계</th><th>기간</th><th>전년 동기比</th></tr></thead>
+          <tbody id="dmTotal"></tbody>
+        </table>
+      </div>
+      <ul class="dm-notes">
+        <li>단위: 톤(MT). 내수 판매는 인쇄용지 M/S 자료(6대사 [A]), 수출은 통관 실적입니다.</li>
+        <li>내수 '아트지'는 MFC를 뺀 값입니다. 수출 '도공지'는 HS 4810 기준이라 범위가 더 넓습니다.</li>
+        <li>미국향 백상지는 한솔·한국 2사, 미국으로 간 물량만입니다. 같은 파일의 Box 복사지는 뺐습니다.</li>
+        <li>선택한 월이 자료보다 늦으면 자료가 있는 달까지만 더합니다.</li>
+      </ul>
+    </section>
+
+    <!-- 2. 3사 도공지 수출 -->
+    <section class="card">
+      <div class="flex flex-wrap items-baseline justify-between gap-3 mb-2">
+        <div>
+          <h2 class="card-title">국내 3사 도공지 수출</h2>
+          <p class="card-sub" id="dmCoSub"></p>
+        </div>
+        <div class="legend" id="dmCoLegend"></div>
+      </div>
+      <div class="h-[280px] mb-5"><canvas id="dmCoChart" aria-label="3사 도공지 월별 수출량"></canvas></div>
+      <div class="overflow-x-auto">
+        <table class="tbl dm-tbl">
+          <thead><tr><th>제지사</th><th>당월</th><th>전월比</th><th>전년 동월比</th><th class="grp-l">기간 합계</th><th>전년 동기比</th><th>비중</th></tr></thead>
+          <tbody id="dmComp3"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 3. 지역별 -->
+    <section class="card">
+      <div class="flex flex-wrap items-baseline justify-between gap-3 mb-4">
+        <div>
+          <h2 class="card-title">국내 3사 도공지 수출 · 지역별</h2>
+          <p class="card-sub">한국 원본 12개 지역 코드 기준</p>
+        </div>
+        <div class="seg" id="dmRegMode" role="group" aria-label="기간">
+          <button class="pill-btn" data-mode="month">당월</button>
+          <button class="pill-btn active" data-mode="range">기간 합계</button>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="tbl dm-tbl"><thead><tr id="dmRegHead"></tr></thead><tbody id="dmReg"></tbody></table>
+      </div>
+      <ul class="dm-notes">
+        <li>중국산·한국산 모두 국가_마스터.csv의 같은 국가명·지역 코드를 씁니다(한국 원본 12개 코드 기준). 미얀마·캄보디아·브루나이는 10_서남아, 대만·홍콩·몽골은 08_중국에 들어갑니다.</li>
+      </ul>
+    </section>
+
+    <!-- 4. 수출국 Top 10 -->
+    <section class="card">
+      <div class="mb-4">
+        <h2 class="card-title">수출국 Top 10</h2>
+        <p class="card-sub" id="dmTopSub"></p>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <h3 class="panel-title">중국산 코트지 수출(월보 국가별, C2S 중심)</h3>
+            <span class="nofilter">제지사 필터 적용 안 됨</span>
+          </div>
+          <div class="overflow-x-auto"><table class="tbl dm-tbl"><thead><tr class="dm-top-head"></tr></thead><tbody id="dmTopCn"></tbody></table></div>
+        </div>
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <h3 class="panel-title">한국산 도공지 수출(3사)</h3>
+            <span class="nofilter" id="dmTopKrComps"></span>
+          </div>
+          <div class="overflow-x-auto"><table class="tbl dm-tbl"><thead><tr class="dm-top-head"></tr></thead><tbody id="dmTopKr"></tbody></table></div>
+        </div>
+      </div>
+      <ul class="dm-notes">
+        <li>순위는 기간 합계 기준입니다. 순위 변동은 전년 같은 기간 순위와 비교합니다.</li>
+        <li>중국산은 월보 국가별 수출로 코트지(C2S) 중심입니다. 한국산은 수출항·주소지 기준 추정치이며, '무림 울산+한국'은 두 회사가 같은 울산 주소·항구를 써서 합산으로만 잡힙니다.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
 <!-- 토스트 알림 -->
 <div id="toast" role="status" aria-live="polite" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#141414] text-white text-[13px] font-medium px-4 py-2.5 rounded-md opacity-0 pointer-events-none transition-opacity duration-200 z-50 max-w-[90vw]">
   복사 완료
@@ -577,7 +714,7 @@ const REGION_MAP = {
   "01_미국":"북미","02_호주":"오세아니아","03_서유럽":"유럽",
   "04_동유럽":"유럽","05_아프리카":"아프리카","06_남미":"중남미",
   "07_일본":"동북아","08_중국":"동북아","09_동남아":"동남아",
-  "10_서남아":"인도/서남아","11_중동(기타)":"중동","12_중동(이란)":"중동"
+  "10_서남아":"인도/서남아","11_중동(기타)":"중동","12_중동(이란)":"중동","13_한국":"한국"
 };
 
 function cleanRg(rg) {
@@ -1934,23 +2071,18 @@ function addNewsToEmail(idx) {
   showToast(`${n.comp} 동향을 메일 초안에 추가했습니다.`);
 }
 
-// 페이지 전환 (Page 1 <-> Page 2)
+// 페이지 전환 (Page 1 / 2 / 3)
+let domesticInitialized = false;
 function switchPage(pageNum) {
-  const p1 = document.getElementById('page-1');
-  const p2 = document.getElementById('page-2');
-  const b1 = document.getElementById('btn-page1');
-  const b2 = document.getElementById('btn-page2');
+  [1, 2, 3].forEach(n => {
+    document.getElementById(`page-${n}`).classList.toggle('hidden', n !== pageNum);
+    document.getElementById(`btn-page${n}`).className = `page-tab ${n === pageNum ? 'active' : 'inactive'}`;
+  });
 
-  if (pageNum === 1) {
-    p1.classList.remove('hidden');
-    p2.classList.add('hidden');
-    b1.className = 'page-tab active';
-    b2.className = 'page-tab inactive';
-  } else {
-    p1.classList.add('hidden');
-    p2.classList.remove('hidden');
-    b1.className = 'page-tab inactive';
-    b2.className = 'page-tab active';
+  if (pageNum === 3 && !domesticInitialized) {
+    initDomestic();
+    domesticInitialized = true;
+  } else if (pageNum === 2) {
     if (!mapInitialized) {
       initMarketMap();
       initCompetitors();
@@ -2058,6 +2190,188 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
   document.getElementById('lockPw').focus();
 });
+</script>
+
+<script>
+// ============================================================================
+// [PAGE 3] 국내시장. 데이터: DATA_DOM_MS(내수 M/S), DATA_DOM_EXPORT(3사 도공지 국가별), DATA_DOM_US(미국향 백상지),
+//          DATA_EXPORT(중국산 국가별). 용어 정의는 저장소 루트 CONTEXT.md
+// ============================================================================
+function initDomestic() {
+  const COMPS = ['한솔', '무림', '무림 울산+한국'];
+  const COLOR = { '한솔': '#1d5fbf', '무림': '#6f9ad8', '무림 울산+한국': '#b9cdea' };
+  const REGIONS = KR_REGIONS;
+  const $ = id => document.getElementById(id);
+
+  if (typeof DATA_DOM_MS === 'undefined') {
+    $('page-3').querySelector('main').insertAdjacentHTML('beforeend', '<p class="card">국내시장 데이터가 없습니다. run_updates.py를 다시 실행하세요.</p>');
+    return;
+  }
+
+  const fmt = v => v == null ? '–' : Math.round(v).toLocaleString('ko-KR');
+  const ymKey = (y, m) => `${y}-${String(m).padStart(2, '0')}`;
+  const ymLabel = k => `${k.slice(2, 4)}.${+k.slice(5)}월`;
+  const shift = (k, dm) => { const d = new Date(+k.slice(0, 4), +k.slice(5) - 1 + dm, 1); return ymKey(d.getFullYear(), d.getMonth() + 1); };
+  const pct = (a, b) => (a == null || !b) ? null : (a / b - 1) * 100;
+  const pctCell = p => p == null ? '<span class="flat">–</span>'
+    : `<span class="${p > 0.05 ? 'dm-up' : p < -0.05 ? 'dm-dn' : 'flat'}">${p > 0 ? '+' : ''}${p.toFixed(1)}%</span>`;
+  const latest = s => Object.keys(s).sort().pop();
+  const sumBy = (rows, pred) => { const o = {}; rows.forEach(r => { if (pred(r)) o[r.ym] = (o[r.ym] || 0) + r.v; }); return o; };
+  const sumRange = (s, y, a, b) => { let t = 0, n = 0; for (let m = a; m <= b; m++) { const v = s[ymKey(y, m)]; if (v != null) { t += v; n++; } } return n ? t : null; };
+
+  const ms = DATA_DOM_MS, EX = DATA_DOM_EXPORT;
+  const CN = DATA_EXPORT.map(r => ({ ym: ymKey(r.y, r.m), ct: r.c, rg: r._rg, v: r.v }));
+  const exAll = sumBy(EX, () => true), usWf = sumBy(DATA_DOM_US, () => true);
+  const K_DOM = latest(ms.art_maker), K_EX = latest(exAll), K_US = latest(usWf);
+  const K_CN = CN.reduce((a, r) => r.ym > a ? r.ym : a, '');
+  const byComp = c => sumBy(EX, r => r.comp === c);
+
+  // 필터: 기본은 3사 수출 최신 연도의 1월~최신 월, 제지사 전체
+  const F = { year: +K_EX.slice(0, 4), from: 1, to: +K_EX.slice(5), comps: new Set(COMPS) };
+  const selComps = () => COMPS.filter(c => F.comps.has(c));
+  // 출처 최신 월에 맞춘 실제 기간. 선택 월이 자료보다 늦으면 자료가 있는 달까지만
+  function period(lastKey) {
+    const ly = +lastKey.slice(0, 4), lm = +lastKey.slice(5);
+    if (F.year > ly) return null;
+    const b = F.year === ly ? Math.min(F.to, lm) : F.to;
+    return b < F.from ? null : { y: F.year, a: F.from, b, end: ymKey(F.year, b) };
+  }
+  const rangeLabel = p => p.a === p.b ? `${p.b}월` : `${p.a}~${p.b}월`;
+  const periodLabel = p => `${String(p.y).slice(2)}.${rangeLabel(p)}`;
+  function stats(series, lastKey) {
+    const p = period(lastKey);
+    if (!p) return null;
+    const sum = sumRange(series, p.y, p.a, p.b), prev = sumRange(series, p.y - 1, p.a, p.b);
+    return { p, cur: series[p.end], mom: pct(series[p.end], series[shift(p.end, -1)]), yoy: pct(series[p.end], series[shift(p.end, -12)]), sum, sumYoy: pct(sum, prev) };
+  }
+  const noData = (cols, k) => `<td colspan="${cols}" class="flat">선택한 기간에 자료 없음${k ? ` (최신 ${ymLabel(k)})` : ''}</td>`;
+
+  $('dmFiles').textContent = `원본 · ${ms.files.ms} · ${ms.files.coated} · ${ms.files.us}`;
+  const years = [...new Set(Object.keys(exAll).map(k => +k.slice(0, 4)))].sort((a, b) => b - a);
+  $('dmYear').innerHTML = years.map(y => `<option value="${y}">${y}년</option>`).join('');
+  const mOpts = Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1}월</option>`).join('');
+  $('dmFrom').innerHTML = mOpts; $('dmTo').innerHTML = mOpts;
+  $('dmYear').value = F.year; $('dmFrom').value = F.from; $('dmTo').value = F.to;
+  $('dmYear').onchange = () => { F.year = +$('dmYear').value; render(); };
+  $('dmFrom').onchange = () => { F.from = +$('dmFrom').value; if (F.from > F.to) { F.to = F.from; $('dmTo').value = F.to; } render(); };
+  $('dmTo').onchange = () => { F.to = +$('dmTo').value; if (F.to < F.from) { F.from = F.to; $('dmFrom').value = F.from; } render(); };
+  $('dmComp').innerHTML = ['전체', ...COMPS].map(c => `<button class="pill-btn" data-c="${c}">${c}</button>`).join('');
+  $('dmComp').onclick = e => {
+    const c = e.target.closest('button')?.dataset.c; if (!c) return;
+    if (c === '전체') COMPS.forEach(x => F.comps.add(x));
+    else if (F.comps.has(c)) { if (F.comps.size > 1) F.comps.delete(c); } // 마지막 하나는 끌 수 없음
+    else F.comps.add(c);
+    render();
+  };
+  let regMode = 'range';
+  $('dmRegMode').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    regMode = b.dataset.mode;
+    $('dmRegMode').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+    renderReg();
+  };
+
+  // 1. 국내 전체량 (제지사 필터 적용 안 됨)
+  function renderTotal() {
+    const kpis = [['내수 아트지 · 내수 판매', ms.art_maker, K_DOM], ['내수 백상지 · 내수 판매', ms.wf_maker, K_DOM],
+                  ['수출 도공지 · 3사', exAll, K_EX], ['수출 백상지 · 미국향', usWf, K_US]];
+    $('dmKpi').innerHTML = kpis.map(([label, s, k]) => {
+      const st = stats(s, k);
+      return st ? `<div><div class="kpi-label">${label}</div><div class="kpi-value num">${fmt(st.sum)}<span class="unit">톤</span></div>
+        <div class="kpi-note">${periodLabel(st.p)} · 전년 동기比 ${pctCell(st.sumYoy)}</div></div>`
+        : `<div><div class="kpi-label">${label}</div><div class="kpi-value">–</div><div class="kpi-note">자료 없음 (최신 ${ymLabel(k)})</div></div>`;
+    }).join('');
+    const rows = [
+      ['내수 아트지(C2S) · 내수 판매[A]', ms.art_maker, K_DOM, ''], ['국내 총수요(수입 포함)', ms.art_demand, K_DOM, 'sub'],
+      ['내수 백상지(UWF) · 내수 판매[A]', ms.wf_maker, K_DOM, ''], ['국내 총수요(마이너·수입 포함)', ms.wf_demand, K_DOM, 'sub'],
+      ['수출 도공지(HS 4810) · 3사', exAll, K_EX, ''], ['수출 백상지 · 미국향(한솔·한국)', usWf, K_US, ''],
+    ];
+    $('dmTotal').innerHTML = rows.map(([label, s, k, cls]) => {
+      const st = stats(s, k);
+      if (!st) return `<tr class="${cls}"><td>${label}</td>${noData(7, k)}</tr>`;
+      const short = st.p.b < F.to ? ` <span class="badge-neutral">자료 ${st.p.b}월까지</span>` : '';
+      return `<tr class="${cls}"><td>${label}</td><td>${ymLabel(st.p.end)}</td><td>${fmt(st.cur)}</td><td>${pctCell(st.mom)}</td><td>${pctCell(st.yoy)}</td>
+        <td class="grp-l">${fmt(st.sum)}</td><td>${periodLabel(st.p)}${short}</td><td>${pctCell(st.sumYoy)}</td></tr>`;
+    }).join('');
+  }
+
+  // 2. 3사 도공지 수출: 24.1월부터 모든 달, 선택 기간만 진하게
+  let chart;
+  function renderComp() {
+    const p = period(K_EX), comps = selComps();
+    const first = Object.keys(exAll).sort()[0];
+    $('dmCoSub').textContent = `월별 수출량(톤) · ${ymLabel(first)}~${ymLabel(K_EX)} · 진한 막대가 선택 기간` + (p ? ` (${periodLabel(p)})` : ' (자료 없음)');
+    $('dmCoLegend').innerHTML = comps.map(c => `<span><i style="background:${COLOR[c]}"></i>${c}</span>`).join('');
+    const months = Object.keys(exAll).sort();
+    const inSel = m => p && +m.slice(0, 4) === p.y && +m.slice(5) >= p.a && +m.slice(5) <= p.b;
+    const datasets = comps.map(c => { const s = byComp(c);
+      return { label: c, data: months.map(m => s[m] || 0), backgroundColor: months.map(m => COLOR[c] + (inSel(m) ? '' : '4d')), borderWidth: 0, maxBarThickness: 22 }; });
+    if (chart) { chart.data.datasets = datasets; chart.update(); }
+    else chart = new Chart($('dmCoChart'), {
+      type: 'bar', data: { labels: months.map(ymLabel), datasets },
+      options: { maintainAspectRatio: false, animation: false,
+        plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, callbacks: {
+          label: c => ` ${c.dataset.label}: ${fmt(c.raw)}톤`, footer: items => `합계 ${fmt(items.reduce((a, i) => a + i.raw, 0))}톤` } } },
+        scales: { x: { stacked: true, grid: { display: false }, ticks: { color: '#626262', font: { size: 11 }, autoSkip: true, maxRotation: 0 } },
+                  y: { stacked: true, grid: { color: '#f0f0ee' }, border: { display: false }, ticks: { color: '#626262', font: { size: 11 }, callback: v => fmt(v / 1000) + '천' } } } }
+    });
+    const tot = stats(sumBy(EX, r => F.comps.has(r.comp)), K_EX);
+    if (!tot) { $('dmComp3').innerHTML = `<tr>${noData(7)}</tr>`; return; }
+    const row = (name, st, cls = '') => `<tr class="${cls}"><td>${name}</td><td>${fmt(st.cur)}</td><td>${pctCell(st.mom)}</td><td>${pctCell(st.yoy)}</td>
+      <td class="grp-l">${fmt(st.sum)}</td><td>${pctCell(st.sumYoy)}</td><td>${tot.sum ? (st.sum / tot.sum * 100).toFixed(1) + '%' : '–'}</td></tr>`;
+    $('dmComp3').innerHTML = comps.map(c => row(c, stats(byComp(c), K_EX))).join('') + row(comps.length === 3 ? '3사 합계' : '선택 합계', tot, 'total');
+  }
+
+  // 3. 지역별 (12개 코드 × 선택 제지사)
+  function renderReg() {
+    const p = period(K_EX), comps = selComps();
+    if (!p) { $('dmRegHead').innerHTML = '<th>지역</th>'; $('dmReg').innerHTML = `<tr>${noData(1)}</tr>`; return; }
+    const val = (rg, c, y) => { const s = sumBy(EX, r => r.rg === rg && (c ? r.comp === c : F.comps.has(r.comp)));
+      return (regMode === 'month' ? s[ymKey(y, p.b)] : sumRange(s, y, p.a, p.b)) || 0; };
+    $('dmRegHead').innerHTML = `<th>지역 (${regMode === 'month' ? ymLabel(p.end) : periodLabel(p)})</th>${comps.map(c => `<th>${c}</th>`).join('')}<th class="grp-l">합계</th><th>비중</th><th>전년 동기</th><th>전년比</th>`;
+    const data = REGIONS.map(rg => ({ rg, cs: comps.map(c => val(rg, c, p.y)), tot: val(rg, null, p.y), prev: val(rg, null, p.y - 1) }));
+    const g = data.reduce((a, d) => a + d.tot, 0), gp = data.reduce((a, d) => a + d.prev, 0);
+    const sums = comps.map((_, i) => data.reduce((a, d) => a + d.cs[i], 0));
+    $('dmReg').innerHTML = data.map(d => `<tr><td>${d.rg}</td>${d.cs.map(v => `<td>${fmt(v)}</td>`).join('')}
+        <td class="grp-l">${fmt(d.tot)}</td><td>${g ? (d.tot / g * 100).toFixed(1) + '%' : '–'}</td><td>${fmt(d.prev)}</td><td>${pctCell(pct(d.tot, d.prev))}</td></tr>`).join('')
+      + `<tr class="total"><td>합계</td>${sums.map(v => `<td>${fmt(v)}</td>`).join('')}<td class="grp-l">${fmt(g)}</td><td>100%</td><td>${fmt(gp)}</td><td>${pctCell(pct(g, gp))}</td></tr>`;
+  }
+
+  // 4. Top 10 (기간 합계, 순위 변동은 전년 같은 기간 대비)
+  function topTable(rows, lastKey, bodyId, withRg) {
+    const p = period(lastKey);
+    if (!p) { $(bodyId).innerHTML = `<tr>${noData(7)}</tr>`; return null; }
+    const agg = y => { const o = {};
+      rows.forEach(r => { const yy = +r.ym.slice(0, 4), mm = +r.ym.slice(5);
+        if (yy === y && mm >= p.a && mm <= p.b) { o[r.ct] = o[r.ct] || { v: 0, rg: r.rg }; o[r.ct].v += r.v; } });
+      return o; };
+    const cur = agg(p.y), prev = agg(p.y - 1);
+    const prevRank = Object.fromEntries(Object.entries(prev).sort((a, b) => b[1].v - a[1].v).map(([c], i) => [c, i + 1]));
+    const total = Object.values(cur).reduce((a, x) => a + x.v, 0);
+    $(bodyId).innerHTML = Object.entries(cur).sort((a, b) => b[1].v - a[1].v).slice(0, 10).map(([c, x], i) => {
+      const pv = prev[c] ? prev[c].v : null, d = prevRank[c] ? prevRank[c] - (i + 1) : null;
+      const mv = d == null ? '<span class="flat">신규</span>' : d > 0 ? `<span class="dm-up">▲${d}</span>` : d < 0 ? `<span class="dm-dn">▼${-d}</span>` : '<span class="flat">–</span>';
+      return `<tr><td>${i + 1}</td><td class="l">${c}${withRg && x.rg ? `<span class="dm-rg">${x.rg}</span>` : ''}</td><td>${fmt(x.v)}</td><td>${(x.v / total * 100).toFixed(1)}%</td>
+        <td>${fmt(pv)}</td><td>${pctCell(pct(x.v, pv))}</td><td>${mv}</td></tr>`;
+    }).join('');
+    return p;
+  }
+  document.querySelectorAll('.dm-top-head').forEach(h => h.innerHTML =
+    '<th>순위</th><th class="l">국가</th><th>물량</th><th>비중</th><th>전년 동기</th><th>전년比</th><th>순위 변동</th>');
+  function renderTop() {
+    const pc = topTable(CN, K_CN, 'dmTopCn', true);
+    const pk = topTable(EX.filter(r => F.comps.has(r.comp)), K_EX, 'dmTopKr', true);
+    const lab = p => p ? periodLabel(p) : '자료 없음';
+    $('dmTopSub').textContent = `기간 합계(톤) · 중국산 ${lab(pc)} · 한국산 ${lab(pk)}`;
+    $('dmTopKrComps').textContent = selComps().length === 3 ? '3사 전체' : selComps().join(' + ');
+  }
+
+  function render() {
+    $('dmComp').querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.c === '전체' ? F.comps.size === 3 : F.comps.has(b.dataset.c)));
+    renderTotal(); renderComp(); renderReg(); renderTop();
+  }
+  render();
+}
 </script>
 </body>
 </html>
