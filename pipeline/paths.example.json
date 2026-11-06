@@ -1,0 +1,11 @@
+{
+  "_설명": "이 파일을 paths.local.json으로 복사하고 source_dir를 이 PC의 엑셀 폴더로 바꾼다. paths.local.json은 git에 올리지 않는다.",
+  "source_dir": "C:\\엑셀_업데이트_폴더",
+  "master_weekly": "1_26년_중국 아트지 가격.xlsx",
+  "master_cn": "1_중국수출_생산실적_2605월_new.xlsx",
+  "master_kr": "1_한국산_수출실적_251031.xlsx",
+  "raw_cn_dir": "중국_수출_가격_Monthly",
+  "raw_kr_dir": "한국_수출_가격_Monthly",
+  "domestic_dir": "국내_수출실적_내수시장",
+  "translation_dir": "중국_시장리포트_번역"
+}

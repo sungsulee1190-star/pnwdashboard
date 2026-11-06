@@ -5,3 +5,19 @@ data.js
 
 # 원본 엑셀(DRM)은 저장소에 올리지 않음
 master_excels/
+
+# 평문 data.js 백업(run_updates.py가 실행마다 만든다)
+data.js.backup_*
+
+# PC마다 다른 엑셀 폴더 경로, 실행 로그
+pipeline/paths.local.json
+pipeline/update_log.txt
+__pycache__/
+
+# 로컬 전용: 유료 월보 요약(라이선스), 개인 작업 메모
+rzx_monthly.js
+CLAUDE.md
+README.md
+260402_작업로그.md
+260620_작업로그.md
+260623_DRM_데이터업데이트_대응방향.md
