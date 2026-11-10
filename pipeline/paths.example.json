@@ -6,6 +6,5 @@
   "master_kr": "1_한국산_수출실적_251031.xlsx",
   "raw_cn_dir": "중국_수출_가격_Monthly",
   "raw_kr_dir": "한국_수출_가격_Monthly",
-  "domestic_dir": "국내_수출실적_내수시장",
-  "translation_dir": "중국_시장리포트_번역"
+  "domestic_dir": "국내_수출실적_내수시장"
 }

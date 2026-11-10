@@ -38,7 +38,6 @@ MASTER_PATHS = [MASTER_WEEKLY_PATH, MASTER_CN_PATH, MASTER_KR_PATH]
 RAW_CN_DIR = os.path.join(SOURCE_DIR, PATHS["raw_cn_dir"])
 RAW_KR_DIR = os.path.join(SOURCE_DIR, PATHS["raw_kr_dir"])
 DOMESTIC_DIR = os.path.join(SOURCE_DIR, PATHS["domestic_dir"])
-TRANSLATION_DIR = os.path.join(SOURCE_DIR, PATHS["translation_dir"])
 
 DATA_JS_PATH = os.path.join(DASHBOARD_DIR, "data.js")
 
@@ -46,9 +45,6 @@ DATA_JS_PATH = os.path.join(DASHBOARD_DIR, "data.js")
 _missing = [p for p in [SOURCE_DIR, *MASTER_PATHS, RAW_CN_DIR, RAW_KR_DIR, DOMESTIC_DIR] if not os.path.exists(p)]
 if _missing:
     sys.exit("[중단] 엑셀 폴더에 다음 경로가 없습니다 (paths.local.json 확인):\n  - " + "\n  - ".join(_missing))
-
-# Create translation directory if not exists
-os.makedirs(TRANSLATION_DIR, exist_ok=True)
 
 def open_wb_safe(excel, path, read_only=False):
     """Opens an Excel workbook safely, reusing the already-open workbook if open in the user's Excel."""
@@ -74,7 +70,7 @@ def close_wb_safe(wb, was_open):
 # 2. File Utilities
 # ─────────────────────────────────────────────
 def robust_find_file(folder, keywords, extension):
-    """Finds files matching multiple keywords in folder and all subfolders, sorted by modification time (newest first)."""
+    """Finds files matching multiple keywords in folder and all subfolders. Latest period in the file name wins; modification time breaks ties."""
     if not os.path.exists(folder):
         print(f"  [Error] Folder does not exist: {folder}")
         return None
@@ -93,9 +89,10 @@ def robust_find_file(folder, keywords, extension):
                 
     if not files:
         return None
-    # Sort by modification time (newest first)
-    files.sort(key=os.path.getmtime, reverse=True)
-    return files[0]
+    def rank(path):
+        year, month = parse_date_from_filename(os.path.basename(path))
+        return (year or 0, month or 0, os.path.getmtime(path))
+    return max(files, key=rank)
 
 def parse_date_from_filename(filename):
     """Parses year and month/day from filename using regular expressions."""
