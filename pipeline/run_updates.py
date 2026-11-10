@@ -1556,9 +1556,10 @@ def commit_and_push_to_github():
         print("  - 변경된 파일이 없어 깃허브 업로드를 건너뜁니다.")
         return
         
-    # git user config (commit 전 필수)
-    run_git(["config", "user.email", "sungsulee1190@gmail.com"])
-    run_git(["config", "user.name", "sungsulee1190-star"])
+    # git 작성자 정보는 코드에 두지 않는다(공개 저장소). 이 PC의 git 설정을 쓴다
+    if run_git(["config", "user.email"]).returncode != 0:
+        print("  - [오류] git user.email이 설정되지 않아 업로드를 건너뜁니다. 저장소 폴더에서 git config user.email 을 한 번 설정하세요.")
+        return
 
     # Commit
     today = datetime.datetime.now().strftime("%Y-%m-%d")
