@@ -132,6 +132,31 @@ body.locked > header, body.locked > #page-1, body.locked > #page-2, body.locked 
 .leaflet-tooltip.mill-label { background: rgba(255,255,255,.92); border: 0; box-shadow: none; padding: 1px 5px; font-size: 11px; font-weight: 500; color: var(--text); border-radius: 3px; }
 .leaflet-tooltip.mill-label::before { display: none; }
 
+/* [PAGE 2-B] 마켓맵 모드 (이 구획 안에서만 적용) */
+#mmSection .tbl { width: 100%; border-collapse: collapse; }
+#mmSection .tbl th { padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+#mmSection .tbl td { padding: 6px 10px; font-size: 12.5px; vertical-align: top; }
+#mmSection .tbl .r { text-align: right; }
+#mmSection .tbl tr.tot td { font-weight: 600; border-top: 1px solid var(--text); }
+#mmSection .tbl tr.click { cursor: pointer; } #mmSection .tbl tr.click:hover td { background: var(--raised); }
+#mmSection .tbl .ref { background: var(--raised); }
+#mmSection .mute { color: var(--muted); } #mmSection .off { color: #b5b5b3; }
+#mmSection .mm-bar { position: sticky; top: 48px; z-index: 30; background: var(--surface); border-bottom: 1px solid var(--border); padding: 8px 0 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+#mmSection .mm-comps label { margin-right: 10px; font-size: 13px; white-space: nowrap; cursor: pointer; }
+#mmSection .mm-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin: 22px 0 8px; padding-top: 12px; border-top: 1px solid var(--border); }
+#mmSection .mm-h .panel-meta { margin-left: auto; white-space: normal; }
+#mmSection .mm-h4 { font-size: 13px; font-weight: 600; margin: 14px 0 6px; }
+#mmSection .mm-src { font-size: 12px; color: var(--muted); line-height: 18px; margin: 4px 0; }
+#mmSection .mm-tag { display: inline-block; font-size: 11px; padding: 0 5px; border: 1px solid var(--border); border-radius: 3px; color: var(--muted); font-weight: 400; margin-left: 4px; }
+#mmSection .mm-ai { font-size: 12px; color: var(--muted); border: 1px dashed var(--control); border-radius: 4px; padding: 3px 8px; margin-top: 6px; }
+#mmSection ol.mm-lines { margin: 6px 0 0; padding-left: 18px; list-style: decimal; font-size: 12.5px; line-height: 18px; }
+#mmSection ol.mm-lines li { padding: 3px 0; cursor: pointer; } #mmSection ol.mm-lines li:hover { background: var(--raised); }
+#mmSection i.sw { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 4px; vertical-align: 0; }
+#mmSection .mm-pie { background: none; border: none; } #mmSection .mm-pie svg { overflow: visible; display: block; }
+#mmSection .mm-rlab { background: none; border: none; font-size: 11px; font-weight: 600; white-space: nowrap; text-shadow: 0 0 2px #fff, 0 0 2px #fff, 0 0 2px #fff; }
+.mm-empty { color: var(--muted); border: 1px dashed var(--control); border-radius: 6px; padding: 10px 12px; font-size: 13px; margin-bottom: 6px; }
+#mmMap { height: 500px; }
+
 @media (max-width: 767px) {
   .card { padding: 16px; }
   .kpi-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -424,11 +449,79 @@ body.locked > header, body.locked > #page-1, body.locked > #page-2, body.locked 
         <h1 class="text-2xl font-bold tracking-[-0.02em]">마켓맵·경쟁사</h1>
         <p class="text-[15px] text-[color:var(--muted)] mt-1">경쟁사 공장의 위치와 CAPA, 14개 제지사의 실적과 동향</p>
       </div>
-      <button onclick="showToast('공시·뉴스 동기화를 요청했습니다. 반영까지 시간이 걸릴 수 있습니다.')" class="pill-btn">공시·뉴스 동기화</button>
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="seg" role="group" aria-label="지도 모드">
+          <button class="pill-btn active" id="btnModeCapa" onclick="MM.setMode('capa')">공장 CAPA</button>
+          <button class="pill-btn" id="btnModeMm" onclick="MM.setMode('mm')">마켓맵</button>
+        </div>
+        <button onclick="showToast('공시·뉴스 동기화를 요청했습니다. 반영까지 시간이 걸릴 수 있습니다.')" class="pill-btn">공시·뉴스 동기화</button>
+      </div>
     </div>
 
+    <!-- [PAGE 2-B] 마켓맵 모드: 확인된 수입(중국산+한국산+유럽산). 코드는 아래 [PAGE 2-B] 스크립트 -->
+    <section id="mmSection" class="card hidden">
+      <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+        <div>
+          <h2 class="card-title">마켓맵 · 확인된 수입</h2>
+          <p class="card-sub">확인된 수입 = 중국산 + 한국산 + 유럽산(EU 역외 수출 + EU 회원국끼리) · 지종 = 코트지 · 한국제지 분리 전: 23.8 이후는 '무림·한국 미분리'</p>
+        </div>
+        <span class="panel-meta" id="mmBuilt"></span>
+      </div>
+      <div id="mmEmpty" class="mm-empty hidden">마켓맵 데이터가 아직 배포되지 않았습니다(배포 배치 실행 필요).</div>
+      <div id="mmBody" class="hidden">
+        <div class="mm-bar">
+          <span class="ctl-label">시작</span><select id="mmY0" class="field"></select><select id="mmM0" class="field"></select>
+          <span class="ctl-label">끝</span><select id="mmY1" class="field"></select><select id="mmM1" class="field"></select>
+          <div class="seg" role="group" aria-label="기간 프리셋">
+            <button class="pill-btn" id="mmPYtd">올해 누계</button><button class="pill-btn" id="mmP12">최근 12개월</button><button class="pill-btn" id="mmPLy">작년 연간</button>
+          </div>
+          <span id="mmPinfo" class="ctl-label"></span>
+          <button id="mmXls" class="pill-btn ml-auto">엑셀 다운로드</button>
+          <div class="w-full flex flex-wrap items-center gap-x-3 gap-y-1"><span class="ctl-label">회사(원산지)</span><span id="mmComps" class="mm-comps"></span><span id="mmXlsMsg" class="ctl-label"></span></div>
+        </div>
+
+        <div class="mm-h"><h3 class="panel-title">1. 한솔 지역구분표</h3><span class="panel-meta" id="mmSrcA"></span></div>
+        <div class="seg mb-2" role="group" aria-label="표시">
+          <button class="pill-btn active" data-am="t">중량</button><button class="pill-btn" data-am="yoy">전년비</button><button class="pill-btn" data-am="pct">중량%</button><button class="pill-btn" data-am="fob">가격 FOB</button>
+        </div>
+        <div id="mmTA" class="overflow-x-auto"></div>
+
+        <div class="mm-h"><h3 class="panel-title">2. 지도</h3><button id="mmMapTog" class="btn-text">접기</button><span class="panel-meta" id="mmSrcMap"></span></div>
+        <div id="mmMapBox">
+          <div class="legend mb-2" id="mmLegend"></div>
+          <div id="mmMap" class="rounded-lg border border-[color:var(--border)]"></div>
+          <p class="mm-src" id="mmMapNote"></p>
+        </div>
+
+        <div class="mm-h"><h3 class="panel-title">3. 국가별 변동 Top5</h3><span class="panel-meta" id="mmSrcRank"></span></div>
+        <p class="mm-src">기준(C26): 전년 같은 기간 대비, 해당국 둘 중 한 해 5천톤 이상, 기준별 상위 5. 표 아래 한 줄 = 그 나라 사실(고정 양식). 회사 필터는 이 블록에 적용하지 않는다. 나라를 누르면 국가 상세로 간다.</p>
+        <div id="mmRank" class="grid grid-cols-1 xl:grid-cols-3 gap-4"></div>
+
+        <div class="mm-h"><h3 class="panel-title">4. 기간 증감 · Top10</h3></div>
+        <h4 class="mm-h4">표 B · 기간 증감 (전년 동기비)</h4>
+        <div id="mmTB" class="overflow-x-auto"></div>
+        <p class="mm-src" id="mmSrcB"></p>
+        <h4 class="mm-h4">표 C · 국가 Top10 <select id="mmRg" class="field ml-2"></select></h4>
+        <div id="mmTC" class="overflow-x-auto"></div>
+
+        <div class="mm-h"><h3 class="panel-title">5. 국가 상세 · <span id="mmDName"></span></h3><span class="panel-meta" id="mmSrcD"></span></div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <h4 class="mm-h4">무역통계 · 확인된 수입 구성</h4><div id="mmDComp" class="overflow-x-auto"></div>
+            <h4 class="mm-h4">일본산·인도산 수출 (연간, Comtrade 수출국 신고) <span class="mm-tag">참고</span></h4><div id="mmDAsia"></div>
+            <h4 class="mm-h4">월별 추이 (끝 월까지 24개월, 천톤)</h4><div id="mmDSpark"></div>
+          </div>
+          <div>
+            <h4 class="mm-h4">소속 지역 당사 실적 <span id="mmDRg" class="mm-tag"></span></h4>
+            <div class="mm-empty">구글 시트 연결 전 · 자료 없음 (당사 판매량·가격·이익률은 지역 단위 그대로 표시 예정, 나라로 나누지 않음 · C18)</div>
+            <h4 class="mm-h4">장표 (입력판 값)</h4><div id="mmDDeck"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- 마켓맵 & CAPA -->
-    <section class="card">
+    <section class="card" id="capaSection">
       <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
         <div>
           <h2 class="card-title">공장 분포와 설비 CAPA</h2>
@@ -2191,6 +2284,365 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
   document.getElementById('lockPw').focus();
 });
+</script>
+
+<script>
+// ============================================================================
+// [PAGE 2-B] 마켓맵 모드. 데이터: DATA_MM (pipeline/build_marketmap.py가 data.js에 넣는 블록)
+// 확인받은 화면 = 마켓맵 프로젝트 스케치 v5. 계산 규칙 = PRD C표(C1·C9·C14·C16·C21·C26·C28~C31)
+// 전역에 드러내는 이름은 MM 하나. 상태는 MM 안의 st에만 둔다(전역 STATE 안 씀)
+// ============================================================================
+const MM = (() => {
+  const COL = ['#141414', '#1d5fbf', '#6f9ad8', '#b9cdea', '#8fb0e0', '#8a8a8a', '#c9c9c6'];   // 중국산·한솔·무림·한국제지·미분리·유럽 역외·역내
+  const KR = [1, 2, 3, 4];
+  let D = null, S, NS, C, LATEST, FIRST, EULAST, SRC, BY, KO2CI, st, ready = false;
+  let map = null, markers = null, CUR = null, PREV = null, mode = 'capa';
+  const POS = {};
+  const RS = { 'L열': '', 'L번호정리': '[L열 번호 정리]', '중국코드변환': '[추정] 251031 L열에 없는 나라 → 중국 코드 변환', '미배정': '[추정] 지역코드 없음' };
+
+  // ---------- 공통 ----------
+  const $ = id => document.getElementById(id);
+  const ym = m => `${String(Math.floor(m / 12) % 100).padStart(2, '0')}.${m % 12 + 1}`;
+  const per = (a, b) => `${ym(a)}~${ym(b)}`;
+  const div = (x, y) => (y ? x / y : null);
+  const kt = t => (t == null ? '—' : (t / 1000).toFixed(1));
+  const mt = x => (x ? Math.round(x).toLocaleString('en-US') : '—');
+  const sg = (x, d = 1) => (x == null ? '—' : (x > 0 ? '+' : x < 0 ? '−' : '±') + Math.abs(x).toFixed(d));
+  const pc = x => (x == null ? '—' : (x * 100).toFixed(1) + '%');
+  const cls = x => (x == null || Math.abs(x) < 1e-9 ? '' : x > 0 ? 'dm-up' : 'dm-dn');
+  const zero = () => new Array(NS).fill(0);
+  const sw = i => `<i class="sw" style="background:${COL[i]}"></i>`;
+  const tot = arr => (arr ? arr.reduce((s, x) => s + x, 0) : 0);
+  const sel = arr => (arr ? arr.reduce((s, x, i) => s + (st.comp.has(i) ? x : 0), 0) : 0);
+  const krOther = arr => (arr ? arr[2] + arr[3] + arr[4] : 0);
+  const eu = arr => arr[5] + arr[6];
+  const skip = ci => C[ci].ko === '기타' || C[ci].ko === '미상';
+  const fob = (m, v) => (div(m, v) == null ? '—' : '$' + Math.round(m / v));
+  const yoy = (x, x0) => { const g = div(x - x0, x0); return (x || x0) ? `<span class="${cls(g)}">${g == null ? '신규' : sg(g * 100, 0) + '%'}</span> <span class="mute">${sg((x - x0) / 1000)}천톤</span>` : '—'; };
+
+  // 기간 집계(모든 화면이 이 함수 하나를 쓴다): 월 a~b의 나라별 계열 물량(v)·금액(m)
+  const AGG = new Map();
+  function agg(a, b) {
+    const key = a + ':' + b;
+    if (AGG.has(key)) return AGG.get(key);
+    const v = new Map(), m = new Map();
+    for (let k = a; k <= b; k++) for (const r of BY[k] || []) {
+      if (!v.has(r[1])) { v.set(r[1], zero()); m.set(r[1], zero()); }
+      v.get(r[1])[r[2]] += r[3]; m.get(r[1])[r[2]] += r[4];
+    }
+    const out = { v, m };
+    AGG.set(key, out);
+    return out;
+  }
+  function byRegion(ag) {   // 나라 집계 → 권역 집계
+    const R = {}; D.regions.forEach(k => R[k] = { v: zero(), m: zero() });
+    for (const [ci, v] of ag.v) { const o = R[C[ci].rg] || (R[C[ci].rg] = { v: zero(), m: zero() }), m = ag.m.get(ci); v.forEach((x, i) => { o.v[i] += x; o.m[i] += m[i]; }); }
+    return R;
+  }
+
+  function setup() {
+    D = DATA_MM; S = D.series; NS = S.length; C = D.countries;
+    LATEST = D.latest; FIRST = D.range.cn[0]; EULAST = D.range.eu[1];
+    SRC = '출처: 중국 월보 + 한국 3사 수출 실적 + Eurostat Comext EU27(역외·역내)';
+    BY = {}; for (const r of D.rows) (BY[r[0]] = BY[r[0]] || []).push(r);
+    KO2CI = {}; C.forEach((c, i) => KO2CI[c.ko] = i);
+    const au = C.findIndex(c => c.ko === '호주');
+    st = { a: Math.floor(LATEST / 12) * 12, b: LATEST, comp: new Set(S.map((_, i) => i)), am: 't', rg: '', ci: au >= 0 ? au : 0 };
+    $('mmBuilt').textContent = `기준월 ${ym(LATEST)}(세 자료 공통 최신월, C31) · 빌드 ${D.built}`;
+    fillControls();
+    $('mmBody').addEventListener('click', e => { const t = e.target.closest('[data-ci]'); if (t) showDetail(+t.dataset.ci); });
+    ensureWorld(initMap);
+    render();
+  }
+
+  // ---------- 위쪽 컨트롤 ----------
+  function fillControls() {
+    const Y0 = Math.floor(FIRST / 12), Y1 = Math.floor(LATEST / 12), yo = [], mo = [];
+    for (let y = Y0; y <= Y1; y++) yo.push(`<option value="${y}">${y}년</option>`);
+    for (let m = 1; m <= 12; m++) mo.push(`<option value="${m - 1}">${m}월</option>`);
+    ['mmY0', 'mmY1'].forEach(id => $(id).innerHTML = yo.join('')); ['mmM0', 'mmM1'].forEach(id => $(id).innerHTML = mo.join(''));
+    const clamp = k => Math.max(FIRST, Math.min(LATEST, k));
+    const pick = () => {   // 연·월 → 월 번호. 자료 범위 밖은 범위 끝으로, 시작 > 끝이면 맞춤
+      st.a = clamp(+$('mmY0').value * 12 + +$('mmM0').value); st.b = clamp(+$('mmY1').value * 12 + +$('mmM1').value);
+      if (st.a > st.b) st.a = st.b; render();
+    };
+    ['mmY0', 'mmM0', 'mmY1', 'mmM1'].forEach(id => $(id).onchange = pick);
+    $('mmComps').innerHTML = S.map((s, i) => `<label><input type="checkbox" data-c="${i}" checked> ${sw(i)}${s}</label>`).join('');
+    $('mmComps').onchange = e => { const i = +e.target.dataset.c; e.target.checked ? st.comp.add(i) : st.comp.delete(i); render(); };
+    $('mmPYtd').onclick = () => { st.b = LATEST; st.a = Math.floor(LATEST / 12) * 12; render(); };
+    $('mmP12').onclick = () => { st.b = LATEST; st.a = LATEST - 11; render(); };
+    $('mmPLy').onclick = () => { const y = Math.floor(LATEST / 12) - 1; st.a = y * 12; st.b = y * 12 + 11; render(); };
+    $('mmXls').onclick = () => { $('mmXlsMsg').textContent = '엑셀 다운로드는 다음 판에서 연결합니다(지금 보는 표 그대로 내려받기).'; };
+    $('mmRg').innerHTML = '<option value="">전체 지역</option>' + D.regions.map(r => `<option>${r}</option>`).join('');
+    $('mmRg').onchange = () => { st.rg = $('mmRg').value; renderTop10(); };
+    document.querySelectorAll('#mmSection [data-am]').forEach(b => b.onclick = () => {
+      st.am = b.dataset.am; document.querySelectorAll('#mmSection [data-am]').forEach(x => x.classList.toggle('active', x === b)); renderRegionTable();
+    });
+    $('mmMapTog').onclick = () => {
+      const box = $('mmMapBox'), hide = !box.classList.contains('hidden');
+      box.classList.toggle('hidden', hide); $('mmMapTog').textContent = hide ? '펼치기' : '접기';
+      if (!hide && map) setTimeout(() => map.invalidateSize(), 50);
+    };
+  }
+
+  // ---------- 1. 한솔 지역구분표 (24권역, F7) ----------
+  // E 일본산 · F 인도산 = Comtrade 연간 참고값. 끝 월이 12월이면 그 해, 아니면 전해 중 자료 있는 최신 연도. 합계·지도·Top5에 넣지 않는다(C1)
+  function asiaYear() { const yE = Math.floor(st.b / 12), done = st.b % 12 === 11 ? yE : yE - 1; const ys = Object.keys(D.asia.JP || {}).map(Number).filter(y => y <= done); return ys.length ? Math.max(...ys) : null; }
+  function asiaByRegion(code, y) { const R = {}; for (const [ko, t] of Object.entries((D.asia[code] || {})[y] || {})) { const ci = KO2CI[ko]; const rg = ci == null ? '미배정' : C[ci].rg; R[rg] = (R[rg] || 0) + t; } return R; }
+  function renderRegionTable() {
+    const R = byRegion(CUR), R0 = byRegion(PREV);
+    const AY = asiaYear(), AS = ['JP', 'IN'].map(c => [asiaByRegion(c, AY), asiaByRegion(c, AY - 1)]);
+    const keys = D.regions.concat(Object.keys(R).filter(k => !D.regions.includes(k) && tot(R[k].v) > 0));
+    AS.forEach(([a]) => Object.keys(a).forEach(k => { if (!keys.includes(k)) keys.push(k); }));
+    const asTot = AS.map(([a, a0]) => [tot(Object.values(a)), tot(Object.values(a0))]);
+    const asCell = (j, k) => {             // j = 0 일본산, 1 인도산 / k = 지역 또는 null(전체)
+      if (AY == null) return '<td class="r ref mute">자료 없음</td>';
+      const [a, a0] = AS[j], x = k ? a[k] || 0 : asTot[j][0], x0 = k ? a0[k] || 0 : asTot[j][1];
+      if (st.am === 't') return `<td class="r ref">${x ? `${mt(x)} <span class="mute">(${(div(x, asTot[j][0]) * 100).toFixed(0)}%)</span>` : '—'}</td>`;
+      if (st.am === 'yoy') return `<td class="r ref">${yoy(x, x0)}</td>`;
+      return '<td class="r ref mute">—</td>';
+    };
+    const sum = RR => { const o = { v: zero(), m: zero() }; keys.forEach(k => RR[k] && RR[k].v.forEach((x, i) => { o.v[i] += x; o.m[i] += RR[k].m[i]; })); return o; };
+    const all = sum(R), all0 = sum(R0);
+    const colTot = i => (i === 'sum' ? sel(all.v) : all.v[i]);
+    const one = (o, o0, i) => {            // i = 계열 index 또는 'sum'
+      const x = i === 'sum' ? sel(o.v) : o.v[i], x0 = i === 'sum' ? sel(o0.v) : o0.v[i];
+      if (i !== 'sum' && !st.comp.has(i)) return '<span class="off">—</span>';
+      if (st.am === 't') return x ? `${mt(x)} <span class="mute">(${(div(x, colTot(i)) * 100).toFixed(0)}%)</span>` : '—';
+      if (st.am === 'yoy') return yoy(x, x0);
+      if (st.am === 'pct') return x ? pc(div(x, sel(o.v))) : '—';
+      if (i === 0) return '<span class="mute">자료 없음</span>';
+      if (i >= 5) return '<span class="mute">금액 미수집</span>';
+      if (i === 'sum') { const kv = KR.filter(k => st.comp.has(k)); return fob(kv.reduce((s, k) => s + o.m[k], 0), kv.reduce((s, k) => s + o.v[k], 0)); }
+      return fob(o.m[i], o.v[i]);
+    };
+    const nx = '<td class="r off">다음 판</td>';
+    const head = `<thead><tr><th rowspan="2">지역</th><th class="r" rowspan="2">전체 수요<br><span class="mute">= 확인된 수입(B+C+D, 선택 계열)</span></th><th class="r off" rowspan="2">A Local</th><th class="r">B</th><th class="r" colspan="4">C 한국산</th><th class="r" colspan="2">D 유럽산</th><th class="r ref" colspan="2">E·F 아시아산 (연간 참고) <span class="mm-tag">${AY == null ? '자료 없음' : AY + ' 연간 · 참고' + (st.am === 'yoy' ? ` vs ${AY - 1}` : '')}</span></th></tr>
+      <tr><th class="r">${sw(0)}중국산</th>${KR.map(i => `<th class="r ${st.comp.has(i) ? '' : 'off'}">${sw(i)}${S[i]}</th>`).join('')}${[5, 6].map(i => `<th class="r ${st.comp.has(i) ? '' : 'off'}">${sw(i)}${i === 5 ? 'EU 역외 수출' : 'EU 회원국끼리'}</th>`).join('')}<th class="r ref">E 일본산</th><th class="r ref">F 인도산</th></tr></thead>`;
+    const row = (k, o, o0, c = '') => `<tr class="${c}"><td>${k}${k === '미배정' ? ` <span class="mm-tag">${RS['미배정']}</span>` : ''}</td><td class="r"><b>${one(o, o0, 'sum')}</b></td>${nx}${S.map((_, i) => `<td class="r">${one(o, o0, i)}</td>`).join('')}${asCell(0, c === 'tot' ? null : k)}${asCell(1, c === 'tot' ? null : k)}</tr>`;
+    const empty = { v: zero(), m: zero() };
+    const conv = C.filter((c, i) => c.rs === '중국코드변환' && CUR.v.has(i)).length;
+    $('mmTA').innerHTML = `<table class="tbl">${head}<tbody>${keys.map(k => row(k, R[k] || empty, R0[k] || empty)).join('')}${row('전체', all, all0, 'tot')}</tbody></table>
+      <p class="mm-src">${SRC} · ${per(st.a, st.b)}${st.am === 'yoy' ? ` vs ${per(st.a - 12, st.b - 12)}` : ''} · 단위 MT · ${st.am === 't' ? '괄호 = 열 합계 대비 비율' : st.am === 'yoy' ? '전년 같은 기간 대비 %, 천톤' : st.am === 'pct' ? '행 안 비중(선택 계열 합 = 100%)' : 'FOB $/톤 = 금액÷물량, 한국산만'} · 지종 = 코트지 · D 유럽산 = Comext EU27 수출국 신고(C29): 역외 수출 + EU 회원국끼리(도착 회원국 기준)${st.b > EULAST ? ` · <b>D 열 자료는 ${ym(EULAST)}까지(선택 기간보다 짧음)</b>` : ''} · 회사별(UPM·Sappi·Burgo 등)은 미국·멕시코만 별도 조사 · A 열 = 다음 판 · E·F = UN Comtrade 수출국 신고 연간(HS 481013+14+19, ${AY ?? '—'}년${st.am === 'yoy' ? ` vs ${AY - 1}년` : ''}), 기간이 달라 전체 수요 합계·지도·Top5에 미포함(C1), 중량%·FOB 모드는 "—" · 지역 = 251031 L열, ${conv}개국은 중국 코드 변환 [추정] · 한국제지 단독은 23.7까지, 이후는 "무림·한국 미분리"</p>`;
+  }
+
+  // ---------- 2. 지도 (C9·C23): CAPA 지도(millMap)와 별도 Leaflet 인스턴스 ----------
+  function ensureWorld(cb) {
+    if (window.WORLD_50M) return cb();
+    const sc = document.createElement('script'); sc.src = 'vendor/world-50m.js'; sc.onload = cb;
+    sc.onerror = () => { $('mmMapNote').textContent = '국가 경계 데이터를 불러오지 못했습니다.'; };
+    document.head.appendChild(sc);
+  }
+  function centroid(geom) {   // 가장 큰 땅덩이의 무게중심 [위도, 경도]
+    const polys = geom.type === 'Polygon' ? [geom.coordinates] : geom.type === 'MultiPolygon' ? geom.coordinates : [];
+    let best = null, bestA = 0;
+    for (const p of polys) {
+      const ring = p[0]; let A = 0, x = 0, y = 0;
+      for (let i = 0; i < ring.length - 1; i++) { const [x0, y0] = ring[i], [x1, y1] = ring[i + 1], k = x0 * y1 - x1 * y0; A += k; x += (x0 + x1) * k; y += (y0 + y1) * k; }
+      if (Math.abs(A) > bestA) { bestA = Math.abs(A); best = [y / (3 * A), x / (3 * A)]; }
+    }
+    return best;
+  }
+  function initMap() {
+    if (map) return;
+    map = L.map('mmMap', { minZoom: 2, maxZoom: 7, zoomSnap: 1, attributionControl: false }).setView([22, 45], 2);
+    const geo = topojson.feature(window.WORLD_50M, window.WORLD_50M.objects.countries);
+    const en2c = {}; C.forEach((c, i) => { if (c.en) en2c[c.en] = i; if (c.pt) POS[i] = c.pt; });
+    geo.features.forEach(f => { const i = en2c[f.properties.name]; if (i != null) { const p = centroid(f.geometry); if (p) POS[i] = p; } });
+    L.geoJSON(geo, { style: f => ({ color: '#cfcfcb', weight: 0.6, fillColor: en2c[f.properties.name] != null ? '#f0f0ee' : '#fbfbfa', fillOpacity: 1 }),
+      onEachFeature: (f, l) => { const i = en2c[f.properties.name]; if (i != null) l.on('click', () => showDetail(i)); } }).addTo(map);
+    markers = L.layerGroup().addTo(map);
+    map.on('zoomend', drawMarkers);
+    $('mmLegend').innerHTML = S.map((s, i) => `<span>${sw(i)}${s}</span>`).join('') + '<span>원 크기 = 확인된 수입(선택 계열 합) · 줌 4 미만 = 지역 원, 4 이상 = 나라 원</span>';
+    setTimeout(() => map.invalidateSize(), 100);
+    drawMarkers();
+  }
+  function pie(vals, r) {
+    const t = tot(vals); if (!t) return '';
+    let a = -Math.PI / 2, out = '';
+    vals.forEach((v, i) => {
+      if (!v) return;
+      if (v / t > 0.9999) { out += `<circle cx="${r}" cy="${r}" r="${r}" fill="${COL[i]}"/>`; return; }
+      const b = a + 2 * Math.PI * v / t, big = b - a > Math.PI ? 1 : 0;
+      out += `<path d="M${r},${r} L${(r + r * Math.cos(a)).toFixed(2)},${(r + r * Math.sin(a)).toFixed(2)} A${r},${r} 0 ${big} 1 ${(r + r * Math.cos(b)).toFixed(2)},${(r + r * Math.sin(b)).toFixed(2)} Z" fill="${COL[i]}"/>`;
+      a = b;
+    });
+    return `<svg width="${2 * r}" height="${2 * r}"><g stroke="#fff" stroke-width="0.6">${out}</g><circle cx="${r}" cy="${r}" r="${r}" fill="none" stroke="#141414" stroke-width="0.8"/></svg>`;
+  }
+  function drawMarkers() {
+    if (!map || !CUR) return;
+    markers.clearLayers();
+    const vals = [], noPos = [];
+    for (const [ci, v] of CUR.v) {
+      const vv = v.map((x, i) => (st.comp.has(i) ? x : 0)), t = tot(vv);
+      if (t <= 0) continue;
+      if (!POS[ci]) { noPos.push(`${C[ci].ko} ${kt(t)}천톤`); continue; }
+      vals.push({ ci, vv, t, pos: POS[ci] });
+    }
+    const region = map.getZoom() < 4;
+    let items = vals;
+    if (region) {
+      const g = {};
+      for (const x of vals) { const k = C[x.ci].rg, o = g[k] = g[k] || { vv: zero(), t: 0, la: 0, ln: 0, k };
+        x.vv.forEach((y, i) => o.vv[i] += y); o.t += x.t; o.la += x.pos[0] * x.t; o.ln += x.pos[1] * x.t; }
+      items = Object.values(g).map(o => ({ ...o, pos: [o.la / o.t, o.ln / o.t] }));
+    }
+    const mx = Math.max(1, ...items.map(x => x.t));
+    items.sort((a, b) => b.t - a.t).forEach(x => {
+      const r = Math.max(4, (region ? 34 : 26) * Math.sqrt(x.t / mx));
+      const name = region ? x.k : C[x.ci].ko;
+      const m = L.marker(x.pos, { icon: L.divIcon({ className: 'mm-pie', html: pie(x.vv, r), iconSize: [2 * r, 2 * r], iconAnchor: [r, r] }) })
+        .bindTooltip(`<b>${name}</b> ${kt(x.t)}천톤<br>` + x.vv.map((v, i) => v ? `${S[i]} ${kt(v)} (${pc(v / x.t)})` : '').filter(Boolean).join('<br>'));
+      m.on('click', () => region ? map.setView(x.pos, 4) : showDetail(x.ci));
+      markers.addLayer(m);
+      if (region && r > 13) markers.addLayer(L.marker(x.pos, { interactive: false, icon: L.divIcon({ className: 'mm-rlab', html: name, iconSize: null, iconAnchor: [-r - 2, 7] }) }));
+    });
+    $('mmMapNote').textContent = `${region ? '지역 원(소속 나라 위치의 물량 가중 평균 자리, 클릭 = 확대)' : '나라 원(국가 경계 중심, 클릭 = 국가 상세)'} · 지도 위치 없는 항목(표에는 포함): ${noPos.join(', ') || '없음'} · 지도 바탕 = 로컬 world-50m`;
+  }
+
+  // ---------- 3. 국가별 변동 Top5 (C26) + 고정 양식 한 줄 (C21·C28) ----------
+  function forecast(ci, cur) {   // 남은 달 = 작년 같은 달 × 올해 누계/작년 누계, 범위 = 지난 3년 같은 비율
+    const y = Math.floor(st.b / 12), mEnd = st.b % 12;
+    if (mEnd === 11) return null;
+    if (st.a !== y * 12) return { pt: null, note: '1월 시작 기간만' };
+    const ytdOf = Y => tot(agg(Y * 12, Y * 12 + mEnd).v.get(ci));
+    const remOf = Y => tot(agg(Y * 12 + mEnd + 1, Y * 12 + 11).v.get(ci));
+    const ly = ytdOf(y - 1), lr = remOf(y - 1);
+    if (ly < 500 || lr < 100) return { pt: null, note: '자료 부족' };
+    const point = cur + lr * cur / ly;
+    const fx = [y - 3, y - 2, y - 1].filter(Y => Y * 12 >= FIRST)
+      .map(Y => { const t = ytdOf(Y); return t > 0 ? cur * (1 + remOf(Y) / t) : null; }).filter(x => x != null);
+    return { pt: point, lo: fx.length ? Math.min(...fx) : point, hi: fx.length ? Math.max(...fx) : point };
+  }
+  function renderTop5() {
+    const rows = [];
+    const add = (ci, v, p) => {
+      const t1 = tot(v), t0 = tot(p);
+      if (Math.max(t1, t0) < 5000 || skip(ci)) return;
+      const dC = [[v[0] - p[0], '중국산'], [krOther(v) - krOther(p), '한국 타사'], [eu(v) - eu(p), '유럽산']].sort((x, y) => Math.abs(y[0]) - Math.abs(x[0]))[0];
+      rows.push({ ci, v, p, t1, t0, dV: t1 - t0, dS: ((div(v[1], t1) || 0) - (div(p[1], t0) || 0)) * 100, dC });
+    };
+    for (const [ci, v] of CUR.v) add(ci, v, PREV.v.get(ci) || zero());
+    for (const [ci, p] of PREV.v) if (!CUR.v.has(ci)) add(ci, zero(), p);
+    const top = f => rows.slice().sort((x, y) => Math.abs(f(y)) - Math.abs(f(x))).slice(0, 5);
+    const lists = [['물량 변화', '천톤', top(r => r.dV), r => sg(r.dV / 1000)],
+                   ['한솔 점유율 변화', '%p', top(r => r.dS), r => sg(r.dS)],
+                   ['경쟁사 급변', '천톤', top(r => r.dC[0]), r => `${sg(r.dC[0] / 1000)} <span class="mute">${r.dC[1]}</span>`]];
+    // 고정 양식: [나라](지역) 기간 X천톤(전년비 ±Y%, ±Z천톤) · 증가 · 감소 · 한솔 A%→B% · 연간 예상 C(D~E)
+    const line = r => {
+      const c = C[r.ci], g = div(r.dV, r.t0);
+      const dd = [[S[0], r.v[0] - r.p[0]], [S[1], r.v[1] - r.p[1]], ['한국 타사', krOther(r.v) - krOther(r.p)], ['유럽산', eu(r.v) - eu(r.p)]];
+      const up = dd.filter(x => x[1] >= 50).sort((a, b) => b[1] - a[1]).map(x => `${x[0]} ${sg(x[1] / 1000)}`).join(', ') || '없음';
+      const dn = dd.filter(x => x[1] <= -50).sort((a, b) => a[1] - b[1]).map(x => `${x[0]} ${sg(x[1] / 1000)}`).join(', ') || '없음';
+      const f = forecast(r.ci, r.t1);
+      return `<b>${c.ko}</b><span class="mute">(${c.rg})</span> ${per(st.a, st.b)} ${kt(r.t1)}천톤(전년비 ${g == null ? '신규' : sg(g * 100) + '%'}, ${sg(r.dV / 1000)}천톤)` +
+        ` · 증가: ${up} · 감소: ${dn} · 한솔 ${pc(div(r.p[1], r.t0))}→${pc(div(r.v[1], r.t1))}` +
+        ` · 연간 예상 ${f ? (f.pt == null ? f.note : `${kt(f.pt)}천톤(${kt(f.lo)}~${kt(f.hi)})`) : '—'}`;
+    };
+    $('mmRank').innerHTML = lists.map(([t, u, list, f]) => `<div><h4 class="mm-h4">${t}</h4><table class="tbl"><thead><tr><th>#</th><th>나라</th><th>지역</th><th class="r">변화 ${u}</th><th class="r">${per(st.a, st.b)} 천톤</th><th class="r">전년 같은 기간</th></tr></thead><tbody>` +
+      (list.length ? list.map((r, i) => `<tr class="click" data-ci="${r.ci}"><td>${i + 1}</td><td>${C[r.ci].ko}</td><td class="mute">${C[r.ci].rg}</td><td class="r">${f(r)}</td><td class="r">${kt(r.t1)}</td><td class="r mute">${kt(r.t0)}</td></tr>`).join('') : '<tr><td colspan="6" class="mute">자료 없음</td></tr>') +
+      `</tbody></table><ol class="mm-lines">${list.map(r => `<li data-ci="${r.ci}">${line(r)}</li>`).join('')}</ol>` +
+      `<div class="mm-ai">AI 해석(피터 확인 후 게시) · 자리만</div></div>`).join('');
+  }
+
+  // ---------- 4. 표 B 기간 증감(C14) · 표 C Top10(C16) ----------
+  function renderPeriodTable() {
+    const y = Math.floor(st.b / 12), mEnd = st.b % 12;
+    const P = [['1분기', 0, 2], ['2분기', 3, 5], ['3분기', 6, 8], ['4분기', 9, 11], ['상반기', 0, 5], ['하반기', 6, 11], ['연간', 0, 11]];
+    const R = (Y, a, b) => byRegion(agg(Y * 12 + a, Y * 12 + b));
+    const cols = P.map(([n, a, b]) => a > mEnd ? { n, none: true } : { n, a, b: Math.min(b, mEnd), run: b > mEnd });
+    const cur = R(y, 0, mEnd), lastY = R(y - 1, 0, 11);
+    const rgs = D.regions.filter(k => tot(cur[k].v) || tot(lastY[k].v));
+    const val = (Y, c, k) => { const RR = R(Y, c.a, c.b); return k ? sel(RR[k].v) : rgs.reduce((s, r) => s + sel(RR[r].v), 0); };
+    const cell = (k, c) => {
+      if (c.none) return '<td class="r mute">—</td>';
+      const t1 = val(y, c, k), t0 = val(y - 1, c, k), g = div(t1 - t0, t0);
+      return `<td class="r">${kt(t1)} <span class="${cls(g)}">${g == null ? '—' : sg(g * 100, 0) + '%'}</span></td>`;
+    };
+    $('mmTB').innerHTML = `<table class="tbl"><thead><tr><th>권역 (${y % 100}년 천톤 · 전년 같은 기간 대비)</th>${cols.map(c => `<th class="r">${c.n}${c.run ? ` <span class="mm-tag">진행 중 ~${c.b + 1}월</span>` : ''}</th>`).join('')}</tr></thead><tbody>
+      ${rgs.map(k => `<tr><td>${k}</td>${cols.map(c => cell(k, c)).join('')}</tr>`).join('')}
+      <tr class="tot"><td>합계</td>${cols.map(c => cell(null, c)).join('')}</tr></tbody></table>`;
+    $('mmSrcB').textContent = `${SRC} · ${y % 100}년 vs ${(y - 1) % 100}년(기간 끝 연도 기준) · 미완성 기간은 전년도 같은 달까지만 잘라 비교(C14) · "—" = 아직 시작 안 한 기간 · 회사 필터 적용`;
+  }
+  function renderTop10() {
+    const rows = [];
+    for (const [ci, v] of CUR.v) {
+      if ((st.rg && C[ci].rg !== st.rg) || skip(ci)) continue;
+      const t = sel(v); if (t > 0) rows.push({ ci, v, t, t0: sel(PREV.v.get(ci)) });
+    }
+    rows.sort((a, b) => b.t - a.t);
+    $('mmTC').innerHTML = `<table class="tbl"><thead><tr><th>#</th><th>나라</th><th>권역</th><th class="r">확인된 수입 천톤</th><th class="r">전년 같은 기간</th><th class="r">전년비</th>${S.map((s, i) => `<th class="r ${st.comp.has(i) ? '' : 'off'}">${s} %</th>`).join('')}</tr></thead><tbody>` +
+      (rows.length ? rows.slice(0, 10).map((r, i) => { const g = div(r.t - r.t0, r.t0);
+        return `<tr class="click" data-ci="${r.ci}"><td>${i + 1}</td><td>${C[r.ci].ko}</td><td class="mute">${C[r.ci].rg}</td><td class="r">${kt(r.t)}</td><td class="r">${kt(r.t0)}</td><td class="r ${cls(g)}">${g == null ? '신규' : sg(g * 100) + '%'}</td>${S.map((s, k) => `<td class="r ${st.comp.has(k) ? '' : 'off'}">${st.comp.has(k) ? pc(div(r.v[k], r.t)) : '—'}</td>`).join('')}</tr>`; }).join('')
+        : `<tr><td colspan="${6 + NS}" class="mute">자료 없음</td></tr>`) +
+      `</tbody></table><p class="mm-src">${SRC} · ${per(st.a, st.b)} vs ${per(st.a - 12, st.b - 12)} · 확인된 수입(선택 계열 합) 큰 순(C16) · ${st.rg || '전체 지역'}</p>`;
+  }
+
+  // ---------- 5. 국가 상세 (C10·C18) ----------
+  function showDetail(ci) { st.ci = ci; renderDetail(); $('mmDName').scrollIntoView({ block: 'start' }); }
+  function renderDetail() {
+    const ci = st.ci, c = C[ci], v = CUR.v.get(ci) || zero(), m = CUR.m.get(ci) || zero(), p = PREV.v.get(ci) || zero(), pm = PREV.m.get(ci) || zero();
+    const t1 = tot(v), t0 = tot(p);
+    $('mmDName').textContent = c.ko; $('mmDRg').textContent = c.rg + (RS[c.rs] ? ' ' + RS[c.rs] : '');
+    $('mmDComp').innerHTML = `<table class="tbl"><thead><tr><th>원산지·회사</th><th class="r">${per(st.a, st.b)} 천톤</th><th class="r">비중</th><th class="r">전년 같은 기간</th><th class="r">변화 천톤</th><th class="r">FOB $/톤</th><th class="r">전년 FOB</th></tr></thead><tbody>` +
+      S.map((s, i) => `<tr><td>${sw(i)}${s}${i === 1 ? ' <span class="mm-tag">당사</span>' : ''}</td><td class="r">${kt(v[i])}</td><td class="r">${pc(div(v[i], t1))}</td><td class="r">${kt(p[i])}</td><td class="r ${cls(v[i] - p[i])}">${sg((v[i] - p[i]) / 1000)}</td>
+        <td class="r">${i === 0 ? '<span class="mute">자료 없음</span>' : i >= 5 ? '<span class="mute">금액 미수집</span>' : fob(m[i], v[i])}</td><td class="r">${i === 0 || i >= 5 ? '' : fob(pm[i], p[i])}</td></tr>`).join('') +
+      `<tr class="tot"><td>확인된 수입 합</td><td class="r">${kt(t1)}</td><td class="r">${t1 ? '100%' : '—'}</td><td class="r">${kt(t0)}</td><td class="r">${sg((t1 - t0) / 1000)}</td><td></td><td></td></tr></tbody></table>
+      <p class="mm-src">${SRC} · 한솔 물량 = 위 "한솔" 행 · FOB는 한국산만(금액÷물량) · 회사 필터와 무관하게 전체 구성</p>`;
+    const AYS = Object.keys(D.asia.JP || {}).sort();
+    $('mmDAsia').innerHTML = `<table class="tbl"><thead><tr><th>수출국</th>${AYS.map(y => `<th class="r">${y} 천톤</th>`).join('')}</tr></thead><tbody>` +
+      [['JP', 'E 일본산'], ['IN', 'F 인도산']].map(([k, n]) => `<tr><td>${n}</td>${AYS.map(y => { const t = ((D.asia[k] || {})[y] || {})[c.ko]; return `<td class="r">${t ? kt(t) : '—'}</td>`; }).join('')}</tr>`).join('') +
+      `</tbody></table><p class="mm-src">출처: UN Comtrade 수출국 신고(일본·인도 → ${c.ko}), HS 481013+481014+481019 순중량 · 연 단위 · 위 확인된 수입 합에 미포함(기간이 달라 섞지 않음, C1) · "—" = 신고 없음</p>`;
+    const W = 600, H = 130, n = 24, a = st.b - n + 1, tt = [], hs = [];
+    for (let k = a; k <= st.b; k++) { const x = agg(k, k).v.get(ci) || zero(); tt.push(tot(x)); hs.push(x[1]); }
+    const mx = Math.max(1, ...tt), X = i => 34 + i * (W - 44) / (n - 1), Y = q => H - 18 - q / mx * (H - 32);
+    const pl = (arr, col, w) => `<polyline fill="none" stroke="${col}" stroke-width="${w}" points="${arr.map((q, i) => X(i).toFixed(1) + ',' + Y(q).toFixed(1)).join(' ')}"/>`;
+    $('mmDSpark').innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="max-width:100%;border:1px solid var(--border);border-radius:6px;background:#fff">
+      <line x1="34" x2="${W - 10}" y1="${H - 18}" y2="${H - 18}" stroke="#e6e6e4"/>
+      ${pl(tt, '#8a8a8a', 1.5)}${pl(hs, '#1d5fbf', 2)}
+      <text x="2" y="${Y(mx) + 4}" font-size="10" fill="#626262">${kt(mx)}</text><text x="2" y="${H - 15}" font-size="10" fill="#626262">0</text>
+      ${[0, 12, n - 1].map(i => `<text x="${X(i) - 12}" y="${H - 4}" font-size="10" fill="#626262">${ym(a + i)}</text>`).join('')}
+      <text x="${W - 200}" y="14" font-size="11" fill="#626262">회색 = 확인된 수입 합</text><text x="${W - 70}" y="14" font-size="11" font-weight="600" fill="#1d5fbf">파랑 = 한솔</text></svg>
+      <p class="mm-src">${SRC} · ${per(a, st.b)} · 월별 톤 ÷ 1,000</p>`;
+    const dk = D.deck[c.ko];
+    if (dk) {
+      const ms = dk.ms || [], msTot = ms.reduce((s, x) => s + x[1], 0);
+      $('mmDDeck').innerHTML = `<table class="tbl"><thead><tr><th>권역</th><th>도시</th><th class="r">수요 천톤</th><th class="r">%</th></tr></thead><tbody>${(dk.demand || []).map(d => `<tr><td>${d[0]}</td><td>${d[1]}</td><td class="r">${d[2].toFixed(1)}</td><td class="r">${pc(d[2] / dk.total)}</td></tr>`).join('')}
+        <tr class="tot"><td colspan="2">국가 전체</td><td class="r">${dk.total.toFixed(1)}</td><td class="r">100%</td></tr></tbody></table>
+        ${ms.length ? `<table class="tbl mt-3"><thead><tr><th>제지사 M/S (화면 계산)</th><th class="r">흐름 천톤</th><th class="r">M/S (÷ 국가 수요 ${dk.total})</th></tr></thead><tbody>${ms.map(x => `<tr><td>${x[0]}</td><td class="r">${x[1].toFixed(1)}</td><td class="r">${pc(x[1] / dk.total)}</td></tr>`).join('')}
+        <tr class="tot"><td>합</td><td class="r">${msTot.toFixed(1)}</td><td class="r">${pc(msTot / dk.total)}</td></tr></tbody></table>` : ''}
+        <p class="mm-src">출처: ${dk.src} · ${dk.year}년 · 구분 = ${dk.kind || '—'} · 장표 수요(실제 수요)와 왼쪽 확인된 수입은 출처가 달라 값이 다르다(C1·C9)</p>
+        <div class="mm-empty">Merchant SoW · Printer 구성: 입력판 연결 후 표시</div>`;
+    } else $('mmDDeck').innerHTML = '<div class="mm-empty">자료 없음 (입력판에 이 나라 장표 값이 없음)</div>';
+    $('mmSrcD').textContent = `${per(st.a, st.b)} vs ${per(st.a - 12, st.b - 12)}`;
+  }
+
+  // ---------- 다시 계산 ----------
+  function render() {
+    $('mmY0').value = Math.floor(st.a / 12); $('mmM0').value = st.a % 12; $('mmY1').value = Math.floor(st.b / 12); $('mmM1').value = st.b % 12;
+    CUR = agg(st.a, st.b); PREV = agg(st.a - 12, st.b - 12);
+    $('mmPinfo').textContent = `${per(st.a, st.b)} (${st.b - st.a + 1}개월) vs 전년 ${per(st.a - 12, st.b - 12)}` + (st.a - 12 < FIRST ? ` · 전년 기간 일부에 중국산 자료 없음(중국 월보 ${ym(FIRST)}부터)` : '');
+    $('mmSrcRank').textContent = `${per(st.a, st.b)} vs ${per(st.a - 12, st.b - 12)} · 천톤`;
+    $('mmSrcMap').textContent = `${per(st.a, st.b)} · 확인된 수입 = 중국산 + 한국산 + 유럽산`;
+    $('mmSrcA').textContent = '회사 필터 적용';
+    renderRegionTable(); drawMarkers(); renderTop5(); renderPeriodTable(); renderTop10(); renderDetail();
+  }
+
+  // 모드 전환: 공장 CAPA(기존, 기본) ↔ 마켓맵. CAPA 구획은 숨기기만 하고 건드리지 않는다
+  function setMode(m) {
+    mode = m;
+    document.getElementById('capaSection').classList.toggle('hidden', m !== 'capa');
+    document.getElementById('mmSection').classList.toggle('hidden', m !== 'mm');
+    document.getElementById('btnModeCapa').classList.toggle('active', m === 'capa');
+    document.getElementById('btnModeMm').classList.toggle('active', m === 'mm');
+    if (m === 'capa') { if (typeof leafletMap !== 'undefined' && leafletMap) setTimeout(() => leafletMap.invalidateSize(), 100); return; }
+    if (typeof DATA_MM === 'undefined') { $('mmEmpty').classList.remove('hidden'); return; }
+    $('mmBody').classList.remove('hidden');
+    if (!ready) { ready = true; setup(); }
+    else if (map) setTimeout(() => map.invalidateSize(), 100);
+  }
+  return { setMode };
+})();
 </script>
 
 <script>
