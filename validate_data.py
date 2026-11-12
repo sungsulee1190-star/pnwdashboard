@@ -1,6 +1,63 @@
+import json
 import os
 import sys
+sys.stdout.reconfigure(encoding="utf-8")   # 콘솔이 cp949여도 기호 출력에서 멈추지 않게
 import re
+
+MM_LIMIT_T = 1000   # 합계 불일치·지역 미배정이 이 톤을 넘으면 실패(C27)
+
+
+def check_marketmap(content):
+    """DATA_MM(마켓맵) 검사. 블록이 없으면 건너뛴다. 반환 = (오류 목록, 경고 목록)"""
+    m = re.search(r"^const DATA_MM = (.*);$", content, flags=re.M)
+    if not m:
+        print("DATA_MM 없음 → 마켓맵 검사 건너뜀")
+        return [], []
+    errors, warns = [], []
+    try:
+        mm = json.loads(m.group(1))
+    except ValueError as e:
+        return [f"DATA_MM JSON 읽기 실패: {e}"], []
+    C, R, rows, NS = mm["countries"], set(mm["regions"]), mm["rows"], len(mm["series"])
+    latest = mm["latest"]
+    a, b = latest - 23, latest   # 최근 24개월 = 올해 누계와 전년 같은 기간을 덮는다
+    by_region, by_country, by_series, total = {}, {}, [0.0] * NS, 0.0
+    src_sum = {"cn": 0.0, "kr": 0.0, "eu": 0.0}
+    for mo, ci, si, t, _ in rows:
+        if not (0 <= ci < len(C) and 0 <= si < NS):
+            errors.append(f"DATA_MM 행 index 범위 밖: {[mo, ci, si]}")
+            break
+        src_sum["cn" if si == 0 else "kr" if si <= 4 else "eu"] += t
+        if a <= mo <= b:
+            rg = C[ci]["rg"]
+            by_region[rg] = by_region.get(rg, 0) + t
+            by_country[ci] = by_country.get(ci, 0) + t
+            by_series[si] += t
+            total += t
+    gap = lambda x, y: abs(x - y) > MM_LIMIT_T
+    if gap(sum(by_region.values()), total):
+        errors.append(f"마켓맵 지역 합 {sum(by_region.values()):,.0f} ≠ 전체 {total:,.0f}")
+    if gap(sum(by_series), sum(by_country.values())):
+        errors.append(f"마켓맵 계열 합 {sum(by_series):,.0f} ≠ 나라 합 {sum(by_country.values()):,.0f}")
+    for k, label in (("cn", "중국산 = DATA_EXPORT"), ("kr", "한국산 = DATA_KR_COUNTRY"), ("eu", "유럽산 = Comext 원자료")):
+        want = mm["check"][k + "_t"] - (mm["unmapped"]["eu_t"] if k == "eu" else 0)
+        if gap(src_sum[k], want):
+            errors.append(f"마켓맵 {label} 불일치: {src_sum[k]:,.0f} vs {want:,.0f}톤")
+    unassigned = by_region.get("미배정", 0)
+    if unassigned > MM_LIMIT_T:
+        names = sorted({C[ci]["ko"] for ci in by_country if C[ci]["rg"] == "미배정"})
+        errors.append(f"마켓맵 지역 미배정 {unassigned:,.0f}톤 > {MM_LIMIT_T}톤: {names}")
+    elif unassigned:
+        warns.append(f"마켓맵 지역 미배정 {unassigned:,.0f}톤(문턱 이하)")
+    if mm["unmapped"]["eu_t"] > MM_LIMIT_T:
+        errors.append(f"마켓맵 EU 도착국 매핑 누락 {mm['unmapped']['eu_t']:,.0f}톤: {list(mm['unmapped']['eu'])[:10]}")
+    other = sum(v for k, v in by_region.items() if k not in R and k != "미배정")
+    if other:
+        warns.append(f"마켓맵 24권역 밖(원본 '기타'·한국 등) {other:,.0f}톤, 지역표 '기타' 행으로 표시")
+    y, mth = divmod(latest, 12)
+    print(f"마켓맵 검사: 기준월 {y}.{mth + 1}, 최근 24개월 전체 {total:,.0f}톤, 지역 {len(by_region)}개, 미배정 {unassigned:,.0f}톤")
+    return errors, warns
+
 
 def validate_data_js():
     workspace_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -58,6 +115,12 @@ def validate_data_js():
     if not meta_match:
         errors.append("Could not parse DATA_META object.")
         
+    # 6. 마켓맵(DATA_MM) — 블록이 있을 때만
+    mm_errors, mm_warns = check_marketmap(content)
+    errors += mm_errors
+    for w in mm_warns:
+        print(f"  [경고] {w}")
+
     # Print results
     if errors:
         print("\n❌ Validation Failed:")
