@@ -1,70 +1,66 @@
 @echo off
+rem Marketmap deploy: build_marketmap.py -> validate_data.py -> encrypt -> commit data.enc.js only -> push
+rem Peter runs this himself. Running it = upload approval (C27). Any failure stops before upload.
+rem This file stays ASCII-only: cmd misreads multibyte lines after "chcp 65001". Python/Node print Korean.
 chcp 65001 >nul
 setlocal
-
-rem 마켓맵 데이터 배포: build_marketmap.py -> validate_data.py -> 암호화 -> data.enc.js만 commit -> push
-rem 피터가 직접 실행한다. 실행 = 업로드 승인(C27). 중간에 실패하면 멈추고 아무것도 올리지 않는다.
 cd /d "%~dp0.."
 
 for /f %%b in ('git rev-parse --abbrev-ref HEAD') do set BRANCH=%%b
 if not "%BRANCH%"=="main" (
-    echo [오류] 지금 브랜치가 main이 아닙니다: %BRANCH%
+    echo [ERROR] Current branch is not main: %BRANCH%
     pause
     exit /b 1
 )
 
-echo [1/4] 마켓맵 데이터 만들기 (data.js에 DATA_MM 넣기)
+echo [1/4] Build marketmap data (DATA_MM into data.js)
 python pipeline\build_marketmap.py
-if errorlevel 1 (
-    echo [오류] build_marketmap.py 실패. 업로드하지 않습니다.
-    pause
-    exit /b 1
-)
+if errorlevel 1 goto fail
 
-echo [2/4] data.js 검증 (합계 불일치·지역 미배정 1천톤 초과면 중단)
+echo [2/4] Validate data.js (stops if mismatch or unassigned region over 1,000 t)
 python validate_data.py
-if errorlevel 1 (
-    echo [오류] 검증 실패. 원본을 고친 뒤 다시 실행하세요. 업로드하지 않습니다.
-    pause
-    exit /b 1
-)
+if errorlevel 1 goto fail
 
-echo [3/4] 암호화
-echo 주의: 입력하는 비밀번호가 화면에 그대로 보입니다. 옆에 사람이 없을 때 입력하세요.
-echo       비밀번호에 ^& ^| ^< ^> ^^ %% 기호가 있으면 이 창에서 깨질 수 있습니다. 그때는 node tools\encrypt-data.mjs를 직접 쓰세요.
-set /p "PNW_PASSWORD=대시보드 비밀번호: "
-set /p "PNW_CONFIRM=한 번 더 입력: "
-if not "%PNW_PASSWORD%"=="%PNW_CONFIRM%" (
-    echo [오류] 두 번 입력한 비밀번호가 다릅니다. 업로드하지 않습니다.
-    pause
-    exit /b 1
-)
-set PNW_CONFIRM=
+echo [3/4] Encrypt
+echo WARNING: the password is visible on screen while you type. Make sure nobody is watching.
+echo          If the password has special characters such as ^& ^| ^< ^> ^^ %%, use node tools\encrypt-data.mjs instead.
+set "PNW_PASSWORD="
+set "PNW_CONFIRM="
+set /p "PNW_PASSWORD=Dashboard password: "
+set /p "PNW_CONFIRM=Type it again: "
+if not defined PNW_PASSWORD goto mismatch
+if not "%PNW_PASSWORD%"=="%PNW_CONFIRM%" goto mismatch
+set "PNW_CONFIRM="
 cls
 node tools\encrypt-data.mjs
-if errorlevel 1 (
-    set PNW_PASSWORD=
-    echo [오류] 암호화 실패. 업로드하지 않습니다.
-    pause
-    exit /b 1
-)
-set PNW_PASSWORD=
+if errorlevel 1 goto fail
+set "PNW_PASSWORD="
 
-echo [4/4] data.enc.js만 올리기 (평문 data.js는 올리지 않음)
+echo [4/4] Commit data.enc.js only (plain data.js is never uploaded)
 git add data.enc.js
-git commit -m "data: 마켓맵 데이터(DATA_MM) 갱신 (data.enc.js)"
-if errorlevel 1 (
-    echo [오류] commit 실패(바뀐 내용이 없을 수 있음).
-    pause
-    exit /b 1
-)
+git commit -m "data: update marketmap data (DATA_MM) in data.enc.js"
+if errorlevel 1 goto fail
 git push origin main
 if errorlevel 1 (
-    echo [오류] push 실패. 강제 push는 하지 않습니다. git pull --rebase origin main 후 다시 실행하세요.
+    echo [ERROR] Push failed. No force push. Run "git pull --rebase origin main" and try again.
     pause
     exit /b 1
 )
 
 echo.
-echo 배포 완료. 1~3분 뒤 사이트에서 Ctrl+F5 후 2페이지 '마켓맵'을 확인하세요.
+echo Done. Wait 1-3 minutes, press Ctrl+F5 on the site, open page 2 and choose the marketmap mode.
 pause
+exit /b 0
+
+:mismatch
+set "PNW_PASSWORD="
+set "PNW_CONFIRM="
+echo [ERROR] The two passwords are empty or different. Nothing was uploaded.
+pause
+exit /b 1
+
+:fail
+set "PNW_PASSWORD="
+echo [ERROR] A step failed (see the message above). Nothing was uploaded.
+pause
+exit /b 1
