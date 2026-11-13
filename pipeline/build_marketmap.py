@@ -12,7 +12,9 @@
 data.js의 다른 블록은 건드리지 않는다. data.js는 평문이라 git에 올리지 않는다(암호화본 data.enc.js만 올림).
 """
 import datetime
+import csv
 import json
+import math
 import os
 import re
 import sys
@@ -62,6 +64,54 @@ def month(y, m):
     return y * 12 + m - 1
 
 
+def verify_eu_csv(path, sources, metadata):
+    """CSV→월·도착지 JSON을 직접 대사한다. 집계행은 제외하고 특수코드는 별도 보존한다."""
+    codes = {}
+    for mode, meta in metadata.items():
+        for name, info in meta["countries"].items():
+            for code in info["codes"]:
+                if code in codes:
+                    fail(f"EU 코드 중복: {code}")
+                codes[code] = (mode, name)
+        for code in meta["special_codes"]:
+            if code in codes:
+                fail(f"EU 코드 중복: {code}")
+            codes[code] = (mode, None)
+    geographic, special, seen = {}, {}, set()
+    aggregates = {code for meta in metadata.values() for code in meta["excluded_aggregate_codes"]}
+    with open(path, encoding="utf-8-sig", newline="") as f:
+        for r in csv.DictReader(f):
+            code = r["partner"]
+            if r["product"] not in {"48101300", "48101400", "48101900"}:
+                fail(f"EU CSV 예상 밖 품목 코드: {r['product']}")
+            quantity = float(r["t"])
+            if not math.isfinite(quantity) or quantity < 0:
+                fail(f"EU CSV 유효하지 않은 수량: {r['t']}")
+            if code in aggregates:
+                continue
+            if code not in codes:
+                fail(f"EU CSV 미분류 코드: {code}")
+            key = (code, r["product"], r["time"])
+            if key in seen:
+                fail(f"EU CSV 중복 행: {key}")
+            seen.add(key)
+            y, m = map(int, r["time"].split("-"))
+            mk = str(month(y, m))
+            mode, name = codes[code]
+            target = special if name is None else geographic
+            k = (mode, mk, code if name is None else name)
+            target[k] = target.get(k, 0.0) + quantity
+    if not seen:
+        fail("EU CSV에 유효한 자료가 없다")
+    expected = {(mode, mk, name): t for mode, src in sources.items() for mk, countries in src.items() for name, t in countries.items()}
+    expected_special = {(mode, mk, code): t for mode, meta in metadata.items() for code, info in meta["special_codes"].items() for mk, t in info["monthly_t"].items()}
+    for label, left, right in (("국가 JSON", geographic, expected), ("특수코드", special, expected_special)):
+        for key in left.keys() | right.keys():
+            if abs(left.get(key, 0) - right.get(key, 0)) > 0.000001:
+                fail(f"EU CSV 대사 실패 ({label}) {key}: {left.get(key, 0)} vs {right.get(key, 0)}")
+    return sum(geographic.values()), sum(special.values())
+
+
 def main():
     if not os.path.exists(DATA_JS):
         fail("data.js 없음. 먼저 pipeline\\update.bat(또는 run_updates.py)로 data.js를 만든다.")
@@ -83,6 +133,11 @@ def main():
     base = load_json(p("scripts", "marketmap_country_base.json"))["countries"]
     eux = load_json(p("데이터_Comext", "eu27_by_country_month.json"))
     eui = load_json(p("데이터_Comext", "eu27_intra_by_country_month.json"))
+    eu_meta = {
+        "extra": load_json(p("데이터_Comext", "eu27_by_country_month.metadata.json")),
+        "intra": load_json(p("데이터_Comext", "eu27_intra_by_country_month.metadata.json")),
+    }
+    eu_geo_total, eu_special_total = verify_eu_csv(p("데이터_Comext", "comext_eu27_all_partners.csv"), {"extra": eux, "intra": eui}, eu_meta)
     asia = load_json(p("데이터_공급국", "asia_export_by_country.json"))
     deck = {k: v for k, v in load_json(p("데이터_공급국", "deck_input.json")).items() if not k.startswith("_")}
 
@@ -99,16 +154,19 @@ def main():
         vol[k] = vol.get(k, 0) + (r.get("v") or 0)
         amt[k] = amt.get(k, 0) + (r.get("amt") or 0)
 
-    names = sorted({k[1] for k in vol})
+    names = sorted({k[1] for k in vol} | {name for src in (eux, eui) for countries in src.values() for name in countries})
     ci = {c: i for i, c in enumerate(names)}
     countries = []
     for c in names:
         b = base.get(c, {})
+        if not b:
+            info = next((meta["countries"][c] for meta in eu_meta.values() if c in meta["countries"]), {})
+            b = {"en": info.get("label"), "rg": "기타", "rs": "권역 확인 필요"}
         h = rmap.get(c) or b.get("l")
         if h:
             rg, rs = L_FIX.get(h, h), ("L번호정리" if h in L_FIX else "L열")
         elif b.get("rg") and b["rg"] != "미배정":
-            rg, rs = CN2H.get(b["rg"], b["rg"]), "중국코드변환"
+            rg, rs = CN2H.get(b["rg"], b["rg"]), b.get("rs") if b.get("rs") == "권역 확인 필요" else "중국코드변환"
         else:
             rg, rs = "미배정", "미배정"
         countries.append({"ko": c, "en": b.get("en"), "pt": b.get("pt"), "rg": rg, "rs": rs})
@@ -123,7 +181,7 @@ def main():
                 else:
                     eu_unmapped[ko] = eu_unmapped.get(ko, 0) + t
 
-    rows = [[k[0], ci[k[1]], k[2], round(v, 1), round(amt.get(k, 0))] for k, v in sorted(vol.items()) if v or amt.get(k)]
+    rows = [[k[0], ci[k[1]], k[2], round(v, 3) if k[2] >= 5 else round(v, 1), round(amt.get(k, 0))] for k, v in sorted(vol.items()) if v or amt.get(k)]
     cn_m = [month(r["y"], r["m"]) for r in cn]
     kr_m = [month(r["y"], r["m"]) for r in kr]
     eu_m = [int(k) for k in eux]
@@ -142,10 +200,12 @@ def main():
         "rows": rows,          # [월 번호(연*12+월-1), 나라 index, 계열 index, 톤, 금액 USD]
         "asia": asia,          # {JP|IN: {연도: {나라: 톤}}} 연간 참고값, 합계에 넣지 않음(C1)
         "deck": deck,
+        "eu_special": {mode: meta["special_codes"] for mode, meta in eu_meta.items()},
+        "eu_monthly_check": {mode: {mk: sum(countries.values()) for mk, countries in src.items()} for mode, src in (("extra", eux), ("intra", eui))},
         "unmapped": {"eu_t": round(sum(eu_unmapped.values()), 1), "eu": {k: round(v, 1) for k, v in sorted(eu_unmapped.items(), key=lambda x: -x[1])},
                      "asia_t": asia_unmapped},
         "check": {"cn_t": round(sum(r.get("v") or 0 for r in cn), 1), "kr_t": round(sum(r.get("v") or 0 for r in kr), 1),
-                  "eu_t": round(sum(t for src in (eux, eui) for o in src.values() for t in o.values()), 1)},
+                  "eu_t": eu_geo_total, "eu_special_t": eu_special_total},
         "source": "중국 월보(DATA_EXPORT) + 한국 3사(DATA_KR_COUNTRY) + Eurostat Comext EU27(역외·역내) · 일본·인도 = UN Comtrade 연간",
     }
 

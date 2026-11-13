@@ -9,7 +9,7 @@ set LOG_FILE=pipeline\update_log.txt
 echo ==============================================
 echo [PNW Dashboard 자동 업데이트 프로세스 시작]
 echo ==============================================
-echo [1/4] 데이터 파싱 및 data.js 생성 (run_updates.py)
+echo [1/5] 데이터 파싱 및 data.js 생성 (run_updates.py)
 python pipeline\run_updates.py --no-git
 if errorlevel 1 (
     echo [오류] run_updates.py 실행 실패
@@ -18,7 +18,16 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [2/4] data.js 문법 및 데이터 무결성 검증 (validate_data.py)
+echo [2/5] Build marketmap data (DATA_MM)
+python pipeline\build_marketmap.py
+if errorlevel 1 (
+    echo [ERROR] Marketmap build failed. Upload cancelled.
+    echo %date% %time% - ERROR: Marketmap build failed >> "%LOG_FILE%"
+    pause
+    exit /b 1
+)
+
+echo [3/5] data.js 문법 및 데이터 무결성 검증 (validate_data.py)
 python validate_data.py
 if errorlevel 1 (
     echo [오류] data.js 검증 실패. 안전을 위해 Git Push를 취소합니다.
@@ -27,7 +36,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [3/4] data.js 암호화 및 GitHub 배포 준비 (data.js 평문은 올리지 않음)
+echo [4/5] data.js 암호화 및 GitHub 배포 준비 (data.js 평문은 올리지 않음)
 if not defined PNW_PASSWORD (
     echo [오류] PNW_PASSWORD 환경변수가 없습니다. 대시보드 로그인 비밀번호로 한 번 설정하세요: setx PNW_PASSWORD "비밀번호"
     echo %date% %time% - ERROR: PNW_PASSWORD 미설정 >> "%LOG_FILE%"
@@ -44,7 +53,7 @@ if errorlevel 1 (
 git add data.enc.js index.html dashboard_logic.js
 git commit -m "Auto update data.enc.js %date%"
 
-echo [4/4] GitHub로 데이터 전송 중...
+echo [5/5] GitHub로 데이터 전송 중...
 git push origin main
 if errorlevel 1 (
     echo [경고] Push 실패. GitHub의 새 커밋을 먼저 받아온 뒤 다시 시도합니다...

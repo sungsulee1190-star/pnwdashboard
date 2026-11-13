@@ -5,14 +5,12 @@ import re
 import datetime
 import win32com.client
 import pandas as pd
-import subprocess
 
 # Configure stdout for utf-8 to avoid console encoding issues
 sys.stdout.reconfigure(encoding='utf-8')
 sys.stderr.reconfigure(encoding='utf-8')
 
 DRY_RUN = "--dry-run" in sys.argv
-SKIP_GIT = "--no-git" in sys.argv
 
 import json
 
@@ -1497,90 +1495,6 @@ def auto_backup(selected_files, phase="pre"):
     return backup_dir
 
 
-def commit_and_push_to_github():
-    """Stages updated files and Excel master back-ups, commits, and pushes to GitHub Pages."""
-    print("\n[Part 6] 깃허브(서버) 업로드 자동화")
-    
-    # Backup the master Excel files by copying them into 'master_excels/' in the dashboard repo
-    backup_dir = os.path.join(DASHBOARD_DIR, "master_excels")
-    os.makedirs(backup_dir, exist_ok=True)
-    
-    master_files = [os.path.basename(p) for p in MASTER_PATHS]
-
-    import shutil
-    for src in MASTER_PATHS:
-        fn = os.path.basename(src)
-        dst = os.path.join(backup_dir, fn)
-        if os.path.exists(src):
-            try:
-                if not DRY_RUN:
-                    shutil.copy2(src, dst)
-                    print(f"  - 마스터 백업 파일 복사 완료: {fn} -> master_excels/")
-                else:
-                    print(f"  [Dry-run] 마스터 백업 파일 복사를 건너뜁니다: {fn}")
-            except Exception as e:
-                print(f"  ⚠️  마스터 파일 백업 복사 실패 ({fn}): {e}")
-                
-    def run_git(args):
-        res = subprocess.run(["git"] + args, cwd=DASHBOARD_DIR, capture_output=True, text=True)
-        return res
-        
-    if DRY_RUN:
-        print("  [Dry-run] Dry-run 모드로 깃허브 푸시를 건너뜁니다.")
-        return
-        
-    # Check git repository
-    git_status = run_git(["status"])
-    if git_status.returncode != 0:
-        print("  - Git 저장소가 감지되지 않아 새로 초기화합니다.")
-        run_git(["init"])
-        run_git(["branch", "-M", "main"])
-        
-    # Check remote origin
-    git_remote = run_git(["remote", "-v"])
-    target_url = "https://github.com/sungsulee1190-star/pnwdashboard"
-    if target_url not in git_remote.stdout:
-        print(f"  - 원격 저장소 등록: {target_url}")
-        if "origin" in git_remote.stdout:
-            run_git(["remote", "remove", "origin"])
-        run_git(["remote", "add", "origin", target_url])
-        
-    # Stage files
-    run_git(["add", "data.js"])
-    for fn in master_files:
-        run_git(["add", f"master_excels/{fn}"])
-        
-    # Check if there are changes to commit
-    status_output = run_git(["status", "--porcelain"])
-    if not status_output.stdout.strip():
-        print("  - 변경된 파일이 없어 깃허브 업로드를 건너뜁니다.")
-        return
-        
-    # git 작성자 정보는 코드에 두지 않는다(공개 저장소). 이 PC의 git 설정을 쓴다
-    if run_git(["config", "user.email"]).returncode != 0:
-        print("  - [오류] git user.email이 설정되지 않아 업로드를 건너뜁니다. 저장소 폴더에서 git config user.email 을 한 번 설정하세요.")
-        return
-
-    # Commit
-    today = datetime.datetime.now().strftime("%Y-%m-%d")
-    commit_msg = f"data: {today} 자동 업데이트"
-    run_git(["commit", "-m", commit_msg])
-    print(f"  - 로컬 커밋 완료: '{commit_msg}'")
-    
-    # Push (실패 시 force push 재시도)
-    print("  - 깃허브 푸시(push) 진행 중 (자격 증명이 필요할 수 있습니다)...")
-    push_res = run_git(["push", "-u", "origin", "main"])
-    if push_res.returncode == 0:
-        print("  ✅ 깃허브(서버) 업로드 완료!")
-    else:
-        # 원격 업데이트가 있을 때 force push
-        print("  ⚠️  일반 push 실패, --force로 재시도...")
-        push_res2 = run_git(["push", "-u", "origin", "main", "--force"])
-        if push_res2.returncode == 0 or "forced update" in push_res2.stderr:
-            print("  ✅ 깃허브(서버) 업로드 완료! (force push)")
-        else:
-            print(f"  ❌ 깃허브 푸시 실패:\n{push_res2.stderr}")
-
 # ─────────────────────────────────────────────
 # Main Pipeline
 # ─────────────────────────────────────────────
@@ -1654,16 +1568,13 @@ def main():
         if not DRY_RUN:
             auto_backup(selected_files, phase="post")
 
-        # Call GitHub Push conditionally
-        if not SKIP_GIT:
-            commit_and_push_to_github()
-        else:
-            print("  [Info] --no-git 플래그로 인해 자동 Git Push를 건너뜁니다.")
+        print("  [Info] 로컬 데이터만 생성했습니다. 배포는 pipeline\\update.bat에서 암호화 후 진행합니다.")
         
     except Exception as e:
         print(f"\n❌ 파이프라인 실행 중 오류 발생: {e}")
         import traceback
         traceback.print_exc()
+        raise
     finally:
         if excel:
             try:

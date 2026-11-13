@@ -23,11 +23,15 @@ def check_marketmap(content):
     a, b = latest - 23, latest   # 최근 24개월 = 올해 누계와 전년 같은 기간을 덮는다
     by_region, by_country, by_series, total = {}, {}, [0.0] * NS, 0.0
     src_sum = {"cn": 0.0, "kr": 0.0, "eu": 0.0}
+    eu_monthly = {}
     for mo, ci, si, t, _ in rows:
         if not (0 <= ci < len(C) and 0 <= si < NS):
             errors.append(f"DATA_MM 행 index 범위 밖: {[mo, ci, si]}")
             break
         src_sum["cn" if si == 0 else "kr" if si <= 4 else "eu"] += t
+        if si in (5, 6):
+            k = ("extra" if si == 5 else "intra", str(mo))
+            eu_monthly[k] = eu_monthly.get(k, 0.0) + t
         if a <= mo <= b:
             rg = C[ci]["rg"]
             by_region[rg] = by_region.get(rg, 0) + t
@@ -43,6 +47,13 @@ def check_marketmap(content):
         want = mm["check"][k + "_t"] - (mm["unmapped"]["eu_t"] if k == "eu" else 0)
         if gap(src_sum[k], want):
             errors.append(f"마켓맵 {label} 불일치: {src_sum[k]:,.0f} vs {want:,.0f}톤")
+    if "eu_monthly_check" not in mm or "eu_special" not in mm:
+        errors.append("EU 원자료 월별 대사 또는 특수코드 기록 없음: 마켓맵을 다시 빌드하세요")
+    else:
+        expected = {(mode, mk): t for mode, months in mm["eu_monthly_check"].items() for mk, t in months.items()}
+        for k in eu_monthly.keys() | expected.keys():
+            if abs(eu_monthly.get(k, 0) - expected.get(k, 0)) > 0.0001:
+                errors.append(f"EU 월별 대사 실패 {k}: {eu_monthly.get(k, 0)} vs {expected.get(k, 0)}톤")
     unassigned = by_region.get("미배정", 0)
     if unassigned > MM_LIMIT_T:
         names = sorted({C[ci]["ko"] for ci in by_country if C[ci]["rg"] == "미배정"})
