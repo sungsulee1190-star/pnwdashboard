@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/static/pretendard.css">
 <!-- 수출 실적 데이터: 암호화본. 로그인 화면에서 비밀번호로 풀어 data.js 내용을 실행 -->
 <script src="data.enc.js"></script>
+<script defer src="marketmap-workbook.js"></script>
 <!-- 경쟁사 공시·뉴스 (주차별 헤드라인) -->
 <script src="news.js"></script>
 <!-- 공장별 CAPA (공시·회사 자료 기준, 출처 포함) -->
@@ -2401,7 +2402,26 @@ const MM = (() => {
     $('mmPYtd').onclick = () => { st.b = LATEST; st.a = Math.floor(LATEST / 12) * 12; render(); };
     $('mmP12').onclick = () => { st.b = LATEST; st.a = LATEST - 11; render(); };
     $('mmPLy').onclick = () => { const y = Math.floor(LATEST / 12) - 1; st.a = y * 12; st.b = y * 12 + 11; render(); };
-    $('mmXls').onclick = () => { $('mmXlsMsg').textContent = '엑셀 다운로드는 다음 판에서 연결합니다(지금 보는 표 그대로 내려받기).'; };
+    $('mmXls').onclick = () => {
+      const groups = [
+        ['mmTA', '지역구분표'], ['mmRank', '국가별 변동'],
+        ['mmTB', '기간 증감'], ['mmTC', '국가 Top10'],
+        ['mmDComp', '국가 수입 구성'], ['mmDAsia', '일본산·인도산'],
+        ['mmDDeck', '국가 장표']
+      ];
+      const sheets = groups.flatMap(([id, title]) =>
+        Array.from($(id).querySelectorAll('table')).filter(table =>
+          !table.closest('details:not([open])') && table.getClientRects().length
+        ).map((table, i) => ({
+          name: i ? title + ' ' + (i + 1) : title, table
+        })));
+      try {
+        window.downloadMarketMapWorkbook(sheets, '마켓맵_' + per(st.a, st.b).replace(/[\\/:*?"<>|]/g, '-') + '.xlsx');
+        $('mmXlsMsg').textContent = sheets.length + '개 표 다운로드';
+      } catch {
+        $('mmXlsMsg').textContent = '엑셀 파일을 만들지 못했습니다. 화면을 새로 고친 뒤 다시 시도하세요.';
+      }
+    };
     $('mmRg').innerHTML = '<option value="">전체 지역</option>' + D.regions.map(r => `<option>${r}</option>`).join('');
     $('mmRg').onchange = () => {
       st.rg = $('mmRg').value;
