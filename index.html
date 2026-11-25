@@ -25,7 +25,7 @@
 .mm-quick { width: 260px; flex: 0 0 260px; border: 1px solid var(--border); padding: 14px; background: #fff; overflow: auto; }
 .mm-quick[hidden] { display: none; }
 .mm-quick-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-.mm-quick-head button { text-decoration: underline; }
+.mm-quick-head button { min-height: 32px; text-decoration: underline; }
 .mm-quick #mmQuickFull { margin-top: 12px; }
 #mmRank > div { min-width: 0; }
 #mmRank .overflow-x-auto { overflow-x: auto; }
@@ -47,7 +47,7 @@
   --radius-card: 8px; --radius-control: 6px;
 }
 * { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; scroll-padding-top: 112px; }
 body { background: var(--ground); color: var(--text); -webkit-font-smoothing: antialiased; font-size: 14px; line-height: 20px; }
 .num, .tbl td, .kpi-value { font-variant-numeric: tabular-nums; }
 
@@ -58,6 +58,7 @@ body { background: var(--ground); color: var(--text); -webkit-font-smoothing: an
 .page-tab:hover { color: var(--text); }
 .page-tab.active { color: var(--text); border-bottom-color: var(--text); }
 .page-tab.inactive { color: var(--muted); }
+.topbar-actions .btn-text { min-height: 40px; }
 
 /* 컨트롤 */
 .seg { display: inline-flex; background: var(--active); border-radius: var(--radius-control); padding: 2px; gap: 2px; flex-shrink: 0; }
@@ -70,9 +71,12 @@ body { background: var(--ground); color: var(--text); -webkit-font-smoothing: an
 .btn-primary:hover { opacity: .88; }
 .btn-text { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; }
 .btn-text:hover { text-decoration: underline; text-underline-offset: 3px; }
+.filter-bar { position: sticky; top: 49px; }
 .field { height: 32px; border: 1px solid var(--control); border-radius: var(--radius-control); background: var(--surface); padding: 0 10px; font-size: 13px; color: var(--text); }
 .field:focus, .pill-btn:focus-visible, .btn-primary:focus-visible, .page-tab:focus-visible, .btn-text:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .ctl-label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.pivot-filters { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.table-scroll:focus-visible, summary:focus-visible, .mm-quick-head button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 
 /* 패널 */
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 24px; }
@@ -89,7 +93,7 @@ body { background: var(--ground); color: var(--text); -webkit-font-smoothing: an
 .kpi-strip > div:first-child { border-left: 0; }
 .kpi-label { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
 .kpi-value { font-size: 26px; line-height: 32px; font-weight: 600; letter-spacing: -0.02em; color: var(--text); }
-.kpi-value .unit, .unit { font-size: 13px; font-weight: 400; color: var(--muted); letter-spacing: 0; margin-left: 2px; }
+.kpi-value .unit, .unit { display: inline-block; font-size: 13px; font-weight: 400; color: var(--muted); letter-spacing: 0; margin-left: 4px; }
 .kpi-note { font-size: 13px; color: var(--muted); margin-top: 6px; }
 
 /* 표 */
@@ -152,8 +156,14 @@ body.locked > header, body.locked > #page-1, body.locked > #page-2, body.locked 
 #mmSection .tbl tr.click { cursor: pointer; } #mmSection .tbl tr.click:hover td { background: var(--raised); }
 #mmSection .tbl .ref { background: var(--raised); }
 #mmSection .mute { color: var(--muted); } #mmSection .off { color: #b5b5b3; }
-#mmSection .mm-bar { position: sticky; top: 48px; z-index: 30; background: var(--surface); border-bottom: 1px solid var(--border); padding: 8px 0 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
-#mmSection .mm-comps label { margin-right: 10px; font-size: 13px; white-space: nowrap; cursor: pointer; }
+#mmSection .mm-bar { position: sticky; top: 49px; z-index: 30; background: var(--surface); border-bottom: 1px solid var(--border); padding: 8px 0 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.mm-period, .mm-date, .mm-region, .mm-origins { display: flex; align-items: center; gap: 8px; }
+.mm-origins { flex-wrap: wrap; width: 100%; }
+.mm-comps { display: flex; flex-wrap: wrap; gap: 0 12px; }
+#mmSection .mm-comps label { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; font-size: 13px; white-space: nowrap; cursor: pointer; }
+#mmSection .mm-comps .sw { margin-right: 0; }
+#mmPinfo { white-space: normal; }
+#mmDName { scroll-margin-top: 110px; }
 #mmSection .mm-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin: 22px 0 8px; padding-top: 12px; border-top: 1px solid var(--border); }
 #mmSection .mm-h .panel-meta { margin-left: auto; white-space: normal; }
 #mmSection .mm-h4 { font-size: 13px; font-weight: 600; margin: 14px 0 6px; }
@@ -169,15 +179,46 @@ body.locked > header, body.locked > #page-1, body.locked > #page-2, body.locked 
 #mmMap { height: 500px; }
 
 @media (max-width: 767px) {
-  .card { padding: 16px; }
+  html { scroll-padding-top: 100px; }
+  .card { padding: 14px; }
+  .filter-bar { position: static; }
+  .field { min-height: 44px; font-size: 16px; }
+  .pill-btn, .seg .pill-btn, .btn-primary { min-height: 44px; }
+  .lock-card input[type="password"] { min-height: 44px; }
+  .lock-card label:has(input) { min-height: 44px; margin-bottom: 10px; }
   .kpi-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .kpi-strip > div { border-left: 0; border-top: 1px solid var(--border); padding: 14px 16px; }
+  .kpi-strip > div { border-left: 0; border-top: 1px solid var(--border); padding: 12px; }
   .kpi-strip > div:nth-child(-n+2) { border-top: 0; }
   .kpi-strip > div:nth-child(even) { border-left: 1px solid var(--border); }
-  .kpi-value { font-size: 22px; line-height: 28px; }
+  .kpi-value { font-size: clamp(20px, 5.65vw, 24px); line-height: 1.28; }
+  .kpi-note { line-height: 1.36; }
   .scroll-row { overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap !important; }
   .scroll-row::-webkit-scrollbar { display: none; }
+  #newsWeek { max-width: 100%; }
+  #mmSection .mm-bar { position: static; gap: 10px; }
+  .mm-period { flex-wrap: wrap; }
+  .mm-date { gap: 6px; }
+  #mmPinfo { flex-basis: 100%; }
+  .mm-origins { align-items: flex-start; flex-direction: column; gap: 2px; }
+  #mmSection .mm-comps label { min-height: 32px; }
+  #mmDName { scroll-margin-top: 0; }
+  #mmMap { height: 340px; }
+  .mm-quick-head button, .mm-quick #mmQuickFull, #mmMapTog { min-height: 44px; }
   #millMap { height: 320px !important; }
+}
+@media (min-width: 375px) and (max-width: 767px) {
+  .mm-period { display: grid; width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mm-date { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); }
+  .mm-date .ctl-label { grid-column: 1 / -1; }
+  .mm-date .field { width: 100%; min-width: 0; padding-inline: 6px; }
+}
+@media (max-width: 639px) {
+  .topbar nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); height: 44px; }
+  .page-tab { justify-content: center; height: 44px; margin-right: 0; padding: 0 4px; font-size: 13px; }
+  .page-tab:focus-visible { outline-offset: -3px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
 }
 </style>
 </head>
@@ -204,14 +245,15 @@ body.locked > header, body.locked > #page-1, body.locked > #page-2, body.locked 
   <div class="max-w-[1440px] mx-auto px-4 md:px-6 flex flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-1 sm:gap-6 pt-1.5 sm:pt-0 sm:h-12">
     <div class="flex items-center gap-2 shrink-0">
       <span class="mark" aria-hidden="true">PN</span>
+      <span class="sm:hidden text-[13px] font-semibold">인쇄용지 수출</span>
       <span class="hidden sm:inline text-sm font-semibold whitespace-nowrap">인쇄용지 수출 대시보드</span>
     </div>
     <nav class="order-last w-full sm:order-none sm:w-auto flex items-stretch h-12 min-w-0 overflow-x-auto [scrollbar-width:none]" aria-label="화면">
-      <button id="btn-page1" onclick="switchPage(1)" class="page-tab active">수출·단가</button>
+      <button id="btn-page1" onclick="switchPage(1)" class="page-tab active" aria-current="page">수출·단가</button>
       <button id="btn-page2" onclick="switchPage(2)" class="page-tab inactive">마켓맵·경쟁사</button>
       <button id="btn-page3" onclick="switchPage(3)" class="page-tab inactive">국내시장</button>
     </nav>
-    <div class="ml-auto flex items-center gap-4 shrink-0">
+    <div class="topbar-actions ml-auto flex items-center gap-3 sm:gap-4 shrink-0">
       <span id="metaStatusText" class="hidden xl:inline text-xs text-[color:var(--muted)]">데이터 불러오는 중</span>
       <button onclick="logout()" class="btn-text text-[color:var(--muted)]">잠그기</button>
       <button onclick="switchPage(1); setTimeout(()=>document.getElementById('sec-email').scrollIntoView(), 50);" class="btn-text">
@@ -234,8 +276,8 @@ body.locked > header, body.locked > #page-1, body.locked > #page-2, body.locked 
       <span id="overviewPeriodLabel" class="num text-sm text-[color:var(--muted)]"></span>
     </div>
 
-    <!-- 필터: 집계 단위 · 기간 · 지종 · 권역/국가 -->
-    <div class="md:sticky md:top-12 z-40 bg-[color:var(--ground)] py-2 -mx-4 px-4 md:-mx-6 md:px-6">
+    <!-- 필터: 집계 단위 · 기간 · 지종 -->
+    <div class="filter-bar z-40 bg-[color:var(--ground)] py-2 -mx-4 px-4 md:-mx-6 md:px-6">
       <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
         <div class="seg scroll-row" role="group" aria-label="집계 단위">
           <button class="pill-btn active" data-period="monthly" onclick="setPeriodGranularity('monthly', this)">월별</button>
@@ -258,23 +300,6 @@ body.locked > header, body.locked > #page-1, body.locked > #page-2, body.locked 
             <button class="pill-btn active" onclick="setPaperGrade('코트지', this)">코트지</button>
             <button class="pill-btn" onclick="setPaperGrade('옵셋지', this)">백상지</button>
           </div>
-        </div>
-        <div class="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
-          <label for="regionFilter" class="sr-only">권역</label>
-          <select id="regionFilter" onchange="renderPivot()" class="field">
-            <option value="all">전체 권역</option>
-            <option value="동남아">동남아</option>
-            <option value="인도/서남아">인도/서남아</option>
-            <option value="북미">북미</option>
-            <option value="유럽">유럽</option>
-            <option value="중동">중동</option>
-            <option value="오세아니아">오세아니아</option>
-            <option value="동북아">동북아</option>
-            <option value="중남미">중남미</option>
-            <option value="아프리카">아프리카</option>
-          </select>
-          <label for="countrySearch" class="sr-only">국가 검색</label>
-          <input type="search" id="countrySearch" oninput="renderPivot()" placeholder="국가 검색 (예: 베트남)" class="field w-full sm:w-48 min-w-0 placeholder:text-[color:var(--faint)]">
         </div>
       </div>
     </div>
@@ -367,7 +392,25 @@ body.locked > header, body.locked > #page-1, body.locked > #page-2, body.locked 
         </div>
       </div>
 
-      <div class="overflow-auto border border-[color:var(--border)] rounded-lg max-h-[560px]">
+      <div class="pivot-filters">
+      <label for="regionFilter" class="sr-only">권역</label>
+      <select id="regionFilter" onchange="renderPivot()" class="field">
+        <option value="all">전체 권역</option>
+        <option value="동남아">동남아</option>
+        <option value="인도/서남아">인도/서남아</option>
+        <option value="북미">북미</option>
+        <option value="유럽">유럽</option>
+        <option value="중동">중동</option>
+        <option value="오세아니아">오세아니아</option>
+        <option value="동북아">동북아</option>
+        <option value="중남미">중남미</option>
+        <option value="아프리카">아프리카</option>
+      </select>
+      <label for="countrySearch" class="sr-only">국가 검색</label>
+      <input type="search" id="countrySearch" oninput="renderPivot()" placeholder="국가 검색 (예: 베트남)" class="field w-full sm:w-56 min-w-0 placeholder:text-[color:var(--faint)]">
+      </div>
+
+      <div class="table-scroll overflow-auto border border-[color:var(--border)] rounded-lg max-h-[560px]" tabindex="0" role="region" aria-label="권역·국가별 수출 표">
         <table class="tbl w-full border-collapse">
           <thead class="sticky top-0 z-20">
             <tr>
@@ -462,8 +505,8 @@ body.locked > header, body.locked > #page-1, body.locked > #page-2, body.locked 
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <div class="seg" role="group" aria-label="지도 모드">
-          <button class="pill-btn active" id="btnModeCapa" onclick="MM.setMode('capa')">공장 CAPA</button>
-          <button class="pill-btn" id="btnModeMm" onclick="MM.setMode('mm')">마켓맵</button>
+          <button class="pill-btn active" id="btnModeCapa" aria-pressed="true" onclick="MM.setMode('capa')">공장 CAPA</button>
+          <button class="pill-btn" id="btnModeMm" aria-pressed="false" onclick="MM.setMode('mm')">마켓맵</button>
         </div>
         <button onclick="showToast('공시·뉴스 동기화를 요청했습니다. 반영까지 시간이 걸릴 수 있습니다.')" class="pill-btn">공시·뉴스 동기화</button>
       </div>
@@ -490,24 +533,38 @@ body.locked > header, body.locked > #page-1, body.locked > #page-2, body.locked 
       <div id="mmEmpty" class="mm-empty hidden">마켓맵 데이터가 아직 배포되지 않았습니다(배포 배치 실행 필요).</div>
       <div id="mmBody" class="hidden">
         <div class="mm-bar">
-          <span class="ctl-label">시작</span><select id="mmY0" class="field"></select><select id="mmM0" class="field"></select>
-          <span class="ctl-label">끝</span><select id="mmY1" class="field"></select><select id="mmM1" class="field"></select>
+          <div class="mm-period">
+            <div class="mm-date">
+              <span class="ctl-label" aria-hidden="true">시작</span>
+              <select id="mmY0" class="field" aria-label="시작 연도"></select>
+              <select id="mmM0" class="field" aria-label="시작 월"></select>
+            </div>
+            <div class="mm-date">
+              <span class="ctl-label" aria-hidden="true">종료</span>
+              <select id="mmY1" class="field" aria-label="종료 연도"></select>
+              <select id="mmM1" class="field" aria-label="종료 월"></select>
+            </div>
+          </div>
           <div class="seg" role="group" aria-label="기간 프리셋">
             <button class="pill-btn" id="mmPYtd">올해 누계</button><button class="pill-btn" id="mmP12">최근 12개월</button><button class="pill-btn" id="mmPLy">작년 연간</button>
           </div>
-          <span id="mmPinfo" class="ctl-label"></span>
-          <label class="ctl-label" for="mmRg">지역</label><select id="mmRg" class="field" aria-describedby="mmPinfo"></select>
+          <span id="mmPinfo" class="ctl-label" aria-live="polite"></span>
+          <div class="mm-region">
+            <label class="ctl-label" for="mmRg">지역</label>
+            <select id="mmRg" class="field" aria-describedby="mmPinfo"></select>
+          </div>
           <button id="mmXls" class="pill-btn ml-auto">엑셀 다운로드</button>
-          <div class="w-full flex flex-wrap items-center gap-x-3 gap-y-1"><span class="ctl-label">회사(원산지)</span><span id="mmComps" class="mm-comps"></span><span id="mmXlsMsg" class="ctl-label"></span></div>
+          <div class="mm-origins"><span class="ctl-label" id="mmCompsLabel">회사(원산지)</span><div id="mmComps" class="mm-comps" role="group" aria-labelledby="mmCompsLabel"></div></div>
+          <p id="mmXlsMsg" class="card-sub empty:hidden" role="status"></p>
         </div>
 
         <div class="mm-h"><h3 class="panel-title">1. 한솔 지역구분표</h3><span class="panel-meta" id="mmSrcA"></span></div>
         <div class="seg mb-2" role="group" aria-label="표시">
           <button class="pill-btn active" data-am="t">중량</button><button class="pill-btn" data-am="yoy">전년비</button><button class="pill-btn" data-am="pct">중량%</button><button class="pill-btn" data-am="fob">가격 FOB</button>
         </div>
-        <div id="mmTA" class="overflow-x-auto"></div>
+        <div id="mmTA" class="table-scroll overflow-x-auto" tabindex="0" role="region" aria-label="한솔 지역구분표"></div>
 
-        <div class="mm-h"><h3 class="panel-title">2. 지도</h3><button id="mmMapTog" class="btn-text">접기</button><span class="panel-meta" id="mmSrcMap"></span></div>
+        <div class="mm-h"><h3 class="panel-title">2. 지도</h3><button id="mmMapTog" class="btn-text" aria-expanded="true" aria-controls="mmMapBox">접기</button><span class="panel-meta" id="mmSrcMap"></span></div>
         <div id="mmMapBox">
           <div class="legend mb-2" id="mmLegend"></div>
           <div class="mm-map-layout"><div id="mmMap" class="rounded-lg border border-[color:var(--border)]"></div>
@@ -529,15 +586,15 @@ body.locked > header, body.locked > #page-1, body.locked > #page-2, body.locked 
 
         <div class="mm-h"><h3 class="panel-title">5. 국가 상세 · <span id="mmDName"></span></h3><span class="panel-meta" id="mmSrcD"></span></div>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div>
+          <div class="min-w-0">
             <h4 class="mm-h4">무역통계 · 확인된 수입 구성</h4><div id="mmDComp" class="overflow-x-auto"></div>
-            <h4 class="mm-h4">일본산·인도산 수출 (연간, Comtrade 수출국 신고) <span class="mm-tag">참고</span></h4><div id="mmDAsia"></div>
+            <h4 class="mm-h4">일본산·인도산 수출 (연간, Comtrade 수출국 신고) <span class="mm-tag">참고</span></h4><div id="mmDAsia" class="overflow-x-auto"></div>
             <h4 class="mm-h4">월별 추이 (끝 월까지 24개월, 천톤)</h4><div id="mmDSpark"></div>
           </div>
-          <div>
+          <div class="min-w-0">
             <h4 class="mm-h4">소속 지역 당사 실적 <span id="mmDRg" class="mm-tag"></span></h4>
             <div class="mm-empty">구글 시트 연결 전 · 자료 없음 (당사 판매량·가격·이익률은 지역 단위 그대로 표시 예정, 나라로 나누지 않음 · C18)</div>
-            <h4 class="mm-h4">장표 (입력판 값)</h4><div id="mmDDeck"></div>
+            <h4 class="mm-h4">장표 (입력판 값)</h4><div id="mmDDeck" class="overflow-x-auto"></div>
           </div>
         </div>
       </div>
@@ -663,7 +720,7 @@ body.locked > header, body.locked > #page-1, body.locked > #page-2, body.locked 
         <div class="panel">
           <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
             <h3 class="panel-title">경쟁사 동향</h3>
-            <div class="flex flex-wrap items-center gap-2">
+            <div class="flex min-w-0 max-w-full flex-wrap items-center gap-2">
               <label for="newsWeek" class="sr-only">주차</label>
               <select id="newsWeek" onchange="STATE.newsWeek = this.value; renderNewsFeed()" class="field"></select>
               <button onclick="addWeekHeadlinesToEmail()" class="pill-btn">주간 헤드라인 메일에 추가</button>
@@ -697,7 +754,7 @@ body.locked > header, body.locked > #page-1, body.locked > #page-2, body.locked 
     </div>
 
     <!-- 필터: 연도 · 기간 · 제지사(여러 개 선택) -->
-    <div class="md:sticky md:top-12 z-40 bg-[color:var(--ground)] py-2 -mx-4 px-4 md:-mx-6 md:px-6">
+    <div class="filter-bar z-40 bg-[color:var(--ground)] py-2 -mx-4 px-4 md:-mx-6 md:px-6">
       <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
         <div class="flex items-center gap-1.5">
           <label for="dmYear" class="sr-only">연도</label>
@@ -708,9 +765,9 @@ body.locked > header, body.locked > #page-1, body.locked > #page-2, body.locked 
           <label for="dmTo" class="sr-only">종료 월</label>
           <select id="dmTo" class="field"></select>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 min-w-0">
           <span class="ctl-label">제지사</span>
-          <div class="seg scroll-row" id="dmComp" role="group" aria-label="제지사"></div>
+          <div class="seg scroll-row min-w-0 shrink" id="dmComp" role="group" aria-label="제지사"></div>
         </div>
       </div>
     </div>
@@ -2192,8 +2249,13 @@ function addNewsToEmail(idx) {
 let domesticInitialized = false;
 function switchPage(pageNum) {
   [1, 2, 3].forEach(n => {
-    document.getElementById(`page-${n}`).classList.toggle('hidden', n !== pageNum);
-    document.getElementById(`btn-page${n}`).className = `page-tab ${n === pageNum ? 'active' : 'inactive'}`;
+    const current = n === pageNum;
+    const button = document.getElementById(`btn-page${n}`);
+    document.getElementById(`page-${n}`).classList.toggle('hidden', !current);
+    button.classList.toggle('active', current);
+    button.classList.toggle('inactive', !current);
+    if (current) button.setAttribute('aria-current', 'page');
+    else button.removeAttribute('aria-current');
   });
 
   if (pageNum === 3 && !domesticInitialized) {
@@ -2208,7 +2270,7 @@ function switchPage(pageNum) {
       setTimeout(() => leafletMap.invalidateSize(), 100);
     }
   }
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({ top: 0 });
 }
 
 function toggleSupplyDrawer() {
@@ -2419,6 +2481,7 @@ const MM = (() => {
     $('mmMapTog').onclick = () => {
       const box = $('mmMapBox'), hide = !box.classList.contains('hidden');
       box.classList.toggle('hidden', hide); $('mmMapTog').textContent = hide ? '펼치기' : '접기';
+      $('mmMapTog').setAttribute('aria-expanded', String(!hide));
       if (!hide && map) setTimeout(() => map.invalidateSize(), 50);
     };
   }
@@ -2713,8 +2776,10 @@ const MM = (() => {
     mode = m;
     document.getElementById('capaSection').classList.toggle('hidden', m !== 'capa');
     document.getElementById('mmSection').classList.toggle('hidden', m !== 'mm');
-    document.getElementById('btnModeCapa').classList.toggle('active', m === 'capa');
-    document.getElementById('btnModeMm').classList.toggle('active', m === 'mm');
+    $('btnModeCapa').classList.toggle('active', m === 'capa');
+    $('btnModeMm').classList.toggle('active', m === 'mm');
+    $('btnModeCapa').setAttribute('aria-pressed', String(m === 'capa'));
+    $('btnModeMm').setAttribute('aria-pressed', String(m === 'mm'));
     if (m === 'capa') { if (typeof leafletMap !== 'undefined' && leafletMap) setTimeout(() => leafletMap.invalidateSize(), 100); return; }
     if (typeof DATA_MM === 'undefined') { $('mmEmpty').classList.remove('hidden'); return; }
     $('mmBody').classList.remove('hidden');
