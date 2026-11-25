@@ -128,3 +128,14 @@ flowchart LR
 | 국가 상세 장표 값 | 마켓맵 입력 폴더 `데이터_공급국/deck_input.json` |
 | 검증 문턱 | `validate_data.py`의 `MM_LIMIT_T` |
 | 공장 CAPA 지도 | `initMarketMap()`·`renderMapAndCapaChart()` (마켓맵과 별개) |
+
+## 승인된 추정과 근거 (2026-11-17)
+
+- `pipeline/marketmap_estimates.py`: 원자료 해시 검사, 국가 별칭 통합, 한국제지 과거 비중·월별 분리, Local 참고 추정과 실제 출하 우선 처리.
+- `DATA_MM.kr_split.basis`: 기준 기간·공식·해시·국가별 연도 분수. `rows`: 국가·월별 분리 결과와 실패 사유. `original_kr`: 국가·월별 원수량·원금액 원장.
+- `DATA_MM.local.entries`: 국가·기간·물량·상태·출처. `reference`는 CAPA 시점·완전성이 미확정인 참고 계산으로 확정 수입 합계에 섞지 않는다. 실제 0과 `missing`을 구분한다.
+- `paths.local.json` 선택 항목 `marketmap_local_actuals`: 비공개 실제 CWF 내수 출하 JSON. 같은 국가·기간의 실제값이 추정보다 우선한다.
+- 근거 출력 `.private/kr_split_basis.csv`·JSON과 승인 기준·로컬 미리보기·QA 결과는 Git에서 제외한다. 공개 문서·테스트에는 실수치를 넣지 않는다.
+- `MM.agg()`는 추정 금액 결측을 전파하고, 한국산 전 계열 선택 시 원장으로 합계 FOB만 복원한다. 부분 분리 물량은 보존하고 미분리 상태를 함께 표시한다.
+- `MM.showDetail()`은 스크롤 이동 없이 요약창을 연다. 전체 상세보기 버튼만 아래 표로 이동한다. 지도 누락 목록과 상세 기준은 접어서 제공한다.
+- 검증: `python -B -m unittest discover -s tests -v`, `python -B validate_data.py`. 실자료 회귀는 무시된 비공개 승인 기준 파일이 있을 때 수행한다.

@@ -38,6 +38,42 @@ def check_marketmap(content):
             by_country[ci] = by_country.get(ci, 0) + t
             by_series[si] += t
             total += t
+    if 'kr_split' in mm:
+        from collections import defaultdict
+        source_rows = re.search(r'const DATA_KR_COUNTRY = \[([\s\S]*?)\];', content)
+        if not source_rows:
+            errors.append('분리 대사: DATA_KR_COUNTRY 없음')
+        else:
+            from pipeline.marketmap_estimates import canonical
+            expected = defaultdict(lambda: [0.0, 0.0, [0.0, 0.0, 0.0, 0.0]])
+            company_index = {'한솔': 0, '무림': 1, '한국': 2, '무림 울산+한국': 3}
+            for line in source_rows.group(1).splitlines():
+                line = line.strip().rstrip(',')
+                if not line.startswith('{'): continue
+                r = json.loads(re.sub(r'([{,]\s*)(\w+):', r'\1"\2":', line))
+                mo = r['y'] * 12 + r['m'] - 1
+                if mo < 2023 * 12 + 7: continue
+                name = canonical(r['c'])
+                expected[(mo, name)][0] += r.get('v') or 0
+                expected[(mo, name)][1] += r.get('amt') or 0
+                expected[(mo, name)][2][company_index[r['comp']]] += r.get('amt') or 0
+            actual = defaultdict(float)
+            for mo, ci, si, t, amount in rows:
+                if 1 <= si <= 4 and mo >= 2023 * 12 + 7:
+                    actual[(mo, C[ci]['ko'])] += t
+            original = {(r['month'], C[r['country']]['ko']): r for r in mm['kr_split']['original_kr']}
+            for key in expected.keys() | original.keys() | actual.keys():
+                if key not in original:
+                    errors.append(f'분리 원금액 기록 없음: {key}')
+                    continue
+                record = original[key]
+                want = expected.get(key, [0, 0, [0, 0, 0, 0]])
+                if abs(actual.get(key, 0) - want[0]) > 1e-6 or abs(record['volume_t'] - want[0]) > 1e-6:
+                    errors.append(f'한국산 분리 수량 대사 실패: {key}')
+                if abs(record['amount_usd'] - want[1]) > 1e-6 or abs(sum(record['series_amount_usd']) - want[1]) > 1e-6:
+                    errors.append(f'한국산 원금액 대사 실패: {key}')
+                if len(record['series_amount_usd']) != 4 or any(abs(a - b) > 1e-6 for a, b in zip(record['series_amount_usd'], want[2])):
+                    errors.append(f'한국산 계열별 원금액 대사 실패: {key}')
     gap = lambda x, y: abs(x - y) > MM_LIMIT_T
     if gap(sum(by_region.values()), total):
         errors.append(f"마켓맵 지역 합 {sum(by_region.values()):,.0f} ≠ 전체 {total:,.0f}")
@@ -72,7 +108,7 @@ def check_marketmap(content):
 
 def validate_data_js():
     workspace_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    dashboard_dir = os.path.join(workspace_dir, "pnwdashboard-main")
+    dashboard_dir = os.path.dirname(os.path.abspath(__file__))
     data_js_path = os.path.join(dashboard_dir, "data.js")
     
     if not os.path.exists(data_js_path):

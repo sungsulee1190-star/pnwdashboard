@@ -18,6 +18,7 @@ import math
 import os
 import re
 import sys
+from marketmap_estimates import canonical, load_basis, export_basis, split_kr, build_local, HASH
 
 sys.stdout.reconfigure(encoding="utf-8")
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -124,6 +125,15 @@ def main():
 
     text = open(DATA_JS, encoding="utf-8").read()
     cn, kr = js_rows(text, "DATA_EXPORT"), js_rows(text, "DATA_KR_COUNTRY")
+    capa_match = re.search(r'^const DATA_CAPA = (.*);$', text, re.M)
+    if not capa_match:
+        fail('DATA_CAPA 없음')
+    capa = json.loads(capa_match.group(1))
+    basis_path = p('원본_CSV', '(인쇄) 한국산 수출실적_2026.2월', 'BD한국산_전체.csv')
+    basis, annual = load_basis(basis_path)
+    export_basis(os.path.join(ROOT, '.private'), basis, annual)
+    for r in cn + kr:
+        r['c'] = canonical(r['c'])
 
     rmap_name = "hansol_region_map_261112.json"
     if not os.path.exists(p("scripts", rmap_name)):
@@ -138,6 +148,17 @@ def main():
         "intra": load_json(p("데이터_Comext", "eu27_intra_by_country_month.metadata.json")),
     }
     eu_geo_total, eu_special_total = verify_eu_csv(p("데이터_Comext", "comext_eu27_all_partners.csv"), {"extra": eux, "intra": eui}, eu_meta)
+    rmap = {canonical(k): v for k, v in rmap.items()}
+    base = {canonical(k): v for k, v in base.items()}
+    def canonical_eu(src):
+        result = {}
+        for mk, values in src.items():
+            result[mk] = {}
+            for name, value in values.items():
+                name = canonical(name)
+                result[mk][name] = result[mk].get(name, 0) + value
+        return result
+    eux, eui = canonical_eu(eux), canonical_eu(eui)
     asia = load_json(p("데이터_공급국", "asia_export_by_country.json"))
     deck = {k: v for k, v in load_json(p("데이터_공급국", "deck_input.json")).items() if not k.startswith("_")}
 
@@ -156,6 +177,7 @@ def main():
 
     names = sorted({k[1] for k in vol} | {name for src in (eux, eui) for countries in src.values() for name in countries})
     ci = {c: i for i, c in enumerate(names)}
+    split, original_kr = split_kr(vol, amt, ci, basis)
     countries = []
     for c in names:
         b = base.get(c, {})
@@ -181,7 +203,10 @@ def main():
                 else:
                     eu_unmapped[ko] = eu_unmapped.get(ko, 0) + t
 
-    rows = [[k[0], ci[k[1]], k[2], round(v, 3) if k[2] >= 5 else round(v, 1), round(amt.get(k, 0))] for k, v in sorted(vol.items()) if v or amt.get(k)]
+    affected = {(r['month'], r['country'], si) for r in split for si in r['affected_series']}
+    rows = [[k[0], ci[k[1]], k[2], round(v, 3) if k[2] >= 5 else v,
+             None if (k[0], ci[k[1]], k[2]) in affected and k[2] in (2, 3) else round(amt.get(k, 0))]
+            for k, v in sorted(vol.items()) if v or amt.get(k)]
     cn_m = [month(r["y"], r["m"]) for r in cn]
     kr_m = [month(r["y"], r["m"]) for r in kr]
     eu_m = [int(k) for k in eux]
@@ -198,6 +223,11 @@ def main():
         "regions": REGIONS,
         "countries": countries,
         "rows": rows,          # [월 번호(연*12+월-1), 나라 index, 계열 index, 톤, 금액 USD]
+        "kr_split": {"basis": {"period": "2021.01~2023.07", "formula": "한국제지 / 한국산 3사",
+                     "source": "저장 CSV; 최신 원본 대사 미완료", "hash": HASH,
+                     "annual_by_country": {c: dict(v) for c, v in annual.items()},
+                     "combined_by_country": dict(basis)}, "rows": split, "original_kr": original_kr},
+        "local": build_local(capa, ci, cn, kr, mm_dir, actuals=load_json(load_json(PATHS)['marketmap_local_actuals']) if load_json(PATHS).get('marketmap_local_actuals') else None),
         "asia": asia,          # {JP|IN: {연도: {나라: 톤}}} 연간 참고값, 합계에 넣지 않음(C1)
         "deck": deck,
         "eu_special": {mode: meta["special_codes"] for mode, meta in eu_meta.items()},

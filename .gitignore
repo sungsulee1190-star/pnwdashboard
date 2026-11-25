@@ -13,6 +13,10 @@ data.js.backup_*
 pipeline/paths.local.json
 pipeline/update_log.txt
 __pycache__/
+.private/
+.verification/
+local-preview.html
+docs/APPROVED_ESTIMATION_PLAN_20261117.md
 
 # 로컬 전용: 유료 월보 요약(라이선스), 개인 작업 메모
 rzx_monthly.js
