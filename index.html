@@ -537,8 +537,8 @@ body.locked > header, body.locked > #page-1, body.locked > #page-2, body.locked 
           </div>
           <div>
             <h4 class="mm-h4">소속 지역 당사 실적 <span id="mmDRg" class="mm-tag"></span></h4>
-            <div class="mm-empty">구글 시트 연결 전 · 자료 없음 (당사 판매량·가격·이익률은 지역 단위 그대로 표시 예정, 나라로 나누지 않음 · C18)</div>
-            <h4 class="mm-h4">장표 (입력판 값)</h4><div id="mmDDeck"></div>
+            <div id="mmDHistory" class="overflow-x-auto"></div>
+            <h4 class="mm-h4">장표 (입력판 값)</h4><div id="mmDDeck"></div><div id="mmDChannels"></div>
           </div>
         </div>
       </div>
@@ -2407,7 +2407,7 @@ const MM = (() => {
         ['mmTA', '지역구분표'], ['mmRank', '국가별 변동'],
         ['mmTB', '기간 증감'], ['mmTC', '국가 Top10'],
         ['mmDComp', '국가 수입 구성'], ['mmDAsia', '일본산·인도산'],
-        ['mmDDeck', '국가 장표']
+        ['mmDHistory', '지역 당사 실적'], ['mmDDeck', '국가 장표'], ['mmDChannels', '거래처와 인쇄사']
       ];
       const sheets = groups.flatMap(([id, title]) =>
         Array.from($(id).querySelectorAll('table')).filter(table =>
@@ -2667,6 +2667,50 @@ const MM = (() => {
     $('mmQuickName').textContent = C[st.ci].ko + ' · ' + C[st.ci].rg;
     $('mmQuickBody').innerHTML = `<p class="mm-src">${per(st.a, st.b)} · 확인된 수입 ${kt(tot(v))}천톤</p>` + S.map((s, i) => `<div>${sw(i)}${s}: ${i === 3 && unresolved ? (v[i] > 0 ? kt(v[i]) + '천톤 · 일부 미분리' : '합산 물량에서 분리하지 못함') : kt(v[i]) + '천톤'}</div>`).join('');
   }
+  function renderMarketDetailInputs(data, country) {
+    const history = $('mmDHistory'), channels = $('mmDChannels');
+    history.replaceChildren(); channels.replaceChildren();
+    const number = n => Number.isFinite(n) ? n.toLocaleString('ko-KR') : '—';
+    const note = (parent, text) => {
+      const line = document.createElement('p');
+      line.className = 'mm-src';
+      line.textContent = text;
+      parent.append(line);
+    };
+    const table = (parent, headers, rows) => {
+      const t = document.createElement('table');
+      t.className = 'tbl';
+      const head = t.createTHead().insertRow();
+      for (const label of headers) {
+        const th = document.createElement('th'); th.textContent = label; head.append(th);
+      }
+      const body = t.createTBody();
+      for (const row of rows) {
+        const tr = body.insertRow();
+        for (const value of row) tr.insertCell().textContent = value;
+      }
+      parent.append(t);
+    };
+    const sales = data.region?.[country.rg];
+    if (sales) {
+      table(history, ['연도', '판매량(톤)', '도착도 가격($/톤)', 'FOB($/톤)'], data.years.map((year,i) =>
+        [year, number(sales.volume[i]), number(sales.arrival[i]), number(sales.fob[i])]));
+      note(history, data.source + ' · 해당 지역 연간 실적. ' + data.margin_note);
+    } else note(history, '이 지역의 연간 당사 실적이 없습니다.');
+    const ch = data.channels?.[country.ko];
+    if (!ch) { note(channels, '이 국가의 Merchant·Printer 확인 자료가 없습니다.'); return; }
+    const flows = Object.entries(ch.flow).flatMap(([merchant, items]) => {
+      const complete = items.every(([,qty]) => Number.isFinite(qty));
+      const total = complete ? items.reduce((sum,[,qty]) => sum + qty, 0) : 0;
+      return items.map(([mill,qty]) => [merchant, mill, number(qty),
+        total > 0 ? (100 * qty / total).toFixed(1) + '%' : '—']);
+    });
+    table(channels, ['Merchant·채널', '제조사', '연간 공급량(톤)', '채널 내 비중(SoW)'], flows);
+    if (ch.printers.length) table(channels, ['인쇄사 규모', '연간 수요(톤)'], ch.printers.map(([name,qty]) => [name,number(qty)]));
+    else note(channels, '인쇄사 규모별 수요 미확인');
+    note(channels, ch.source + ' · SoW는 채널별 기재 물량으로 계산. 물량이 누락된 채널은 비중 미표시.');
+  }
+
   function renderDetail() {
     const ci = st.ci, c = C[ci], v = CUR.v.get(ci) || zero(), m = CUR.m.get(ci) || zero(), p = PREV.v.get(ci) || zero(), pm = PREV.m.get(ci) || zero();
     const t1 = tot(v), t0 = tot(p);
@@ -2693,6 +2737,7 @@ const MM = (() => {
       ${[0, 12, n - 1].map(i => `<text x="${X(i) - 12}" y="${H - 4}" font-size="10" fill="#626262">${ym(a + i)}</text>`).join('')}
       <text x="${W - 200}" y="14" font-size="11" fill="#626262">회색 = 확인된 수입 합</text><text x="${W - 70}" y="14" font-size="11" font-weight="600" fill="#1d5fbf">파랑 = 한솔</text></svg>
       <p class="mm-src">${SRC} · ${per(a, st.b)} · 월별 톤 ÷ 1,000</p>`;
+    renderMarketDetailInputs(D.detail_input || {}, c);
     const dk = D.deck[c.ko];
     if (dk) {
       const ms = dk.ms || [], msTot = ms.reduce((s, x) => s + x[1], 0);
@@ -2701,8 +2746,8 @@ const MM = (() => {
         ${ms.length ? `<table class="tbl mt-3"><thead><tr><th>제지사 M/S (화면 계산)</th><th class="r">흐름 천톤</th><th class="r">M/S (÷ 국가 수요 ${dk.total})</th></tr></thead><tbody>${ms.map(x => `<tr><td>${x[0]}</td><td class="r">${x[1].toFixed(1)}</td><td class="r">${pc(x[1] / dk.total)}</td></tr>`).join('')}
         <tr class="tot"><td>합</td><td class="r">${msTot.toFixed(1)}</td><td class="r">${pc(msTot / dk.total)}</td></tr></tbody></table>` : ''}
         <p class="mm-src">출처: ${dk.src} · ${dk.year}년 · 구분 = ${dk.kind || '—'} · 장표 수요(실제 수요)와 왼쪽 확인된 수입은 출처가 달라 값이 다르다(C1·C9)</p>
-        <div class="mm-empty">Merchant SoW · Printer 구성: 입력판 연결 후 표시</div>`;
-    } else $('mmDDeck').innerHTML = '<div class="mm-empty">자료 없음 (입력판에 이 나라 장표 값이 없음)</div>';
+        `;
+    } else $('mmDDeck').textContent = '도시 수요·국가 제조사 점유율 자료 없음';
     $('mmSrcD').textContent = `${per(st.a, st.b)} vs ${per(st.a - 12, st.b - 12)}`;
     const basis = D.kr_split?.basis, annual = basis?.annual_by_country?.[c.ko] || {}, combined = basis?.combined_by_country?.[c.ko];
     const br = a => a && a[2] && a[1] > 0 ? `${mt(a[0])} / ${mt(a[1])}톤 = ${(100 * a[0] / a[1]).toFixed(2)}%` : '근거 미확보';

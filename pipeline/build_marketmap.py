@@ -230,6 +230,8 @@ def main():
         "local": build_local(capa, ci, cn, kr, mm_dir, actuals=load_json(load_json(PATHS)['marketmap_local_actuals']) if load_json(PATHS).get('marketmap_local_actuals') else None),
         "asia": asia,          # {JP|IN: {연도: {나라: 톤}}} 연간 참고값, 합계에 넣지 않음(C1)
         "deck": deck,
+        "detail_input": load_json(p("데이터_공급국", "marketmap_detail_input.json"))
+        if os.path.isfile(p("데이터_공급국", "marketmap_detail_input.json")) else {},
         "eu_special": {mode: meta["special_codes"] for mode, meta in eu_meta.items()},
         "eu_monthly_check": {mode: {mk: sum(countries.values()) for mk, countries in src.items()} for mode, src in (("extra", eux), ("intra", eui))},
         "unmapped": {"eu_t": round(sum(eu_unmapped.values()), 1), "eu": {k: round(v, 1) for k, v in sorted(eu_unmapped.items(), key=lambda x: -x[1])},
